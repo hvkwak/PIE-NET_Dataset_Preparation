@@ -12,6 +12,7 @@ Prereq.
 '''
 def view_point(points):
     point_cloud = open3d.geometry.PointCloud()
+    point_cloud.paint_uniform_color(np.array([0.5, 0.5, 0.5]))
     point_cloud.points = open3d.utility.Vector3dVector(points)
     open3d.visualization.draw_geometries([point_cloud])
 
@@ -144,6 +145,67 @@ def delete_spaces(line):
     if line[:4] == "    ": line = line[4:]
     return line
 
+
+def cross_points_finder(curve, other_curve):
+    """[summary]
+
+    Args:
+        curve ([type]): [description]
+        other_curve ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """    
+    cross_points = []
+    for i in curve[1:-1]:
+        for j in other_curve[1:-1]:
+            if i == j:
+                cross_points.append(i)
+    return cross_points
+
+
+def another_half_curve_pair_exist(curve, all_curves, circle_pair_index):
+    """[summary]
+
+    Args:
+        curve ([type]): [description]
+        all_curves ([type]): [description]
+        circle_pair_index ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """    
+    k = 0        
+    for candidate in all_curves:
+        # check if it's same type
+        # cross check the end points
+        if curve[0] == candidate[0] and curve[1][0] == candidate[1][-1] and curve[1][-1] == candidate[1][0]:
+            circle_pair_index[0] = k # index update
+            return True
+        k = k + 1
+    return False
+
+def update_lists(curve, open_curves, corner_points_ori, edge_points_ori):
+    """[summary]
+
+    Args:
+        curve ([type]): [description]
+        open_curves ([type]): [description]
+        corner_points_ori ([type]): [description]
+        edge_points_ori ([type]): [description]
+    """    
+    '''
+    open_curves.append(curve)
+    corner_points_ori.append(curve[1][0])
+    corner_points_ori.append(curve[1][-1])
+    edge_points_ori =  edge_points_ori + curve[1][:]
+    '''
+    open_curves.append(curve)
+    corner_points_ori = corner_points_ori+[curve[1][0], curve[1][-1]]
+    edge_points_ori = edge_points_ori+curve[1][:]
+    return open_curves, corner_points_ori, edge_points_ori
+
+
 def curves_with_vertex_indices(list_ftr_line):
     """ returns sharp curves with vertex indices. 
 
@@ -165,7 +227,7 @@ def curves_with_vertex_indices(list_ftr_line):
 
         if line[:7] == "curves:": 
             in_curve_section = True
-        elif line[:-1] == "  sharp: true" and in_curve_section:
+        elif (line[:-1] == "  sharp: true" or line[:-1] == "  sharp: false") and in_curve_section:
             curve = []
             if lines[idx+1][8:-1] in ["Circle", "BSpline", "Line"]:
 

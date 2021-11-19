@@ -2,6 +2,7 @@ import os
 import sys
 import numpy as np
 import trimesh
+from tqdm import tqdm
 from utils import delete_newline
 from utils import delete_spaces
 from utils import sharp_edges
@@ -13,6 +14,9 @@ from utils import graipher_FPS
 from utils import label_creator
 from utils import residual_vector_creator
 from utils import view_point
+from utils import another_half_curve_pair_exist
+from utils import update_lists
+from utils import cross_points_finder
 from grafkom1Framework import ObjLoader
 
 
@@ -54,7 +58,9 @@ def main():
         model_name_ftr = "_".join(list_ftr_lines[i].split('_')[0:2])
         list_obj_line = delete_newline(list_obj_lines[i])
         list_ftr_line = delete_newline(list_ftr_lines[i])
-        has_sharp_edge = sharp_edges(list_ftr_line)
+        
+        #has_sharp_edge = sharp_edges(list_ftr_line)
+        has_sharp_edge = True
         
         if has_sharp_edge and model_name_obj == model_name_ftr:
             # make sure that there's no "\n" in the line.
@@ -71,62 +77,93 @@ def main():
 
             if vertices.shape[0] < 30000: # make sure we have < 30K vertices to keep it simple.
                 
-                # Curves with vertex indices: sharp edges of BSpline, Line, Cycle only.
-                sharp_curves = curves_with_vertex_indices(list_ftr_line)
+                # Curves with vertex indices: (sharp)edges of BSpline, Line, Cycle only.
+                all_curves = curves_with_vertex_indices(list_ftr_line)
 
                 # (Optional) Filter out/Classify accordingly the curves such as:
                 # 1. Filter out Circles with the different endpoints.
                 # 2. Classify two BSplines that make a circle(same endpoints) as closed curve.
                 # 3. Filter out Several BSplines can make a closed curve.
                 # Note: We just implement the first option. Keep options above in mind for later use.
+                '''
                 for curve in sharp_curves:
                     if curve[0] == 'Circle' and curve[1][0] != curve[1][-1]:
                         if calc_distances(vertices[curve[1][0], :], vertices[curve[1][-1], :] ) > 1.0:
                             # Not even a slight (hand)labeling error. We remove this curve(circle.
                             log_string('Curves in the circle do not match. Skip this curve: '+str(curve), log_fout)
                             sharp_curves.remove(curve)
+                '''
 
 
-                # Curve Classification
-                # Open: BSpline, Line
-                # Closed: Circle
-                #
-                # Edge/Corner points Classification
-                # Corner Points: Start and end points of open curve, Start and end points of Lines
+                # Classifications
+                # Open Curves: BSplines and Lines
+                # Closed Curves: Circles
                 # Edge Points: All the vertices of open or closed curve, All the vertices of a line
+                # Corner Points: Start and end points of open curve, Start and end points of Lines
+                # Note: some circles are just divded into two circles with matching endpoints.
+                # These circles should be one circle and added to closed_curves.
+                # Since we'd be dealing with other datasets, accordingly, we keep them as BSpline.
                 open_curves = []
                 closed_curves = []
                 corner_points_ori = []
                 edge_points_ori = []
-                for curve in sharp_curves:
-                    if curve[0] == 'BSpline': # Open
-                        open_curves.append(curve)
-                        corner_points_ori.append(curve[1][0])
-                        corner_points_ori.append(curve[1][-1])
-                        edge_points_ori =  edge_points_ori + curve[1][:]
+                curve_num = len(all_curves)
+
+                for k in range(curve_num):
+                    
+                    # Note that this is a mutable object which is in list.
+                    curve = all_curves[k]
+                    circle_pair_index = [None]
+
+                    # check if there are (corner) points, where two curves cross or meet.
+                    if len(curve[1]) > 2 and k < curve_num-1:
+                        for j in range(k+1, curve_num):
+                            if len(all_curves[j][1]) > 2:
+                                cross_points = cross_points_finder(curve[1], all_curves[j][1])
+                                corner_points_ori = corner_points_ori + cross_points
+
+                    # classifications
+                    if curve[0] == 'BSpline' or curve[0] == 'Line':
+                        open_curves, corner_points_ori, edge_points_ori = update_lists(curve, open_curves, corner_points_ori, edge_points_ori)
                     elif curve[0] == 'Circle': # Closed
-                        closed_curves.append(curve)
-                        edge_points_ori =  edge_points_ori + curve[1][:]
-                    elif curve[0] == 'Line': # Open
-                        open_curves.append(curve)
-                        corner_points_ori.append(curve[1][0])
-                        corner_points_ori.append(curve[1][-1])
-                        edge_points_ori =  edge_points_ori + curve[1][:]
+                        if curve[1][0] != curve[1][-1] and another_half_curve_pair_exist(curve, all_curves[k:], circle_pair_index):
+                            # this one consist of a pair of two half-circle curves!
+                            all_curves[k+circle_pair_index[0]][0] = 'BSpline' # change the other to BSpline.
+                            curve[0] = 'BSpline' # change it to BSpline.
+                            open_curves, corner_points_ori, edge_points_ori = update_lists(curve, open_curves, corner_points_ori, edge_points_ori)
+                        else:
+                            closed_curves.append(curve)
+                            edge_points_ori =  edge_points_ori + curve[1][:]
+                    k = k + 1
+
+                #view_point(vertices[edge_points_ori,:])
+
+                # make the list unique
+                edge_points_ori = np.unique(edge_points_ori)
+                corner_points_ori = np.unique(corner_points_ori)
 
                 # Downsampling
                 # create mesh
                 mesh = trimesh.Trimesh(vertices = vertices, faces = faces, vertex_normals = vertex_normals)
 
                 # (uniform) random sample 100K surface points: Points in space on the surface of mesh
-                mesh_sample_xyz, mesh_sample_idx = trimesh.sample.sample_surface(mesh, 100000)
+                mesh_sample_xyz, mesh_sample_idx = trimesh.sample.sample_surface_even(mesh, 100000)
 
                 # (greedy) Farthest Points Sampling
                 down_sample_point = graipher_FPS(mesh_sample_xyz, FPS_num) # dtype: np.float64
-                view_point(down_sample_point)
+                
+                
                 # Annotation transfer
                 # edge_points_now ('PC_8096_edge_points_label_bin'), (8096, 1), dtype: uint8
                 # Note: find a nearest neighbor of each edge_point in edge_points_ori, label it as an "edge"
                 nearest_neighbor_idx_edge = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point)
+                # this finds too much non-unique(duplicate) nearest neighbor from down_sample_point
+                # based on distance -> do this greedy.
+                
+                unq, unq_idx, unq_cnt = np.unique(nearest_neighbor_idx_edge, return_inverse=True, return_counts=True)
+                
+                #view_point(down_sample_point)
+                #view_point(np.delete(down_sample_point, unq[unq_cnt > 1], axis = 0))
                 nearest_neighbor_idx_corner = nearest_neighbor_finder(vertices[corner_points_ori,:], down_sample_point)
 
                 edge_points_label_bin = label_creator(FPS_num, nearest_neighbor_idx_edge)
