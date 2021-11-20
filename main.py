@@ -9,7 +9,7 @@ from utils import sharp_edges
 from utils import curves_with_vertex_indices
 from utils import calc_distances
 from utils import log_string
-from utils import nearest_neighbor_finder
+from utils import greedy_nearest_neighbor_finder
 from utils import graipher_FPS
 from utils import label_creator
 from utils import residual_vector_creator
@@ -17,6 +17,7 @@ from utils import view_point
 from utils import another_half_curve_pair_exist
 from utils import update_lists
 from utils import cross_points_finder
+from utils import nearest_neighbor_finder
 from grafkom1Framework import ObjLoader
 
 
@@ -147,7 +148,7 @@ def main():
                 mesh = trimesh.Trimesh(vertices = vertices, faces = faces, vertex_normals = vertex_normals)
 
                 # (uniform) random sample 100K surface points: Points in space on the surface of mesh
-                mesh_sample_xyz, mesh_sample_idx = trimesh.sample.sample_surface_even(mesh, 100000)
+                mesh_sample_xyz, mesh_sample_idx = trimesh.sample.sample_surface(mesh, 100000)
 
                 # (greedy) Farthest Points Sampling
                 down_sample_point = graipher_FPS(mesh_sample_xyz, FPS_num) # dtype: np.float64
@@ -156,6 +157,7 @@ def main():
                 # Annotation transfer
                 # edge_points_now ('PC_8096_edge_points_label_bin'), (8096, 1), dtype: uint8
                 # Note: find a nearest neighbor of each edge_point in edge_points_ori, label it as an "edge"
+                #greedy_nearest_neighbor_idx_edge = greedy_nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point)
                 nearest_neighbor_idx_edge = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point)
                 # this finds too much non-unique(duplicate) nearest neighbor from down_sample_point
                 # based on distance -> do this greedy.
@@ -164,7 +166,7 @@ def main():
                 
                 #view_point(down_sample_point)
                 #view_point(np.delete(down_sample_point, unq[unq_cnt > 1], axis = 0))
-                nearest_neighbor_idx_corner = nearest_neighbor_finder(vertices[corner_points_ori,:], down_sample_point)
+                nearest_neighbor_idx_corner = greedy_nearest_neighbor_finder(vertices[corner_points_ori,:], down_sample_point)
 
                 edge_points_label_bin = label_creator(FPS_num, nearest_neighbor_idx_edge)
                 edge_points_res_vec = residual_vector_creator(down_sample_point, edge_points_label_bin, vertices, edge_points_ori)

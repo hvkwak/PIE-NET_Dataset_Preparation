@@ -64,7 +64,7 @@ def label_creator(num_points, nearest_neighbor_idx):
     else:
         return np.zeros((num_points, 1), dtype = np.int8)
 
-def nearest_neighbor_finder(edge_or_corner_points, down_sample_point):
+def greedy_nearest_neighbor_finder(edge_or_corner_points, down_sample_point):
     """finds a nearest neighbor from point of edge_or_corner_points in down_sample_point and return their indicies in
         down_sample_point.
 
@@ -72,10 +72,75 @@ def nearest_neighbor_finder(edge_or_corner_points, down_sample_point):
         edge_points ((edge_points_num, 3), np.array): edge_points coordinates in original model
         down_sample_point (FPS_num, 3): sampled points from faces.
     """
-    if edge_or_corner_points.shape[0] == 0: # no points avilable
+    pts_num = edge_or_corner_points.shape[0]
+    if pts_num == 0: # no points avilable
         return None
-    return(np.argmin((np.apply_along_axis(np.subtract, 1, edge_or_corner_points, down_sample_point)**2).sum(axis = 2), axis=1))
+
+    distances = (np.apply_along_axis(np.subtract, 1, edge_or_corner_points, down_sample_point)**2).sum(axis = 2)
+    argmin_per_row = np.argmin(distances, axis=1)
+    memory_arr = [None]*pts_num
+    i = 1
+    while i != pts_num:
+        row_idx, col_idx = distances.argmin() // distances.shape[1], distances.argmin()%distances.shape[1]
+        if memory_arr[row_idx] == None:
+            print("point_num: ", i, " distance: ", distances[row_idx, col_idx])
+            memory_arr[row_idx] = col_idx
+            distances[:, col_idx] = np.Inf
+            i = i+1
+        else:
+            distances[row_idx, col_idx] = np.Inf
+    return np.array(memory_arr)
     
+    
+def nearest_neighbor_finder(edge_or_corner_points, down_sample_point):
+
+    pts_num = edge_or_corner_points.shape[0]
+    down_sample_pts_num = down_sample_point.shape[0]
+    if pts_num == 0: # no points avilable
+        return None
+
+    # help-arrays to know if to each point in edge_or_corner_points was assigned a neighbor.
+    # update these two.
+    edge_or_corner_points_neighbor = [None] * pts_num
+    down_sample_pts_used = np.zeros((down_sample_pts_num, ), dtype=np.int8) # array of Falses
+
+    # First compute distances and argmins
+    distances = (np.apply_along_axis(np.subtract, 1, edge_or_corner_points, down_sample_point)**2).sum(axis = 2)
+    argmin_per_row = np.argmin(distances, axis=1)
+
+    # 1. It's a greedy approach. This may generate duplicates of neighbors, but first take nearest neighbor anyway.
+    unique, counts = np.unique(argmin_per_row, return_counts=True) 
+    points_idx_with_one_neighbor = unique[counts == 1] # these are points indicies
+    down_sample_pts_used[points_idx_with_one_neighbor] = 1 # these indicies are now True.
+    for i in points_idx_with_one_neighbor:
+        edge_or_corner_points_neighbor[np.where(argmin_per_row == i)[0][0]] = i
+    
+    # 2. Duplicates should be managed in their neighborhood with available points.
+    points_idx_with_more_neighbors = unique[counts > 1] # point indicies in down_sampled_pts with two or more neighbors in edge points
+    for j in range(points_idx_with_more_neighbors.shape[0]):
+        available_neighbors = available_neighbor_search(j, down_sample_pts_used, down_sample_point, unique, counts)
+
+    # 2. confirm the easy points: unique[counts == 1]
+    unique[counts > 1]
+    edge_or_corner_points[np.where(argmin_per_row == 7732)[0], ]
+    # 2. We assume that duplicates are neighborhood.
+    return argmin_per_row
+
+def available_neighbor_search(j, down_sample_pts_used, down_sample_point, unique, counts):
+
+    temp_array = np.copy(down_sample_point)
+    temp_array[down_sample_pts_used, :] = np.Inf # these points were already assigned/unavailable.
+    distances_to_neighbors = ((down_sample_point[j, :] - temp_array)**2).sum(axis = 1)
+
+    needed_available_neighbors = counts[counts > 1][j]
+    radius = 1
+    substitutes = 2 # hyperparameter
+    
+    # grid-search: increase the size of radius to find possible neighbors in down_sample_point
+    while needed_available_neighbors+substitutes > np.sum(distances_to_neighbors < radius):
+        radius = radius + 0.01
+    available_neighbors = np.where(distances_to_neighbors < radius)
+    return available_neighbors
 
 def calc_distances(p0, points):
     """calculate Euclidean distance between points
