@@ -4,20 +4,15 @@ import numpy as np
 import trimesh
 from tqdm import tqdm
 from utils import delete_newline
-from utils import delete_spaces
-from utils import sharp_edges
 from utils import curves_with_vertex_indices
-from utils import calc_distances
-from utils import log_string
-from utils import greedy_nearest_neighbor_finder
-from utils import graipher_FPS
-from utils import label_creator
-from utils import residual_vector_creator
-from utils import view_point
-from utils import another_half_curve_pair_exist
-from utils import update_lists
 from utils import cross_points_finder
+from utils import update_lists
+from utils import another_half_curve_pair_exist
+from utils import graipher_FPS
 from utils import nearest_neighbor_finder
+from utils import greedy_nearest_neighbor_finder
+
+
 from grafkom1Framework import ObjLoader
 
 
@@ -157,21 +152,54 @@ def main():
                 # Annotation transfer
                 # edge_points_now ('PC_8096_edge_points_label_bin'), (8096, 1), dtype: uint8
                 # Note: find a nearest neighbor of each edge_point in edge_points_ori, label it as an "edge"
-                #greedy_nearest_neighbor_idx_edge = greedy_nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point)
-                nearest_neighbor_idx_edge = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point)
-                # this finds too much non-unique(duplicate) nearest neighbor from down_sample_point
-                # based on distance -> do this greedy.
-                
-                unq, unq_idx, unq_cnt = np.unique(nearest_neighbor_idx_edge, return_inverse=True, return_counts=True)
-                
-                #view_point(down_sample_point)
-                #view_point(np.delete(down_sample_point, unq[unq_cnt > 1], axis = 0))
-                nearest_neighbor_idx_corner = greedy_nearest_neighbor_finder(vertices[corner_points_ori,:], down_sample_point)
+                '''
+                # option 1 : no clustering, just take nearest neighbors. Ties shoud be handled again with nearest neighbor
+                # concept around the tie point of a down_sample_point
+                nearest_neighbor_idx_edge_1 = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                distance_mean_1 = np.mean(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_1, :])**2).sum(axis = 1))
+                distance_max_1 = np.max(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_1, :])**2).sum(axis = 1))
 
-                edge_points_label_bin = label_creator(FPS_num, nearest_neighbor_idx_edge)
-                edge_points_res_vec = residual_vector_creator(down_sample_point, edge_points_label_bin, vertices, edge_points_ori)
+                # option 2 : clustering of bins
+                # grid search of neighbor_distance can make this slightly better than just keeping it as a hyperparameter.
+                # Near "multiple" ties builds a cluster, and builds a neighborhood. 
+                best_avg_max = np.Inf
+                best_neighbor_distance = np.Inf
+                for i in np.arange(0.8, 1.2, 0.05):
+                    neighbor_distance = i
+                    nearest_neighbor_idx_edge_2 = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point, use_clustering=True, neighbor_distance=neighbor_distance)
+                    distance_max_2 = np.max(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_2, :])**2).sum(axis = 1))
+                    if distance_max_2 < best_avg_max:
+                        best_neighbor_distance = i
 
-                corner_points_label_bin = label_creator(FPS_num, nearest_neighbor_idx_corner)
+                neighbor_distance = best_neighbor_distance
+                nearest_neighbor_idx_edge_2 = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point, use_clustering=True, neighbor_distance=neighbor_distance)
+                distance_mean_2 = np.mean(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_2, :])**2).sum(axis = 1))
+                distance_max_2 = np.max(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_2, :])**2).sum(axis = 1))    
+                '''
+                
+                # option 3: greedy. Just random shuffle the indicies and take distance matrix and take minimums.
+                nearest_neighbor_idx_edge_3 = greedy_nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point)                
+                distance_mean_3 = np.mean(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_3, :])**2).sum(axis = 1))
+                distance_max_3 = np.max(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_3, :])**2).sum(axis = 1))
+
+                #print("distance_mean_1: ", distance_mean_1)
+                #print("distance_max_1: ", distance_max_1)                
+                #print("distance_mean_2 with neighbor_distance of ", neighbor_distance, ":", distance_mean_2)
+                #print("distance_max_2 with neighbor_distance of ", neighbor_distance, ":", distance_max_2)                
+                print("distance_mean_3: ", distance_mean_3)
+                print("distance_max_3: ", distance_max_3)
+                
+                
+                
+                
+                
+                
+                #nearest_neighbor_idx_corner = greedy_nearest_neighbor_finder(vertices[corner_points_ori,:], down_sample_point)
+
+                #edge_points_label_bin = label_creator(FPS_num, nearest_neighbor_idx_edge)
+                #edge_points_res_vec = residual_vector_creator(down_sample_point, edge_points_label_bin, vertices, edge_points_ori)
+
+                #corner_points_label_bin = label_creator(FPS_num, nearest_neighbor_idx_corner)
                 
 
         list_obj_line = list_obj_file.readline()
