@@ -49,27 +49,22 @@ def main():
     model_total_num = len(list_ftr_lines)
     assert model_total_num == len(list_obj_lines)
     
-    
     batch_count = 0
     file_count = 0
     for i in range(model_total_num):
         
-        # check the feature file if it contains at least a sharp edge
+        # check the feature file if it contains at least a sharp edges
         # and check that models are same.
         model_name_obj = "_".join(list_obj_lines[i].split('_')[0:2])
         model_name_ftr = "_".join(list_ftr_lines[i].split('_')[0:2])
         list_obj_line = delete_newline(list_obj_lines[i])
         list_ftr_line = delete_newline(list_ftr_lines[i])
+        skip_this_model = False
         
-        #has_sharp_edge = sharp_edges(list_ftr_line)
-        has_sharp_edge = True # Use Default True
-        
-        if has_sharp_edge and model_name_obj == model_name_ftr:
+        if model_name_obj == model_name_ftr:
             # make sure that there's no "\n" in the line.
-            print("Processing: ", "_".join(list_ftr_lines[i].split('_')[0:2]), \
-                ".........."+str(i+1) + "/" + str(model_total_num), "\n")
-            use_this_model = True
-            model_name = model_name_obj
+            print("Processing: ", model_name_ftr, \
+                ".."+str(i+1) + "/" + str(model_total_num))
 
             # load the object file: all vertices / faces of a Model with at least one sharp edge.
             Loader = ObjLoader(file_dir+list_obj_line)
@@ -77,251 +72,261 @@ def main():
             faces = np.array(Loader.faces)
             vertex_normals = np.array(Loader.vertex_normals)
 
-            if vertices.shape[0] < 30000: # make sure we have < 30K vertices to keep it simple.
+            if vertices.shape[0] > 40000: # make sure we have < 30K vertices to keep it simple.
+                print("vertices > 40000. skip this.")
+                continue
+
+            # Curves with vertex indices: (sharp and not sharp)edges of BSpline, Line, Cycle only.
+            all_curves = curves_with_vertex_indices(file_dir+list_ftr_line)
+
+            # (Optional) Filter out/Classify accordingly the curves such as:
+            # 1. Filter out Circles with the different endpoints.
+            # 2. Classify two BSplines that make a circle(same endpoints) as closed curve.
+            # 3. Filter out Several BSplines can make a closed curve.
+            # Note: We just implement the first option. Keep options above in mind for later use.
+
+
+            # Classifications
+            # Open Curves: BSplines and Lines
+            # Closed Curves: Circles
+            # Edge Points: All the vertices of open or closed curve, All the vertices of a line
+            # Corner Points: Start and end points of open curve, Start and end points of Lines
+            # Note: some circles are just divded into two circles with matching endpoints.
+            # These circles should be one circle and added to closed_curves.
+            # Since we'd be dealing with other datasets, accordingly, we keep them as BSpline.
+            open_curves = []
+            closed_curves = []
+            corner_points_ori = []
+            edge_points_ori = []
+            curve_num = len(all_curves)
+
+            for k in range(curve_num):
                 
-                # Curves with vertex indices: (sharp)edges of BSpline, Line, Cycle only.
-                all_curves = curves_with_vertex_indices(file_dir+list_ftr_line)
+                # Note that this is a mutable object which is in list.
+                curve = all_curves[k]
+                circle_pair_index = [None]
 
-                # (Optional) Filter out/Classify accordingly the curves such as:
-                # 1. Filter out Circles with the different endpoints.
-                # 2. Classify two BSplines that make a circle(same endpoints) as closed curve.
-                # 3. Filter out Several BSplines can make a closed curve.
-                # Note: We just implement the first option. Keep options above in mind for later use.
-                '''
-                for curve in sharp_curves:
-                    if curve[0] == 'Circle' and curve[1][0] != curve[1][-1]:
-                        if calc_distances(vertices[curve[1][0], :], vertices[curve[1][-1], :] ) > 1.0:
-                            # Not even a slight (hand)labeling error. We remove this curve(circle.
-                            log_string('Curves in the circle do not match. Skip this curve: '+str(curve), log_fout)
-                            sharp_curves.remove(curve)
-                '''
+                # check if there are (corner) points, where two curves cross or meet.
+                if len(curve[1]) > 2 and k < curve_num-1:
+                    for j in range(k+1, curve_num):
+                        if len(all_curves[j][1]) > 2:
+                            cross_points = cross_points_finder(curve[1], all_curves[j][1])
+                            corner_points_ori = corner_points_ori + cross_points
 
-
-                # Classifications
-                # Open Curves: BSplines and Lines
-                # Closed Curves: Circles
-                # Edge Points: All the vertices of open or closed curve, All the vertices of a line
-                # Corner Points: Start and end points of open curve, Start and end points of Lines
-                # Note: some circles are just divded into two circles with matching endpoints.
-                # These circles should be one circle and added to closed_curves.
-                # Since we'd be dealing with other datasets, accordingly, we keep them as BSpline.
-                open_curves = []
-                closed_curves = []
-                corner_points_ori = []
-                edge_points_ori = []
-                curve_num = len(all_curves)
-
-                for k in range(curve_num):
-                    
-                    # Note that this is a mutable object which is in list.
-                    curve = all_curves[k]
-                    circle_pair_index = [None]
-
-                    # check if there are (corner) points, where two curves cross or meet.
-                    if len(curve[1]) > 2 and k < curve_num-1:
-                        for j in range(k+1, curve_num):
-                            if len(all_curves[j][1]) > 2:
-                                cross_points = cross_points_finder(curve[1], all_curves[j][1])
-                                corner_points_ori = corner_points_ori + cross_points
-
-                    # classifications
-                    if curve[0] == 'BSpline' or curve[0] == 'Line':
+                # classifications
+                if curve[0] == 'BSpline' or curve[0] == 'Line':
+                    open_curves, corner_points_ori, edge_points_ori = update_lists(curve, open_curves, corner_points_ori, edge_points_ori)
+                elif curve[0] == 'Circle': # Closed
+                    if curve[1][0] != curve[1][-1] and another_half_curve_pair_exist(curve, all_curves[k:], circle_pair_index):
+                        # this one consist of a pair of two half-circle curves!
+                        all_curves[k+circle_pair_index[0]][0] = 'BSpline' # change the other to BSpline.
+                        curve[0] = 'BSpline' # change it to BSpline.
                         open_curves, corner_points_ori, edge_points_ori = update_lists(curve, open_curves, corner_points_ori, edge_points_ori)
-                    elif curve[0] == 'Circle': # Closed
-                        if curve[1][0] != curve[1][-1] and another_half_curve_pair_exist(curve, all_curves[k:], circle_pair_index):
-                            # this one consist of a pair of two half-circle curves!
-                            all_curves[k+circle_pair_index[0]][0] = 'BSpline' # change the other to BSpline.
-                            curve[0] = 'BSpline' # change it to BSpline.
-                            open_curves, corner_points_ori, edge_points_ori = update_lists(curve, open_curves, corner_points_ori, edge_points_ori)
-                        else:
-                            closed_curves.append(curve)
-                            edge_points_ori =  edge_points_ori + curve[1][:]
-                    k = k + 1
+                    else:
+                        closed_curves.append(curve)
+                        edge_points_ori =  edge_points_ori + curve[1][:]
+                k = k + 1
+            
+            # if there are more than 256 curves in each section: don't use this model.
+            if (len(open_curves) > 256) or (len(closed_curves) > 256): 
+                print("(open/closed)_curves > 256. skip this.")
+                continue
 
-                #view_point(vertices[edge_points_ori,:])
+            if (len(open_curves) == 0) or (len(closed_curves) == 0): 
+                print("(open/closed)_curves = 0. skip this.")
+                continue
 
-                # make the list unique
-                edge_points_ori = np.unique(edge_points_ori)
-                corner_points_ori = np.unique(corner_points_ori)
+            # make the list unique
+            edge_points_ori = np.unique(edge_points_ori)
+            corner_points_ori = np.unique(corner_points_ori)
+            skip_this_model = edge_points_ori.shape[0] == 0 or corner_points_ori.shape[0] == 0 \
+                            or edge_points_ori.shape[0] > FPS_num or  edge_points_ori.shape[0] > FPS_num
 
-                # Downsampling
-                # create mesh
-                mesh = trimesh.Trimesh(vertices = vertices, faces = faces, vertex_normals = vertex_normals)
+            if skip_this_model: 
+                print("problems in (edge/corner)_points_ori. Skip this.")
+                continue
 
-                # (uniform) random sample 100K surface points: Points in space on the surface of mesh
-                mesh_sample_xyz, mesh_sample_idx = trimesh.sample.sample_surface(mesh, 100000)
+            # Downsampling
+            # create mesh
+            mesh = trimesh.Trimesh(vertices = vertices, faces = faces, vertex_normals = vertex_normals)
 
-                # (greedy) Farthest Points Sampling
-                down_sample_point = graipher_FPS(mesh_sample_xyz, FPS_num) # dtype: np.float64
-                
-                
-                # Annotation transfer
-                # edge_points_now ('PC_8096_edge_points_label_bin'), (8096, 1), dtype: uint8
-                # Note: find a nearest neighbor of each edge_point in edge_points_ori, label it as an "edge"
-                print("NN starts:")
-                # option 1 : no clustering, just take nearest neighbors. Ties shoud be handled again with nearest neighbor
-                # concept around the tie point of a down_sample_point
-                nearest_neighbor_idx_edge_1 = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=1)
-                nearest_neighbor_idx_corner_1 = nearest_neighbor_finder(vertices[corner_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=1)
-                #distance_mean_1 = np.mean(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_1, :])**2).sum(axis = 1))
+            # (uniform) random sample 100K surface points: Points in space on the surface of mesh
+            mesh_sample_xyz, mesh_sample_idx = trimesh.sample.sample_surface(mesh, 100000)
+
+            # (greedy) Farthest Points Sampling
+            down_sample_point = graipher_FPS(mesh_sample_xyz, FPS_num) # dtype: np.float64
+            
+            nearest_neighbor_idx_edge = 0
+            nearest_neighbor_idx_corner = 0
+            # Annotation transfer
+            # edge_points_now ('PC_8096_edge_points_label_bin'), (8096, 1), dtype: uint8
+            # Note: find a nearest neighbor of each edge_point in edge_points_ori, label it as an "edge"
+            # option 1 : no clustering, just take nearest neighbors. Ties shoud be handled again with nearest neighbor
+            # concept around the tie point of a down_sample_point
+            try:
+                nearest_neighbor_idx_edge_1 = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=0.5)
+                nearest_neighbor_idx_corner_1 = nearest_neighbor_finder(vertices[corner_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=0.5)
                 distance_max_1 = np.max(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_1, :])**2).sum(axis = 1))
-                log_string('distance_max_1: '+str(distance_max_1), log_fout)
-                '''
-                # option 2 : clustering of bins
-                # grid search of neighbor_distance can make this slightly better than just keeping it as a hyperparameter.
-                # Near "multiple" ties builds a cluster, and builds a neighborhood. 
-                best_avg_max = np.Inf
-                best_neighbor_distance = np.Inf
-                for l in np.arange(0.8, 1.2, 0.05):
-                    neighbor_distance = i
+                if distance_max_1 > 10: 
+                    print("distance_max_1 > 10. skip this.")
+                    continue
+                nearest_neighbor_idx_edge = nearest_neighbor_idx_edge_1
+                nearest_neighbor_idx_corner = nearest_neighbor_idx_corner_1
+            except:
+                continue
+
+            # option 2 : clustering of bins
+            # First build a cluster nearby multiple ties.
+            '''
+            try:
+                best_max = np.Inf
+                for l in np.arange(0.8, 1.2, 0.1):
+                    neighbor_distance = l
                     nearest_neighbor_idx_edge_2 = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point, use_clustering=True, neighbor_distance=neighbor_distance)
                     distance_max_2 = np.max(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_2, :])**2).sum(axis = 1))
-                    if distance_max_2 < best_avg_max:
-                        best_neighbor_distance = i
+                    if distance_max_2 < best_max:
+                        best_neighbor_distance = l
 
                 neighbor_distance = best_neighbor_distance
                 nearest_neighbor_idx_edge_2 = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point, use_clustering=True, neighbor_distance=neighbor_distance)
-                distance_mean_2 = np.mean(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_2, :])**2).sum(axis = 1))
+                nearest_neighbor_idx_corner_2 = nearest_neighbor_finder(vertices[corner_points_ori,:], down_sample_point, use_clustering=True, neighbor_distance=neighbor_distance)
                 distance_max_2 = np.max(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_2, :])**2).sum(axis = 1))    
-                '''
+                log_string('distance_max_2: '+str(distance_max_2), log_fout)
+                if distance_max_2 > 10: 
+                    print("distance_max_2 > 10. skip this.")
+                    continue
+            except:
+                print("nearest_neighbor_finder was not successful. skip this.")
+                continue
+            nearest_neighbor_idx_edge = nearest_neighbor_idx_edge_2
+            nearest_neighbor_idx_corner = nearest_neighbor_idx_corner_2
+            '''
+
+            # option 3: greedy. Just random shuffle the indicies and take distance matrix and take minimums.
+            #nearest_neighbor_idx_edge_3 = greedy_nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point)
+            #nearest_neighbor_idx_corner_3 = greedy_nearest_neighbor_finder(vertices[corner_points_ori,:], down_sample_point)                
+            #distance_mean_3 = np.mean(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_3, :])**2).sum(axis = 1))
+            #distance_max_3 = np.max(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_3, :])**2).sum(axis = 1))
+            #log_string('Curves in the circle do not match. Skip this curve: '+str(curve), log_fout)
+            #mat = scipy.io.loadmat('1.mat')
+
+            # initialize memory arrays
+            edge_points_label = np.zeros((FPS_num,1), dtype = np.uint8)
+            corner_points_label = np.zeros((FPS_num,1), dtype = np.uint8)
+            open_gt_pair_idx = np.zeros((256, 2), dtype=np.uint16)
+            open_gt_valid_mask = np.zeros((256, 1), dtype=np.uint8)
+            open_gt_256_64_idx = np.zeros((256, 64), dtype=np.uint16)
+            open_gt_type = np.zeros((256, 1), dtype=np.uint8) # Note: BSpline and Lines, so two label types: 1, 2
+            open_type_onehot = np.zeros((256, 4), dtype=np.uint8)
+            open_gt_res = np.zeros((256, 6), dtype=np.float64)
+            open_gt_sample_points = np.zeros((256, 64, 3), dtype=np.float64)
+            open_gt_mask = np.zeros((256, 64), dtype=np.uint8)
+            closed_gt_256_64_idx = np.zeros((256, 64), dtype=np.uint8)
+            closed_gt_mask = np.zeros((256, 64), dtype=np.uint8)
+            closed_gt_type = np.zeros((256, 1), dtype=np.uint8)
+            closed_gt_res = np.zeros((256, 3), dtype=np.float64)
+            closed_gt_sample_points = np.zeros((256, 64, 3), dtype=np.uint8)
+            closed_gt_valid_mask = np.zeros((256, 1), dtype=np.uint8)
+            closed_gt_pair_idx = np.zeros((256, 1), dtype=np.uint16)
+            
+            # and compute them
+            # down_sample_point is already there.
+            edge_points_label[nearest_neighbor_idx_edge, ] = 1
+            edge_points_residual_vector = vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge, :]
+            corner_points_label[nearest_neighbor_idx_corner, ] = 1
+            corner_point_residual_vector = vertices[corner_points_ori,:] - down_sample_point[nearest_neighbor_idx_corner, :]
+            
+            m = 0
+            for curve in closed_curves:
+                closed_gt_pair_idx[m,0] = nearest_neighbor_finder(vertices[np.array([curve[1][0]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                closed_gt_valid_mask[m, 0] = 1
+                # closed_gt_256_64_idx
+                if curve[1][0] == curve[1][-1]: curve[1] = curve[1][:-1] # update if these two indicies are same.
+                if len(curve[1]) > 64:
+                    # take start/end points + sample 62 points = 64 points
+                    closed_gt_256_64_idx[m, 0] = curve[1][0]
+                    closed_gt_256_64_idx[m, 1:64] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[1][1:], len(curve[1][1:]))[:63]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                    #closed_gt_256_64_idx[i, 63] = curve[1][-1]
+                    closed_gt_mask[m, 0:64] = 1
+                else:
+                    indicies_num = len(curve[1])
+                    closed_gt_mask[m, 0:indicies_num] = 1
+                    closed_gt_256_64_idx[m, :] = curve[1] + [curve[1][-1]]*(64 - indicies_num)
+
+                # closed_gt_type, closed_type_onehot
+                if curve[0] == "Circle": closed_gt_type[m,0] = 1
                 
-                # option 3: greedy. Just random shuffle the indicies and take distance matrix and take minimums.
-                #nearest_neighbor_idx_edge_3 = greedy_nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point)
-                #nearest_neighbor_idx_corner_3 = greedy_nearest_neighbor_finder(vertices[corner_points_ori,:], down_sample_point)                
-                #distance_mean_3 = np.mean(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_3, :])**2).sum(axis = 1))
-                #distance_max_3 = np.max(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_3, :])**2).sum(axis = 1))
+                # open_gt_res
+                res1 = vertices[curve[1][0], ]-down_sample_point[closed_gt_pair_idx[m, ][0], ]
+                closed_gt_res[m, ] = np.array([res1])
 
-                #print("distance_mean_1: ", distance_mean_1)
-                #print("distance_max_1: ", distance_max_1)                
-                #print("distance_mean_2 with neighbor_distance of ", neighbor_distance, ":", distance_mean_2)
-                #print("distance_max_2 with neighbor_distance of ", neighbor_distance, ":", distance_max_2)                
-                #print("distance_mean_3: ", distance_mean_3)
-                #print("distance_max_3: ", distance_max_3)
+                # open_gt_sample_points
+                closed_gt_sample_points[m, ...] = down_sample_point[closed_gt_256_64_idx[m], ]
+                m = m + 1
+
+            n = 0
+            for curve in open_curves:
+                open_gt_pair_idx[n, ] = nearest_neighbor_finder(vertices[np.array([curve[1][0], curve[1][-1]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                open_gt_valid_mask[n, 0] = 1
+                # open_gt_256_64_idx
+                if len(curve[1]) > 64:
+                    # take start/end points + sample 62 points = 64 points
+                    open_gt_256_64_idx[n, 0] = curve[1][0]
+                    open_gt_256_64_idx[n, 1:63] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[1][1:-1], len(curve[1][1:-1]))[:62]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                    open_gt_256_64_idx[n, 63] = curve[1][-1]
+                    open_gt_mask[n, 0:64] = 1
+                else:
+                    indicies_num = len(curve[1])
+                    open_gt_mask[n, 0:indicies_num] = 1
+                    open_gt_256_64_idx[n, :] = curve[1] + [curve[1][-1]]*(64 - indicies_num)
+
+                # open_gt_type, open_type_onehot
+                if curve[0] == "BSpline": open_gt_type[n,0], open_type_onehot[n, ] = 1, np.array([0, 1, 0, 0])
+                else: open_gt_type[n,0], open_type_onehot[n, ] = 2, np.array([0, 0, 1, 0]) # "Line"
                 
+                # open_gt_res
+                res1 = vertices[curve[1][0], ]-down_sample_point[open_gt_pair_idx[n, ][0], ]
+                res2 = vertices[curve[1][-1], ]-down_sample_point[open_gt_pair_idx[n, ][1], ]
+                open_gt_res[n, ] = np.array([res1, res2]).flatten()
 
-                nearest_neighbor_idx_edge = nearest_neighbor_idx_edge_1
-                nearest_neighbor_idx_corner = nearest_neighbor_idx_corner_1
-
-                #log_string('Curves in the circle do not match. Skip this curve: '+str(curve), log_fout)
-                #mat = scipy.io.loadmat('1.mat')
-
-                # initialize memory arrays
-                edge_points_label = np.zeros((FPS_num,1), dtype = np.uint8)
-                corner_points_label = np.zeros((FPS_num,1), dtype = np.uint8)
-                open_gt_pair_idx = np.zeros((256, 2), dtype=np.uint16)
-                open_gt_valid_mask = np.zeros((256, 1), dtype=np.uint8)
-                open_gt_256_64_idx = np.zeros((256, 64), dtype=np.uint16)
-                open_gt_type = np.zeros((256, 1), dtype=np.uint8) # Note: BSpline and Lines, so two label types: 1, 2
-                open_type_onehot = np.zeros((256, 4), dtype=np.uint8)
-                open_gt_res = np.zeros((256, 6), dtype=np.float64)
-                open_gt_sample_points = np.zeros((256, 64, 3), dtype=np.float64)
-                open_gt_mask = np.zeros((256, 64), dtype=np.uint8)
-                closed_gt_256_64_idx = np.zeros((256, 64), dtype=np.uint8)
-                closed_gt_mask = np.zeros((256, 64), dtype=np.uint8)
-                closed_gt_type = np.zeros((256, 1), dtype=np.uint8)
-                closed_gt_res = np.zeros((256, 3), dtype=np.float64)
-                closed_gt_sample_points = np.zeros((256, 64, 3), dtype=np.uint8)
-                closed_gt_valid_mask = np.zeros((256, 1), dtype=np.uint8)
-                closed_gt_pair_idx = np.zeros((256, 1), dtype=np.uint16)
-                
-                # and compute them
-                # down_sample_point is already there.
-                edge_points_label[nearest_neighbor_idx_edge, ] = 1
-                edge_points_residual_vector = vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge, :]
-                corner_points_label[nearest_neighbor_idx_corner, ] = 1
-                corner_point_residual_vector = vertices[corner_points_ori,:] - down_sample_point[nearest_neighbor_idx_corner, :]
-                print("hello")
-                m = 0
-                for curve in closed_curves:
-                    closed_gt_pair_idx[m,0] = nearest_neighbor_finder(vertices[np.array([curve[1][0]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
-                    closed_gt_valid_mask[m, 0] = 1
-                    # closed_gt_256_64_idx
-                    if curve[1][0] == curve[1][-1]: curve[1] = curve[1][:-1] # update if these two indicies are same.
-                    if len(curve[1]) > 64:
-                        # take start/end points + sample 62 points = 64 points
-                        closed_gt_256_64_idx[m, 0] = curve[1][0]
-                        closed_gt_256_64_idx[m, 1:64] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[1][1:], len(curve[1][1:]))[:63]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
-                        #closed_gt_256_64_idx[i, 63] = curve[1][-1]
-                        closed_gt_mask[m, 0:64] = 1
-                    else:
-                        indicies_num = len(curve[1])
-                        closed_gt_mask[m, 0:indicies_num] = 1
-                        closed_gt_256_64_idx[m, :] = curve[1] + [curve[1][-1]]*(64 - indicies_num)
-
-                    # closed_gt_type, closed_type_onehot
-                    if curve[0] == "Circle": closed_gt_type[m,0] = 1
-                    
-                    # open_gt_res
-                    res1 = vertices[curve[1][0], ]-down_sample_point[closed_gt_pair_idx[m, ][0], ]
-                    closed_gt_res[m, ] = np.array([res1])
-
-                    # open_gt_sample_points
-                    closed_gt_sample_points[m, ...] = down_sample_point[closed_gt_256_64_idx[m], ]
-                    m = m + 1
-
-                print("hi")
-                n = 0
-                for curve in open_curves:
-                    open_gt_pair_idx[n, ] = nearest_neighbor_finder(vertices[np.array([curve[1][0], curve[1][-1]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
-                    open_gt_valid_mask[n, 0] = 1
-                    # open_gt_256_64_idx
-                    if len(curve[1]) > 64:
-                        # take start/end points + sample 62 points = 64 points
-                        open_gt_256_64_idx[n, 0] = curve[1][0]
-                        open_gt_256_64_idx[n, 1:63] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[1][1:-1], len(curve[1][1:-1]))[:62]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
-                        open_gt_256_64_idx[n, 63] = curve[1][-1]
-                        open_gt_mask[n, 0:64] = 1
-                    else:
-                        indicies_num = len(curve[1])
-                        open_gt_mask[n, 0:indicies_num] = 1
-                        open_gt_256_64_idx[n, :] = curve[1] + [curve[1][-1]]*(64 - indicies_num)
-
-                    # open_gt_type, open_type_onehot
-                    if curve[0] == "BSpline": open_gt_type[n,0], open_type_onehot[n, ] = 1, np.array([0, 1, 0, 0])
-                    else: open_gt_type[n,0], open_type_onehot = 2, np.array([0, 0, 1, 0]) # "Line"
-                    
-                    # open_gt_res
-                    res1 = vertices[curve[1][0], ]-down_sample_point[open_gt_pair_idx[n, ][0], ]
-                    res2 = vertices[curve[1][-1], ]-down_sample_point[open_gt_pair_idx[n, ][1], ]
-                    open_gt_res[n, ] = np.array([res1, res2]).flatten()
-
-                    # open_gt_sample_points
-                    open_gt_sample_points[n, ...] = down_sample_point[open_gt_256_64_idx[n], ]
-                    n = n + 1
-                
-                data = {'Training_data': np.zeros((64, 1), dtype = object)}
-                tp = np.dtype([
-                    ('down_sample_point', 'O'),
-                    ('edge_points_label', 'O'),
-                    ('edge_points_residual_vector', 'O'),
-                    ('corner_points_label', 'O'),
-                    ('corner_point_residual_vector', 'O'),
-                      ('open_gt_pair_idx', 'O'),
-                    ('closed_gt_pair_idx', 'O'),
-                      ('open_gt_valid_mask', 'O'),
-                    ('closed_gt_valid_mask', 'O'),
-                      ('open_gt_256_64_idx', 'O'),
-                    ('closed_gt_256_64_idx', 'O'),
-                      ('open_gt_type','O'),
-                    ('closed_gt_type','O'),
-                    ('open_type_onehot','O'),
-                      ('open_gt_res', 'O'),
-                    ('closed_gt_res', 'O'),
-                      ('open_gt_sample_points', 'O'),
-                    ('closed_gt_sample_points', 'O'), 
-                      ('open_gt_mask', 'O'),
-                    ('closed_gt_mask', 'O')
-                    ])
-                data['Training_data'][batch_count, 0] = np.zeros((1, 1), dtype = tp)
-                for tp_name in tp.names: 
-                    save_this = locals()[tp_name]
-                    data['Training_data'][batch_count, 0][tp_name][0, 0] = save_this
+                # open_gt_sample_points
+                open_gt_sample_points[n, ...] = down_sample_point[open_gt_256_64_idx[n], ]
+                n = n + 1
+            
+            print("Ok. save data.")
+            data = {'Training_data': np.zeros((64, 1), dtype = object)}
+            tp = np.dtype([
+                ('down_sample_point', 'O'),
+                ('edge_points_label', 'O'),
+                ('edge_points_residual_vector', 'O'),
+                ('corner_points_label', 'O'),
+                ('corner_point_residual_vector', 'O'),
+                    ('open_gt_pair_idx', 'O'),
+                ('closed_gt_pair_idx', 'O'),
+                    ('open_gt_valid_mask', 'O'),
+                ('closed_gt_valid_mask', 'O'),
+                    ('open_gt_256_64_idx', 'O'),
+                ('closed_gt_256_64_idx', 'O'),
+                    ('open_gt_type','O'),
+                ('closed_gt_type','O'),
+                ('open_type_onehot','O'),
+                    ('open_gt_res', 'O'),
+                ('closed_gt_res', 'O'),
+                    ('open_gt_sample_points', 'O'),
+                ('closed_gt_sample_points', 'O'), 
+                    ('open_gt_mask', 'O'),
+                ('closed_gt_mask', 'O')
+                ])
+            data['Training_data'][batch_count, 0] = np.zeros((1, 1), dtype = tp)
+            for tp_name in tp.names: 
+                save_this = locals()[tp_name]
+                data['Training_data'][batch_count, 0][tp_name][0, 0] = save_this
 
             
         if batch_count == 63:
-            print("save")
             file_ = str(file_count)+".mat"
             scipy.io.savemat(file_, data)
+            print(file_, "saved.")
             batch_count = 0
             file_count = file_count + 1
         else:

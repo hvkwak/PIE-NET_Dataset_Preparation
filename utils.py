@@ -137,10 +137,8 @@ def nearest_neighbor_finder(edge_or_corner_points, down_sample_point, use_cluste
         edge_or_corner_points_neighbor[np.where(argmin_per_row == i)[0][0]] = i # update with indicies
     
 
-
     # 2. Duplicates should be managed in their neighborhood with available points.
     points_idx_with_more_neighbors = unique[counts > 1] # point indicies in down_sampled_pts which has two or more neighbors in edge points
-
     if use_clustering:
         #
         # 2.1 (Optional) Clusering starts here: use a copied distance matrix.
@@ -181,23 +179,28 @@ def nearest_neighbor_finder(edge_or_corner_points, down_sample_point, use_cluste
                 for k in array_nums:
                     bins.append([k])
             max_size = max_size -1
-        points_idx_with_more_neighbors = bins    
-    # clustering ends here
+        points_idx_with_more_neighbors = bins
+          
+    # clustering(making bins) ends here
     #
-
     for idx in points_idx_with_more_neighbors:
-        available_neighbors = available_neighbor_search(idx, down_sample_pts_used, down_sample_point, unique, counts, clustered = use_clustering)
-        # generate possibilities of permutations of available_neighbors. Hope they are not too many.
-        perm = np.array(list(itertools.permutations(available_neighbors)))
         current_edge_points = []
         if use_clustering:
             for k in idx:
                 current_edge_points = current_edge_points + list(np.where(argmin_per_row == k)[0])
         else: 
             current_edge_points = np.where(argmin_per_row == idx)[0]
+        current_edge_points_num = len(current_edge_points)            
+        # generate permutations of available_neighbors.
+        available_neighbors = available_neighbor_search(idx, down_sample_pts_used, down_sample_point, unique, counts, clustered = use_clustering)
+        assert len(available_neighbors) == current_edge_points_num
+        perm = np.array(list(itertools.permutations(available_neighbors, len(current_edge_points))))
+        if perm.shape[0] > 50000: 
+            print("WARNING: perm.shape[0] is ", perm.shape[0], "skip this.")
+            raise ValueError("perm.shape[0] > 50000.")
+        #print("available_neighbors_num: ", current_edge_points_num, " this is ", perm.shape[0], " permutations.")
         best_distance = np.Inf
         best_perm = None
-
         # search for good permutation of indicies, where the total distance is minimal. this one is brute force.
         for k in range(perm.shape[0]):
             if distances[current_edge_points, perm[k]].sum(axis = 0) <  best_distance:
@@ -215,8 +218,6 @@ def nearest_neighbor_finder(edge_or_corner_points, down_sample_point, use_cluste
 
 def available_neighbor_search(idx, down_sample_pts_used, down_sample_point, unique, counts, clustered):
 
-    radius = 1 # start radius
-    i = 1
     temp_array = np.copy(down_sample_point)
     unavailable_idx = np.where(down_sample_pts_used == 1)[0]
     temp_array[unavailable_idx, :] = np.Inf # these points were already assigned/unavailable.
@@ -236,22 +237,20 @@ def available_neighbor_search(idx, down_sample_pts_used, down_sample_point, uniq
         distances_to_neighbors = ((down_sample_point[idx, :] - temp_array)**2).sum(axis = 1)
         needed_available_neighbors = counts[np.where(unique == idx)[0][0]]
 
+    ''' this was a bad idea.
     # grid-search: increase the size of radius to find possible neighbors in down_sample_point
-    while needed_available_neighbors > np.sum(distances_to_neighbors < radius) or \
-        needed_available_neighbors < np.sum(distances_to_neighbors < radius):
+    np.argpartition(distances[i, ], 2)[2]
+    while needed_available_neighbors != np.sum(distances_to_neighbors < radius):
         # increase/decrease the radius accordingly.
-        if needed_available_neighbors > np.sum(distances_to_neighbors < radius*1.1):
-            radius = radius*1.1
-        elif needed_available_neighbors == np.sum(distances_to_neighbors < radius*1.1):
-            radius = radius*1.1
-            break
+        if needed_available_neighbors > np.sum(distances_to_neighbors < radius):
+            radius = radius*1.3
         else:
-            radius = radius*0.95
+            radius = radius*0.7
         i = i + 1
-    
-    print("After ", i, " iterations it was successful to find a suitable radius: ", radius)
+    #print("After ", i, " iterations it was successful to find a suitable radius: ", radius)
     available_neighbors = np.where(distances_to_neighbors < radius)
-    return available_neighbors[0]
+    '''
+    return [np.argpartition(distances_to_neighbors, i)[i] for i in range(needed_available_neighbors)]
 
 def calc_distances(p0, points):
     """calculate Euclidean distance between points
