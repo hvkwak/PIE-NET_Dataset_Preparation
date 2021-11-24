@@ -37,9 +37,10 @@ def main():
     # open files, change FPS_num from (str) to (int), generate log file.
     list_obj_file = open(args[0], "r")
     list_ftr_file = open(args[1], "r")
-    list_stt_file = open(args[2], "r")
-    FPS_num = int(args[3])
-    log_dir = args[4]
+    #list_stt_file = open(args[2], "r")
+    FPS_num = int(args[2])
+    log_dir = args[3]
+    file_dir = args[4]
     log_fout = open(os.path.join(log_dir, 'generate_dataset_log.txt'), 'w')
 
     # readlines(of files) to make sure they are same length
@@ -71,7 +72,7 @@ def main():
             model_name = model_name_obj
 
             # load the object file: all vertices / faces of a Model with at least one sharp edge.
-            Loader = ObjLoader(list_obj_line)
+            Loader = ObjLoader(file_dir+list_obj_line)
             vertices = np.array(Loader.vertices)
             faces = np.array(Loader.faces)
             vertex_normals = np.array(Loader.vertex_normals)
@@ -79,7 +80,7 @@ def main():
             if vertices.shape[0] < 30000: # make sure we have < 30K vertices to keep it simple.
                 
                 # Curves with vertex indices: (sharp)edges of BSpline, Line, Cycle only.
-                all_curves = curves_with_vertex_indices(list_ftr_line)
+                all_curves = curves_with_vertex_indices(file_dir+list_ftr_line)
 
                 # (Optional) Filter out/Classify accordingly the curves such as:
                 # 1. Filter out Circles with the different endpoints.
@@ -157,7 +158,7 @@ def main():
                 # Annotation transfer
                 # edge_points_now ('PC_8096_edge_points_label_bin'), (8096, 1), dtype: uint8
                 # Note: find a nearest neighbor of each edge_point in edge_points_ori, label it as an "edge"
-                
+                print("NN starts:")
                 # option 1 : no clustering, just take nearest neighbors. Ties shoud be handled again with nearest neighbor
                 # concept around the tie point of a down_sample_point
                 nearest_neighbor_idx_edge_1 = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=1)
@@ -201,8 +202,8 @@ def main():
                 nearest_neighbor_idx_edge = nearest_neighbor_idx_edge_1
                 nearest_neighbor_idx_corner = nearest_neighbor_idx_corner_1
 
-                log_string('Curves in the circle do not match. Skip this curve: '+str(curve), log_fout)
-                mat = scipy.io.loadmat('1.mat')
+                #log_string('Curves in the circle do not match. Skip this curve: '+str(curve), log_fout)
+                #mat = scipy.io.loadmat('1.mat')
 
                 # initialize memory arrays
                 edge_points_label = np.zeros((FPS_num,1), dtype = np.uint8)
@@ -229,7 +230,7 @@ def main():
                 edge_points_residual_vector = vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge, :]
                 corner_points_label[nearest_neighbor_idx_corner, ] = 1
                 corner_point_residual_vector = vertices[corner_points_ori,:] - down_sample_point[nearest_neighbor_idx_corner, :]
-
+                print("hello")
                 m = 0
                 for curve in closed_curves:
                     closed_gt_pair_idx[m,0] = nearest_neighbor_finder(vertices[np.array([curve[1][0]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
@@ -258,7 +259,7 @@ def main():
                     closed_gt_sample_points[m, ...] = down_sample_point[closed_gt_256_64_idx[m], ]
                     m = m + 1
 
-
+                print("hi")
                 n = 0
                 for curve in open_curves:
                     open_gt_pair_idx[n, ] = nearest_neighbor_finder(vertices[np.array([curve[1][0], curve[1][-1]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
