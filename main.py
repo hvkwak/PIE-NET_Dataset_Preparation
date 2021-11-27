@@ -4,7 +4,6 @@ import numpy as np
 import trimesh
 import scipy.io
 import random
-import time
 from tqdm import tqdm
 from utils import delete_newline
 from utils import curves_with_vertex_indices
@@ -54,7 +53,7 @@ def main():
     batch_count = 0
     file_count = 0
     for i in range(model_total_num):
-        starting_time = time.perf_counter()
+        
         # check the feature file if it contains at least a sharp edges
         # and check that models are same.
         model_name_obj = "_".join(list_obj_lines[i].split('/')[-1].split('_')[0:2])
@@ -76,10 +75,14 @@ def main():
             vertices = np.array(Loader.vertices)
             faces = np.array(Loader.faces)
             vertex_normals = np.array(Loader.vertex_normals)
+            del Loader
 
             if vertices.shape[0] > 30000: # make sure we have < 30K vertices to keep it simple.
                 print("vertices > 30000. skip this.")
                 log_string("vertices > 30000. skip this.", log_fout)
+                del vertices
+                del faces
+                del vertex_normals
                 continue
 
             # Curves with vertex indices: (sharp and not sharp)edges of BSpline, Line, Cycle only.
@@ -132,7 +135,8 @@ def main():
                         closed_curves.append(curve)
                         edge_points_ori =  edge_points_ori + curve[1][:]
                 k = k + 1
-            
+
+            del all_curves
             # if there are more than 256 curves in each section: don't use this model.
             if (len(open_curves) > 256) or (len(closed_curves) > 256): 
                 print("(open/closed)_curves > 256. skip this.")
@@ -160,11 +164,12 @@ def main():
             mesh = trimesh.Trimesh(vertices = vertices, faces = faces, vertex_normals = vertex_normals)
 
             # (uniform) random sample 100K surface points: Points in space on the surface of mesh
-            mesh_sample_xyz, mesh_sample_idx = trimesh.sample.sample_surface(mesh, 100000)
-
+            mesh_sample_xyz, _ = trimesh.sample.sample_surface(mesh, 100000)
+            del mesh
             # (greedy) Farthest Points Sampling
             down_sample_point = graipher_FPS(mesh_sample_xyz, FPS_num) # dtype: np.float64
-            
+            del mesh_sample_xyz
+
             nearest_neighbor_idx_edge = 0
             nearest_neighbor_idx_corner = 0
             # Annotation transfer
@@ -355,7 +360,6 @@ def main():
             for tp_name in tp.names: 
                 save_this = locals()[tp_name]
                 data['Training_data'][batch_count, 0][tp_name][0, 0] = save_this
-
             
         if batch_count == 63:
             file_ = save_prefix+"_"+str(file_count)+".mat"
