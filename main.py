@@ -4,6 +4,7 @@ import numpy as np
 import trimesh
 import scipy.io
 import random
+import time
 from tqdm import tqdm
 from utils import delete_newline
 from utils import curves_with_vertex_indices
@@ -53,7 +54,7 @@ def main():
     batch_count = 0
     file_count = 0
     for i in range(model_total_num):
-        
+        starting_time = time.perf_counter()
         # check the feature file if it contains at least a sharp edges
         # and check that models are same.
         model_name_obj = "_".join(list_obj_lines[i].split('/')[-1].split('_')[0:2])
@@ -182,6 +183,7 @@ def main():
                 nearest_neighbor_idx_edge = nearest_neighbor_idx_edge_1
                 nearest_neighbor_idx_corner = nearest_neighbor_idx_corner_1
             except:
+                print("NN was not successful. skip this.")
                 log_string("NN was not successful. skip this.", log_fout)
                 continue
 
@@ -250,14 +252,24 @@ def main():
             
             m = 0
             for curve in closed_curves:
-                closed_gt_pair_idx[m,0] = nearest_neighbor_finder(vertices[np.array([curve[1][0]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                try:
+                    closed_gt_pair_idx[m,0] = nearest_neighbor_finder(vertices[np.array([curve[1][0]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                except:
+                    print("NN for closed_gt_pair_idx was not successful. skip this.")
+                    log_string("NN for closed_gt_pair_idx was not successful. skip this.", log_fout)
+                    continue
                 closed_gt_valid_mask[m, 0] = 1
                 # closed_gt_256_64_idx
                 if curve[1][0] == curve[1][-1]: curve[1] = curve[1][:-1] # update if these two indicies are same.
                 if len(curve[1]) > 64:
                     # take start/end points + sample 62 points = 64 points
                     closed_gt_256_64_idx[m, 0] = curve[1][0]
-                    closed_gt_256_64_idx[m, 1:64] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[1][1:], len(curve[1][1:]))[:63]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                    try:
+                        closed_gt_256_64_idx[m, 1:64] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[1][1:], len(curve[1][1:]))[:63]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                    except:
+                        print("NN for closed_gt_256_64_idx was not successful. skip this.")
+                        log_string("NN for closed_gt_256_64_idx was not successful. skip this.", log_fout)
+                        continue                        
                     #closed_gt_256_64_idx[i, 63] = curve[1][-1]
                     closed_gt_mask[m, 0:64] = 1
                 else:
@@ -278,13 +290,23 @@ def main():
 
             n = 0
             for curve in open_curves:
-                open_gt_pair_idx[n, ] = nearest_neighbor_finder(vertices[np.array([curve[1][0], curve[1][-1]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                try:
+                    open_gt_pair_idx[n, ] = nearest_neighbor_finder(vertices[np.array([curve[1][0], curve[1][-1]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                except:
+                    print("NN for open_gt_pair_idx was not successful. skip this.")
+                    log_string("NN for open_gt_pair_idx was not successful. skip this.", log_fout)
+                    continue
                 open_gt_valid_mask[n, 0] = 1
                 # open_gt_256_64_idx
                 if len(curve[1]) > 64:
                     # take start/end points + sample 62 points = 64 points
                     open_gt_256_64_idx[n, 0] = curve[1][0]
-                    open_gt_256_64_idx[n, 1:63] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[1][1:-1], len(curve[1][1:-1]))[:62]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                    try:
+                        open_gt_256_64_idx[n, 1:63] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[1][1:-1], len(curve[1][1:-1]))[:62]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                    except:
+                        print("NN for open_gt_256_64_idx was not successful. skip this.")
+                        log_string("NN for open_gt_256_64_idx was not successful. skip this.", log_fout)
+                        continue
                     open_gt_256_64_idx[n, 63] = curve[1][-1]
                     open_gt_mask[n, 0:64] = 1
                 else:
