@@ -35,13 +35,14 @@ def main():
     print("args: ", args)
 
     # open files, change FPS_num from (str) to (int), generate log file.
-    list_obj_file = open(args[0], "r")
-    list_ftr_file = open(args[1], "r")
-    #list_stt_file = open(args[2], "r")
-    FPS_num = int(args[2])
-    log_dir = args[3]
-    file_dir = args[4]
-    log_fout = open(os.path.join(log_dir, 'generate_dataset_log.txt'), 'w')
+    list_obj_file = open(args[0], "r") # "/raid/home/hyovin.kwak/all/obj/${1}_list_obj.txt"
+    list_ftr_file = open(args[1], "r") # "/raid/home/hyovin.kwak/all/obj/${1}_list_yml.txt"
+    save_prefix = args[2] # $foldernum
+    #FPS_num = int(args[3]) 8096
+    FPS_num = 8096
+    log_dir = args[3]     # "/raid/home/hyovin.kwak/PIE-NET_Dataset_Preparation/log/"
+    log_file_name = save_prefix+'generate_dataset_log.txt'
+    log_fout = open(os.path.join(log_dir, log_file_name), 'w+')
 
     # readlines(of files) to make sure they are same length
     list_obj_lines = list_obj_file.readlines()
@@ -55,8 +56,10 @@ def main():
         
         # check the feature file if it contains at least a sharp edges
         # and check that models are same.
-        model_name_obj = "_".join(list_obj_lines[i].split('_')[0:2])
-        model_name_ftr = "_".join(list_ftr_lines[i].split('_')[0:2])
+        model_name_obj = "_".join(list_obj_lines[i].split('/')[-1].split('_')[0:2])
+        model_name_ftr = "_".join(list_ftr_lines[i].split('/')[-1].split('_')[0:2])
+        model_name_obj = delete_newline(model_name_obj)
+        model_name_ftr = delete_newline(model_name_ftr)
         list_obj_line = delete_newline(list_obj_lines[i])
         list_ftr_line = delete_newline(list_ftr_lines[i])
         skip_this_model = False
@@ -65,19 +68,21 @@ def main():
             # make sure that there's no "\n" in the line.
             print("Processing: ", model_name_ftr, \
                 ".."+str(i+1) + "/" + str(model_total_num))
+            log_string("Processing: "+ model_name_ftr+ ".."+str(i+1) + "/" + str(model_total_num), log_fout)
 
             # load the object file: all vertices / faces of a Model with at least one sharp edge.
-            Loader = ObjLoader(file_dir+list_obj_line)
+            Loader = ObjLoader(list_obj_line)
             vertices = np.array(Loader.vertices)
             faces = np.array(Loader.faces)
             vertex_normals = np.array(Loader.vertex_normals)
 
-            if vertices.shape[0] > 40000: # make sure we have < 30K vertices to keep it simple.
-                print("vertices > 40000. skip this.")
+            if vertices.shape[0] > 30000: # make sure we have < 30K vertices to keep it simple.
+                print("vertices > 30000. skip this.")
+                log_string("vertices > 30000. skip this.", log_fout)
                 continue
 
             # Curves with vertex indices: (sharp and not sharp)edges of BSpline, Line, Cycle only.
-            all_curves = curves_with_vertex_indices(file_dir+list_ftr_line)
+            all_curves = curves_with_vertex_indices(list_ftr_line)
 
             # (Optional) Filter out/Classify accordingly the curves such as:
             # 1. Filter out Circles with the different endpoints.
@@ -130,10 +135,12 @@ def main():
             # if there are more than 256 curves in each section: don't use this model.
             if (len(open_curves) > 256) or (len(closed_curves) > 256): 
                 print("(open/closed)_curves > 256. skip this.")
+                log_string("(open/closed)_curves > 256. skip this.", log_fout)
                 continue
 
             if (len(open_curves) == 0) or (len(closed_curves) == 0): 
                 print("(open/closed)_curves = 0. skip this.")
+                log_string("(open/closed)_curves = 0. skip this.", log_fout)
                 continue
 
             # make the list unique
@@ -144,6 +151,7 @@ def main():
 
             if skip_this_model: 
                 print("problems in (edge/corner)_points_ori. Skip this.")
+                log_string("problems in (edge/corner)_points_ori. Skip this.", log_fout)
                 continue
 
             # Downsampling
@@ -169,10 +177,12 @@ def main():
                 distance_max_1 = np.max(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_1, :])**2).sum(axis = 1))
                 if distance_max_1 > 10: 
                     print("distance_max_1 > 10. skip this.")
+                    log_string("distance_max_1 > 10. skip this.", log_fout)
                     continue
                 nearest_neighbor_idx_edge = nearest_neighbor_idx_edge_1
                 nearest_neighbor_idx_corner = nearest_neighbor_idx_corner_1
             except:
+                log_string("NN was not successful. skip this.", log_fout)
                 continue
 
             # option 2 : clustering of bins
@@ -211,30 +221,32 @@ def main():
             #mat = scipy.io.loadmat('1.mat')
 
             # initialize memory arrays
-            edge_points_label = np.zeros((FPS_num,1), dtype = np.uint8)
-            corner_points_label = np.zeros((FPS_num,1), dtype = np.uint8)
+            edge_points_label = np.zeros((FPS_num), dtype = np.uint8)
+            corner_points_label = np.zeros((FPS_num), dtype = np.uint8)
+            edge_points_residual_vector = np.zeros_like(down_sample_point)
+            corner_points_residual_vector = np.zeros_like(down_sample_point)
             open_gt_pair_idx = np.zeros((256, 2), dtype=np.uint16)
             open_gt_valid_mask = np.zeros((256, 1), dtype=np.uint8)
             open_gt_256_64_idx = np.zeros((256, 64), dtype=np.uint16)
             open_gt_type = np.zeros((256, 1), dtype=np.uint8) # Note: BSpline and Lines, so two label types: 1, 2
             open_type_onehot = np.zeros((256, 4), dtype=np.uint8)
-            open_gt_res = np.zeros((256, 6), dtype=np.float64)
-            open_gt_sample_points = np.zeros((256, 64, 3), dtype=np.float64)
+            open_gt_res = np.zeros((256, 6), dtype=np.float32)
+            open_gt_sample_points = np.zeros((256, 64, 3), dtype=np.float32)
             open_gt_mask = np.zeros((256, 64), dtype=np.uint8)
             closed_gt_256_64_idx = np.zeros((256, 64), dtype=np.uint8)
             closed_gt_mask = np.zeros((256, 64), dtype=np.uint8)
             closed_gt_type = np.zeros((256, 1), dtype=np.uint8)
-            closed_gt_res = np.zeros((256, 3), dtype=np.float64)
+            closed_gt_res = np.zeros((256, 3), dtype=np.float32)
             closed_gt_sample_points = np.zeros((256, 64, 3), dtype=np.uint8)
             closed_gt_valid_mask = np.zeros((256, 1), dtype=np.uint8)
             closed_gt_pair_idx = np.zeros((256, 1), dtype=np.uint16)
             
             # and compute them
             # down_sample_point is already there.
-            edge_points_label[nearest_neighbor_idx_edge, ] = 1
-            edge_points_residual_vector = vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge, :]
+            edge_points_label[nearest_neighbor_idx_edge] = 1
+            edge_points_residual_vector[nearest_neighbor_idx_edge, :] = vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge, :]
             corner_points_label[nearest_neighbor_idx_corner, ] = 1
-            corner_point_residual_vector = vertices[corner_points_ori,:] - down_sample_point[nearest_neighbor_idx_corner, :]
+            corner_points_residual_vector[nearest_neighbor_idx_corner, ] = vertices[corner_points_ori,:] - down_sample_point[nearest_neighbor_idx_corner, :]
             
             m = 0
             for curve in closed_curves:
@@ -300,21 +312,21 @@ def main():
                 ('edge_points_label', 'O'),
                 ('edge_points_residual_vector', 'O'),
                 ('corner_points_label', 'O'),
-                ('corner_point_residual_vector', 'O'),
-                    ('open_gt_pair_idx', 'O'),
+                ('corner_points_residual_vector', 'O'),
+                  ('open_gt_pair_idx', 'O'),
                 ('closed_gt_pair_idx', 'O'),
-                    ('open_gt_valid_mask', 'O'),
+                  ('open_gt_valid_mask', 'O'),
                 ('closed_gt_valid_mask', 'O'),
-                    ('open_gt_256_64_idx', 'O'),
+                  ('open_gt_256_64_idx', 'O'),
                 ('closed_gt_256_64_idx', 'O'),
-                    ('open_gt_type','O'),
+                  ('open_gt_type','O'),
                 ('closed_gt_type','O'),
                 ('open_type_onehot','O'),
-                    ('open_gt_res', 'O'),
+                  ('open_gt_res', 'O'),
                 ('closed_gt_res', 'O'),
-                    ('open_gt_sample_points', 'O'),
+                  ('open_gt_sample_points', 'O'),
                 ('closed_gt_sample_points', 'O'), 
-                    ('open_gt_mask', 'O'),
+                  ('open_gt_mask', 'O'),
                 ('closed_gt_mask', 'O')
                 ])
             data['Training_data'][batch_count, 0] = np.zeros((1, 1), dtype = tp)
@@ -324,16 +336,13 @@ def main():
 
             
         if batch_count == 63:
-            file_ = str(file_count)+".mat"
+            file_ = save_prefix+"_"+str(file_count)+".mat"
             scipy.io.savemat(file_, data)
             print(file_, "saved.")
             batch_count = 0
             file_count = file_count + 1
         else:
             batch_count = batch_count + 1
-
-        if file_count == 128:
-            break
 
         list_obj_line = list_obj_file.readline()
         list_ftr_line = list_ftr_file.readline()
