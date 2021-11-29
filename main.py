@@ -14,7 +14,6 @@ from utils import graipher_FPS
 from utils import nearest_neighbor_finder
 from utils import greedy_nearest_neighbor_finder
 from utils import log_string
-from utils import view_point
 
 from grafkom1Framework import ObjLoader
 
@@ -86,9 +85,14 @@ def main():
                 del faces
                 del vertex_normals
                 continue
-
+            
             # Curves with vertex indices: (sharp and not sharp)edges of BSpline, Line, Cycle only.
-            all_curves = curves_with_vertex_indices(list_ftr_line)
+            all_curves = []
+            try:
+                all_curves = curves_with_vertex_indices(list_ftr_line)
+            except:
+                print("not sharp curves exist. skip this.")
+                continue
 
             # (Optional) Filter out/Classify accordingly the curves such as:
             # 1. Filter out Circles with the different endpoints.

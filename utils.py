@@ -47,12 +47,6 @@ def timeit(func):
     return wrapper
 '''
 
-def view_point(points):
-    point_cloud = open3d.geometry.PointCloud()
-    point_cloud.paint_uniform_color(np.array([0.5, 0.5, 0.5]))
-    point_cloud.points = open3d.utility.Vector3dVector(points)
-    open3d.visualization.draw_geometries([point_cloud])
-
 def log_string(out_str, log_fout):
     log_fout.write(out_str+'\n')
     log_fout.flush()
@@ -429,6 +423,7 @@ def curves_with_vertex_indices(list_ftr_line):
             in_curve_section = True
         elif (line[:-1] == "  sharp: true" or line[:-1] == "  sharp: false") and in_curve_section:
             curve = []
+            if line[:-1] == "  sharp: false": raise ValueError("  sharp: false")
             if lines[idx+1][8:-1] in ["Circle", "BSpline", "Line"]:
 
                 # append name of curve type
