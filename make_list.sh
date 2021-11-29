@@ -9,8 +9,8 @@
 #
 #
 cd '/raid/home/hyovin.kwak/all/obj/'
-ls -d 00[0-9][0-9] > 0000_0099_list.txt
-list_dir="./0070_0099_list.txt"
+ls -d 00[0][0] > 0000_list.txt
+list_dir="./0000_list.txt"
 while IFS= read -r line1
 do
   echo "${line1}" # e.g. "0000"

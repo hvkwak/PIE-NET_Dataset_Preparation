@@ -2,9 +2,9 @@ import ast
 import numpy as np
 import itertools
 from tqdm import tqdm
+import open3d
 
 '''
-import open3d
 import signal
 from contextlib import contextmanager
 
@@ -30,11 +30,6 @@ def timeout(time):
 def raise_timeout(signum, frame):
     raise TimeoutError
 
-def view_point(points):
-    point_cloud = open3d.geometry.PointCloud()
-    point_cloud.paint_uniform_color(np.array([0.5, 0.5, 0.5]))
-    point_cloud.points = open3d.utility.Vector3dVector(points)
-    open3d.visualization.draw_geometries([point_cloud])
 
 def timeit(func):
     """A wrapper function which calculates time for each execution of a function. 
@@ -51,6 +46,12 @@ def timeit(func):
         return result
     return wrapper
 '''
+
+def view_point(points):
+    point_cloud = open3d.geometry.PointCloud()
+    point_cloud.paint_uniform_color(np.array([0.5, 0.5, 0.5]))
+    point_cloud.points = open3d.utility.Vector3dVector(points)
+    open3d.visualization.draw_geometries([point_cloud])
 
 def log_string(out_str, log_fout):
     log_fout.write(out_str+'\n')

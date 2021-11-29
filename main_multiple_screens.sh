@@ -14,11 +14,11 @@ do
 	if [ ${#start} == 1 ]
 	then
 	   echo "1 digit"
-           ./main.sh "000$start"
+           screen -dmS $start "./main.sh" "000$start"
         elif [ ${#start} == 2 ]
 	then
 	   echo "2 digits"
-	   ./main.sh "00$start"
+	   screen -dmS $start "./main.sh" "00$start"
 	else
 	   echo "digit numbers are wrong. try again."
         fi

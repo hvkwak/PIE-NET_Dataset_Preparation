@@ -14,6 +14,7 @@ from utils import graipher_FPS
 from utils import nearest_neighbor_finder
 from utils import greedy_nearest_neighbor_finder
 from utils import log_string
+from utils import view_point
 
 from grafkom1Framework import ObjLoader
 
@@ -52,6 +53,7 @@ def main():
     
     batch_count = 0
     file_count = 0
+    data = {'Training_data': np.zeros((64, 1), dtype = object)}
     for i in range(model_total_num):
         
         # check the feature file if it contains at least a sharp edges
@@ -77,9 +79,9 @@ def main():
             vertex_normals = np.array(Loader.vertex_normals)
             del Loader
 
-            if vertices.shape[0] > 30000: # make sure we have < 30K vertices to keep it simple.
-                print("vertices > 30000. skip this.")
-                log_string("vertices > 30000. skip this.", log_fout)
+            if vertices.shape[0] > 35000: # make sure we have < 30K vertices to keep it simple.
+                print("vertices > 35000. skip this.")
+                log_string("vertices > 35000. skip this.", log_fout)
                 del vertices
                 del faces
                 del vertex_normals
@@ -181,9 +183,9 @@ def main():
                 nearest_neighbor_idx_edge_1 = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=0.5)
                 nearest_neighbor_idx_corner_1 = nearest_neighbor_finder(vertices[corner_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=0.5)
                 distance_max_1 = np.max(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_1, :])**2).sum(axis = 1))
-                if distance_max_1 > 10: 
-                    print("distance_max_1 > 10. skip this.")
-                    log_string("distance_max_1 > 10. skip this.", log_fout)
+                if distance_max_1 > 1: 
+                    print("distance_max_1 > 1. skip this.")
+                    log_string("distance_max_1 > 1. skip this.", log_fout)
                     continue
                 nearest_neighbor_idx_edge = nearest_neighbor_idx_edge_1
                 nearest_neighbor_idx_corner = nearest_neighbor_idx_corner_1
@@ -333,7 +335,6 @@ def main():
                 n = n + 1
             
             print("Ok. save data.")
-            data = {'Training_data': np.zeros((64, 1), dtype = object)}
             tp = np.dtype([
                 ('down_sample_point', 'O'),
                 ('edge_points_label', 'O'),
@@ -367,6 +368,7 @@ def main():
             print(file_, "saved.")
             batch_count = 0
             file_count = file_count + 1
+            data = {'Training_data': np.zeros((64, 1), dtype = object)}
         else:
             batch_count = batch_count + 1
 
