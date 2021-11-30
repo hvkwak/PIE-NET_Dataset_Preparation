@@ -8,12 +8,14 @@ from tqdm import tqdm
 from utils import delete_newline
 from utils import curves_with_vertex_indices
 from utils import cross_points_finder
-from utils import update_lists
+from utils import update_lists_open
 from utils import another_half_curve_pair_exist
 from utils import graipher_FPS
 from utils import nearest_neighbor_finder
 from utils import greedy_nearest_neighbor_finder
 from utils import log_string
+from utils import merge_two_half_circles_or_BSpline
+from utils import update_lists_closed
 
 from grafkom1Framework import ObjLoader
 
@@ -115,22 +117,47 @@ def main():
             edge_points_ori = []
             curve_num = len(all_curves)
 
-            for k in range(curve_num):
-                
+            k = 0
+            while k < curve_num:
                 # Note that this is a mutable object which is in list.
                 curve = all_curves[k]
                 circle_pair_index = [None]
-
-
+                circle_pair_Forward = [None]
 
                 # check if there are (corner) points, where two curves cross or meet.
                 if len(curve[1]) > 2 and k < curve_num-1:
                     for j in range(k+1, curve_num):
                         if len(all_curves[j][1]) > 2:
                             cross_points = cross_points_finder(curve[1], all_curves[j][1])
-                            corner_points_ori = corner_points_ori + cross_points
+                            if len(cross_points) > 0:
+                                log_string("len(cross_points) > 0.", log_fout)
+                                corner_points_ori = corner_points_ori + cross_points
 
                 # classifications
+                if curve[0] == 'Line':
+                    open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
+                elif curve[0] == 'Circle':
+                    if curve[1][0] != curve[1][-1] and another_half_curve_pair_exist(curve, all_curves[k+1:], circle_pair_index, circle_pair_Forward):
+                        # this one consist of a pair of two half-circle curves!
+                        curve = merge_two_half_circles_or_BSpline(curve, k+1+circle_pair_index[0], all_curves, circle_pair_Forward)
+                        closed_curves, edge_points_ori = update_lists_closed(curve, closed_curves, edge_points_ori)
+                        del all_curves[k+1+circle_pair_index[0]]
+                        circle_pair_index = [None]
+                        circle_pair_Forward = [None]
+                        curve_num = curve_num - 1
+                    else:
+                        closed_curves, edge_points_ori = update_lists_closed(curve, closed_curves, edge_points_ori)
+                elif curve[0] == 'BSpline':
+                    if curve[1][0] != curve[1][-1] and another_half_curve_pair_exist(curve, all_curves[k+1:], circle_pair_index, circle_pair_Forward):
+                        curve = merge_two_half_circles_or_BSpline(curve, k+1+circle_pair_index[0], all_curves, circle_pair_Forward)
+                        closed_curves, edge_points_ori = update_lists_closed(curve, closed_curves, edge_points_ori)
+                        del all_curves[k+1+circle_pair_index[0]]
+                        circle_pair_index = [None]
+                        circle_pair_Forward = [None]
+                        curve_num = curve_num - 1
+                    else:
+                        open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
+                '''
                 if curve[0] == 'BSpline' or curve[0] == 'Line':
                     open_curves, corner_points_ori, edge_points_ori = update_lists(curve, open_curves, corner_points_ori, edge_points_ori)
                 elif curve[0] == 'Circle': # Closed
@@ -138,10 +165,11 @@ def main():
                         # this one consist of a pair of two half-circle curves!
                         all_curves[k+circle_pair_index[0]][0] = 'BSpline' # change the other to BSpline.
                         curve[0] = 'BSpline' # change it to BSpline.
-                        open_curves, corner_points_ori, edge_points_ori = update_lists(curve, open_curves, corner_points_ori, edge_points_ori)
+                        
                     else:
                         closed_curves.append(curve)
                         edge_points_ori =  edge_points_ori + curve[1][:]
+                '''
                 k = k + 1
 
             del all_curves

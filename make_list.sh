@@ -8,13 +8,15 @@
 # 3. run this file.
 #
 #
-cd '/raid/home/hyovin.kwak/all/obj/'
-ls -d 00[0][0] > 0000_list.txt
-list_dir="./0000_list.txt"
+dir_obj='/home/pro2future/Documents/all/obj/'
+dir_feat='/home/pro2future/Documents/all/feat/'
+cd $dir_obj
+ls -d 00[9][9] > 0099_list.txt
+list_dir="./0099_list.txt"
 while IFS= read -r line1
 do
   echo "${line1}" # e.g. "0000"
-  cp /raid/home/hyovin.kwak/all/feat/${line1}/*.yml ${line1}
+  cp $dir_feat/${line1}/*.yml ${line1}
   cd ${line1}
   ls *.yml | awk -F '_features' '{print $1}' > ../${line1}_list_yml.txt
   cd ..
@@ -31,6 +33,6 @@ do
 	    rm ${line1}/${line2}*.yml
     fi
   done < "$filename"
-  ls /raid/home/hyovin.kwak/all/obj/${line1}/*.obj > ${line1}_list_obj.txt
-  ls /raid/home/hyovin.kwak/all/obj/${line1}/*.yml > ${line1}_list_features.txt
+  ls $dir_obj/${line1}/*.obj > ${line1}_list_obj.txt
+  ls $dir_obj/${line1}/*.yml > ${line1}_list_features.txt
 done < "$list_dir"
