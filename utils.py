@@ -423,7 +423,6 @@ def curves_with_vertex_indices(list_ftr_line):
             in_curve_section = True
         elif (line[:-1] == "  sharp: true" or line[:-1] == "  sharp: false") and in_curve_section:
             curve = []
-            if line[:-1] == "  sharp: false": raise ValueError("  sharp: false")
             if lines[idx+1][8:-1] in ["Circle", "BSpline", "Line"]:
 
                 # append name of curve type
@@ -464,5 +463,7 @@ def curves_with_vertex_indices(list_ftr_line):
                     string = string + lastline[:closed_bracket_idx-3]
                     curve.append(ast.literal_eval(string))
                     curves.append(curve)
+            else:
+                raise ValueError("curve not Curve, Line or BSpline.")
         elif line[:9] == "surfaces:": # text file reached surfaces. returns.
             return curves

@@ -91,7 +91,7 @@ def main():
             try:
                 all_curves = curves_with_vertex_indices(list_ftr_line)
             except:
-                print("not sharp curves exist. skip this.")
+                print("skip this.")
                 continue
 
             # (Optional) Filter out/Classify accordingly the curves such as:
@@ -120,6 +120,8 @@ def main():
                 # Note that this is a mutable object which is in list.
                 curve = all_curves[k]
                 circle_pair_index = [None]
+
+
 
                 # check if there are (corner) points, where two curves cross or meet.
                 if len(curve[1]) > 2 and k < curve_num-1:
