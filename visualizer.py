@@ -6,21 +6,19 @@ from scipy.interpolate import splprep, splev
 def main():
     
     ref_mat = sio.loadmat('/home/pro2future/Documents/PIE-NET_Dataset_Preparation/5.mat')['Training_data']
-    my_mat = sio.loadmat('/home/pro2future/Documents/PIE-NET_Dataset_Preparation/0042_4.mat')['Training_data']
+    my_mat = sio.loadmat('/home/pro2future/Documents/PIE-NET_Dataset_Preparation/0042_0.mat')['Training_data']
+    for i in range(5):
+        ref_down_sample_point = ref_mat[i, 0]['down_sample_point'][0, 0]
+        ref_PC_8096_edge_points_label_bin = np.where(ref_mat[i, 0]['PC_8096_edge_points_label_bin'][0, 0][:, 0] == 1)[0]
+        ref_corner_points_label_bin = np.where(ref_mat[i, 0]['corner_points_label'][0, 0][:, 0] == 1)[0]
+        view_point(ref_down_sample_point, ref_PC_8096_edge_points_label_bin, ref_corner_points_label_bin)
 
-    ref_down_sample_point = ref_mat[0, 0]['down_sample_point'][0, 0]
-    ref_PC_8096_edge_points_label_bin = np.where(ref_mat[0, 0]['PC_8096_edge_points_label_bin'][0, 0][:, 0] == 1)[0]
-    ref_corner_points_label_bin = np.where(ref_mat[0, 0]['corner_points_label'][0, 0][:, 0] == 1)[0]
-    view_point(ref_down_sample_point)
-    view_point(ref_down_sample_point[ref_PC_8096_edge_points_label_bin, ])
-    view_point(ref_down_sample_point[ref_corner_points_label_bin, ])
+    for i in range(5):
+        my_down_sample_point = my_mat[i, 0]['down_sample_point'][0, 0]
+        my_down_sample_point_edge = np.where(my_mat[i, 0]['edge_points_label'][0, 0][0,:] == 1)[0]
+        my_down_sample_point_corner = np.where(my_mat[i, 0]['corner_points_label'][0, 0][0,:] == 1)[0]
+        view_point(my_down_sample_point, my_down_sample_point_edge, my_down_sample_point_corner)
 
-    my_down_sample_point = my_mat[0, 0]['down_sample_point'][0, 0]
-    my_down_sample_point_edge = np.where(my_mat[0, 0]['edge_points_label'][0, 0][0,:] == 1)[0]
-    my_down_sample_point_corner = np.where(my_mat[0, 0]['corner_points_label'][0, 0][0,:] == 1)[0]
-    view_point(my_down_sample_point)
-    view_point(my_down_sample_point[my_down_sample_point_edge, ])
-    view_point(my_down_sample_point[my_down_sample_point_corner, ])
     
     '''
     from scipy.interpolate import splprep, splev
@@ -66,10 +64,17 @@ def main():
     '''
 
 
-def view_point(points):
+def view_point(points, my_down_sample_point_edge, my_down_sample_point_corner):
     point_cloud = open3d.geometry.PointCloud()
-    point_cloud.paint_uniform_color([0.0, 0.0, 0.0])
-    point_cloud.points = open3d.utility.Vector3dVector(points)
+    point_cloud.points = open3d.utility.Vector3dVector(points)    
+    color1 = [0.0, 0.0, 0.0]
+    color2 = [0.0, 0.0, 0.99]
+    color3 = [0.99, 0, 0.0]    
+    color_array = np.zeros_like(points)
+    color_array[my_down_sample_point_edge, ] = color2
+    color_array[my_down_sample_point_corner, ] = color3
+    point_cloud.colors = open3d.utility.Vector3dVector(color_array)
+    #point_cloud.paint_uniform_color([0.0, 0.0, 0.0])
     open3d.visualization.draw_geometries([point_cloud])
 
 
