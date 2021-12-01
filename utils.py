@@ -373,11 +373,11 @@ def another_half_curve_pair_exist(curve, all_curves, circle_pair_index, circle_p
     for candidate in all_curves:
         # check if it's same type
         # cross check the end points
-        if curve[0] == candidate[0] and (curve[1][0] == candidate[1][-1] and curve[1][-1] == candidate[1][0]):
+        if curve[0] == candidate[0] and (curve[2][0] == candidate[2][-1] and curve[2][-1] == candidate[2][0]):
             circle_pair_index[0] = k # index update
             circle_pair_Forward[0] = True
             return True
-        elif curve[0] == candidate[0] and (curve[1][0] == candidate[1][0] and curve[1][-1] == candidate[1][-1]):
+        elif curve[0] == candidate[0] and (curve[2][0] == candidate[2][0] and curve[2][-1] == candidate[2][-1]):
             circle_pair_index[0] = k # index update
             circle_pair_Forward[0] = False
             return True
@@ -395,21 +395,21 @@ def update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori):
     """    
     '''
     open_curves.append(curve)
-    corner_points_ori.append(curve[1][0])
-    corner_points_ori.append(curve[1][-1])
-    edge_points_ori =  edge_points_ori + curve[1][:]
+    corner_points_ori.append(curve[2][0])
+    corner_points_ori.append(curve[2][-1])
+    edge_points_ori =  edge_points_ori + curve[2][:]
     '''
     open_curves.append(curve)
-    corner_points_ori = corner_points_ori+[curve[1][0], curve[1][-1]]
-    edge_points_ori = edge_points_ori+curve[1][:]
+    corner_points_ori = corner_points_ori+[curve[2][0], curve[2][-1]]
+    edge_points_ori = edge_points_ori+curve[2][:]
     return open_curves, corner_points_ori, edge_points_ori
 
 def merge_two_half_circles_or_BSpline(curve, index_in_all_curves, all_curves, circle_pair_Forward):
     if circle_pair_Forward[0]:
-        curve[1] = curve[1] + all_curves[index_in_all_curves][1][1:]
+        curve[2] = curve[2] + all_curves[index_in_all_curves][2][1:]
     else:
-        all_curves[index_in_all_curves][1].reverse()
-        curve[1] = curve[1] + all_curves[index_in_all_curves][1][1:]
+        all_curves[index_in_all_curves][2].reverse()
+        curve[2] = curve[2] + all_curves[index_in_all_curves][2][1:]
     return curve
 
 def update_lists_closed(curve, closed_curves, edge_points_ori):
@@ -423,12 +423,12 @@ def update_lists_closed(curve, closed_curves, edge_points_ori):
     """    
     '''
     open_curves.append(curve)
-    corner_points_ori.append(curve[1][0])
-    corner_points_ori.append(curve[1][-1])
-    edge_points_ori =  edge_points_ori + curve[1][:]
+    corner_points_ori.append(curve[2][0])
+    corner_points_ori.append(curve[2][-1])
+    edge_points_ori =  edge_points_ori + curve[2][:]
     '''
     closed_curves.append(curve)
-    edge_points_ori = edge_points_ori+curve[1][:]
+    edge_points_ori = edge_points_ori+curve[2][:]
     return closed_curves, edge_points_ori
 
 
@@ -456,9 +456,18 @@ def curves_with_vertex_indices(list_ftr_line):
         elif (line[:-1] == "  sharp: true" or line[:-1] == "  sharp: false") and in_curve_section:
             curve = []
             if lines[idx+1][8:-1] in ["Circle", "BSpline", "Line"]:
+                degree = None
+                if lines[idx+1][8:-1] == "BSpline":
+                    degree_idx_search = idx+1
+                    while lines[degree_idx_search][2:8] != "degree":
+                        degree_idx_search = degree_idx_search -1
+                    degree = int(lines[degree_idx_search][10:-1])
 
                 # append name of curve type
                 curve.append(lines[idx+1][8:-1])
+
+                # append the degree of curve
+                curve.append(degree)
 
                 # get ready to append the vert_indices
                 string = ''

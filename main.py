@@ -54,7 +54,7 @@ def main():
     batch_count = 0
     file_count = 0
     data = {'Training_data': np.zeros((64, 1), dtype = object)}
-    for i in range(model_total_num):
+    for i in range(32, model_total_num):
         
         # check the feature file if it contains at least a sharp edges
         # and check that models are same.
@@ -116,6 +116,34 @@ def main():
             edge_points_ori = []
             curve_num = len(all_curves)
 
+            # Remove BSplines of degree = 1 in all_curves
+            BSpline_one_degree_list = []
+            BSpline_two_or_more_degree_list = []
+            all_curves_list = []
+            k = 0
+            while k < curve_num:
+                curve = all_curves[k]
+                if curve[0] == 'BSpline' and curve[1] == 1:
+                    BSpline_one_degree_list.append(curve[2])
+                elif curve[0] == 'BSpline' and curve[1] > 1:
+                    BSpline_two_or_more_degree_list.append(curve[2])
+                all_curves_list.append(curve[2])
+                k = k + 1
+
+            if len(BSpline_one_degree_list) > 0:
+                print("Visualizing.. BSpline_one_degree_list")
+                view_point(vertices, BSpline_one_degree_list)            
+
+            if len(BSpline_two_or_more_degree_list) > 0:
+                print("Visualizing.. BSpline_two_or_more_degree_list")
+                view_point(vertices, BSpline_two_or_more_degree_list)
+
+            print("Visualizing.. all_curves_list")
+            view_point(vertices, all_curves_list)
+            continue
+
+
+            curve_num = len(all_curves)
             k = 0
             while k < curve_num:
                 # Note that this is a mutable object which is in list.
@@ -124,10 +152,10 @@ def main():
                 circle_pair_Forward = [None]
 
                 # check if there are (corner) points, where two curves cross or meet.
-                if len(curve[1]) > 2 and k < curve_num-1:
+                if len(curve[2]) > 2 and k < curve_num-1:
                     for j in range(k+1, curve_num):
-                        if len(all_curves[j][1]) > 2:
-                            cross_points = cross_points_finder(curve[1], all_curves[j][1])
+                        if len(all_curves[j][2]) > 2:
+                            cross_points = cross_points_finder(curve[2], all_curves[j][2])
                             if len(cross_points) > 0:
                                 log_string("len(cross_points) > 0.", log_fout)
                                 corner_points_ori = corner_points_ori + cross_points
@@ -136,7 +164,7 @@ def main():
                 if curve[0] == 'Line':
                     open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
                 elif curve[0] == 'Circle':
-                    if curve[1][0] != curve[1][-1] and another_half_curve_pair_exist(curve, all_curves[k+1:], circle_pair_index, circle_pair_Forward):
+                    if curve[2][0] != curve[2][-1] and another_half_curve_pair_exist(curve, all_curves[k+1:], circle_pair_index, circle_pair_Forward):
                         # this one consist of a pair of two half-circle curves!
                         curve = merge_two_half_circles_or_BSpline(curve, k+1+circle_pair_index[0], all_curves, circle_pair_Forward)
                         closed_curves, edge_points_ori = update_lists_closed(curve, closed_curves, edge_points_ori)
@@ -147,7 +175,7 @@ def main():
                     else:
                         closed_curves, edge_points_ori = update_lists_closed(curve, closed_curves, edge_points_ori)
                 elif curve[0] == 'BSpline':
-                    if curve[1][0] != curve[1][-1] and another_half_curve_pair_exist(curve, all_curves[k+1:], circle_pair_index, circle_pair_Forward):
+                    if curve[2][0] != curve[2][-1] and another_half_curve_pair_exist(curve, all_curves[k+1:], circle_pair_index, circle_pair_Forward):
                         curve = merge_two_half_circles_or_BSpline(curve, k+1+circle_pair_index[0], all_curves, circle_pair_Forward)
                         closed_curves, edge_points_ori = update_lists_closed(curve, closed_curves, edge_points_ori)
                         del all_curves[k+1+circle_pair_index[0]]
@@ -160,18 +188,20 @@ def main():
                 if curve[0] == 'BSpline' or curve[0] == 'Line':
                     open_curves, corner_points_ori, edge_points_ori = update_lists(curve, open_curves, corner_points_ori, edge_points_ori)
                 elif curve[0] == 'Circle': # Closed
-                    if curve[1][0] != curve[1][-1] and another_half_curve_pair_exist(curve, all_curves[k:], circle_pair_index):
+                    if curve[2][0] != curve[2][-1] and another_half_curve_pair_exist(curve, all_curves[k:], circle_pair_index):
                         # this one consist of a pair of two half-circle curves!
                         all_curves[k+circle_pair_index[0]][0] = 'BSpline' # change the other to BSpline.
                         curve[0] = 'BSpline' # change it to BSpline.
                         
                     else:
                         closed_curves.append(curve)
-                        edge_points_ori =  edge_points_ori + curve[1][:]
+                        edge_points_ori =  edge_points_ori + curve[2][:]
                 '''
                 k = k + 1
 
             del all_curves
+
+
             # if there are more than 256 curves in each section: don't use this model.
             if (len(open_curves) > 256) or (len(closed_curves) > 256): 
                 print("(open/closed)_curves > 256. skip this.")
@@ -293,35 +323,35 @@ def main():
             m = 0
             for curve in closed_curves:
                 try:
-                    closed_gt_pair_idx[m,0] = nearest_neighbor_finder(vertices[np.array([curve[1][0]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                    closed_gt_pair_idx[m,0] = nearest_neighbor_finder(vertices[np.array([curve[2][0]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
                 except:
                     print("NN for closed_gt_pair_idx was not successful. skip this.")
                     log_string("NN for closed_gt_pair_idx was not successful. skip this.", log_fout)
                     continue
                 closed_gt_valid_mask[m, 0] = 1
                 # closed_gt_256_64_idx
-                if curve[1][0] == curve[1][-1]: curve[1] = curve[1][:-1] # update if these two indicies are same.
-                if len(curve[1]) > 64:
+                if curve[2][0] == curve[2][-1]: curve[2] = curve[2][:-1] # update if these two indicies are same.
+                if len(curve[2]) > 64:
                     # take start/end points + sample 62 points = 64 points
-                    closed_gt_256_64_idx[m, 0] = curve[1][0]
+                    closed_gt_256_64_idx[m, 0] = curve[2][0]
                     try:
-                        closed_gt_256_64_idx[m, 1:64] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[1][1:], len(curve[1][1:]))[:63]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                        closed_gt_256_64_idx[m, 1:64] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:], len(curve[2][1:]))[:63]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
                     except:
                         print("NN for closed_gt_256_64_idx was not successful. skip this.")
                         log_string("NN for closed_gt_256_64_idx was not successful. skip this.", log_fout)
                         continue                        
-                    #closed_gt_256_64_idx[i, 63] = curve[1][-1]
+                    #closed_gt_256_64_idx[i, 63] = curve[2][-1]
                     closed_gt_mask[m, 0:64] = 1
                 else:
-                    indicies_num = len(curve[1])
+                    indicies_num = len(curve[2])
                     closed_gt_mask[m, 0:indicies_num] = 1
-                    closed_gt_256_64_idx[m, :] = curve[1] + [curve[1][-1]]*(64 - indicies_num)
+                    closed_gt_256_64_idx[m, :] = curve[2] + [curve[2][-1]]*(64 - indicies_num)
 
                 # closed_gt_type, closed_type_onehot
                 if curve[0] == "Circle": closed_gt_type[m,0] = 1
                 
                 # open_gt_res
-                res1 = vertices[curve[1][0], ]-down_sample_point[closed_gt_pair_idx[m, ][0], ]
+                res1 = vertices[curve[2][0], ]-down_sample_point[closed_gt_pair_idx[m, ][0], ]
                 closed_gt_res[m, ] = np.array([res1])
 
                 # open_gt_sample_points
@@ -331,36 +361,36 @@ def main():
             n = 0
             for curve in open_curves:
                 try:
-                    open_gt_pair_idx[n, ] = nearest_neighbor_finder(vertices[np.array([curve[1][0], curve[1][-1]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                    open_gt_pair_idx[n, ] = nearest_neighbor_finder(vertices[np.array([curve[2][0], curve[2][-1]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
                 except:
                     print("NN for open_gt_pair_idx was not successful. skip this.")
                     log_string("NN for open_gt_pair_idx was not successful. skip this.", log_fout)
                     continue
                 open_gt_valid_mask[n, 0] = 1
                 # open_gt_256_64_idx
-                if len(curve[1]) > 64:
+                if len(curve[2]) > 64:
                     # take start/end points + sample 62 points = 64 points
-                    open_gt_256_64_idx[n, 0] = curve[1][0]
+                    open_gt_256_64_idx[n, 0] = curve[2][0]
                     try:
-                        open_gt_256_64_idx[n, 1:63] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[1][1:-1], len(curve[1][1:-1]))[:62]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                        open_gt_256_64_idx[n, 1:63] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:-1], len(curve[2][1:-1]))[:62]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
                     except:
                         print("NN for open_gt_256_64_idx was not successful. skip this.")
                         log_string("NN for open_gt_256_64_idx was not successful. skip this.", log_fout)
                         continue
-                    open_gt_256_64_idx[n, 63] = curve[1][-1]
+                    open_gt_256_64_idx[n, 63] = curve[2][-1]
                     open_gt_mask[n, 0:64] = 1
                 else:
-                    indicies_num = len(curve[1])
+                    indicies_num = len(curve[2])
                     open_gt_mask[n, 0:indicies_num] = 1
-                    open_gt_256_64_idx[n, :] = curve[1] + [curve[1][-1]]*(64 - indicies_num)
+                    open_gt_256_64_idx[n, :] = curve[2] + [curve[2][-1]]*(64 - indicies_num)
 
                 # open_gt_type, open_type_onehot
                 if curve[0] == "BSpline": open_gt_type[n,0], open_type_onehot[n, ] = 1, np.array([0, 1, 0, 0])
                 else: open_gt_type[n,0], open_type_onehot[n, ] = 2, np.array([0, 0, 1, 0]) # "Line"
                 
                 # open_gt_res
-                res1 = vertices[curve[1][0], ]-down_sample_point[open_gt_pair_idx[n, ][0], ]
-                res2 = vertices[curve[1][-1], ]-down_sample_point[open_gt_pair_idx[n, ][1], ]
+                res1 = vertices[curve[2][0], ]-down_sample_point[open_gt_pair_idx[n, ][0], ]
+                res2 = vertices[curve[2][-1], ]-down_sample_point[open_gt_pair_idx[n, ][1], ]
                 open_gt_res[n, ] = np.array([res1, res2]).flatten()
 
                 # open_gt_sample_points
@@ -395,8 +425,6 @@ def main():
                 save_this = locals()[tp_name]
                 data['Training_data'][batch_count, 0][tp_name][0, 0] = save_this
             
-            view_point(down_sample_point, np.where(edge_points_label == 1)[0][0], np.where(corner_points_label == 1)[0])
-
         if batch_count == 63:
             file_ = save_prefix+"_"+str(file_count)+".mat"
             scipy.io.savemat(file_, data)

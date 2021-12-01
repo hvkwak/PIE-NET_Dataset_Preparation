@@ -64,15 +64,30 @@ def main():
     '''
 
 
-def view_point(points, my_down_sample_point_edge, my_down_sample_point_corner):
+def view_point(points, BSpline_per_degree_list):
     point_cloud = open3d.geometry.PointCloud()
     point_cloud.points = open3d.utility.Vector3dVector(points)    
-    color1 = [0.0, 0.0, 0.0]
-    color2 = [0.0, 0.0, 0.99]
-    color3 = [0.99, 0, 0.0]    
+    color1 = [0.0, 0.99, 0.0] # BSpline one degree, green
+    color2 = [0.0, 0.0, 0.99] # edge, blue
+    color3 = [0.99, 0, 0.0] # corner, red
+    color4 = [np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1)]
     color_array = np.zeros_like(points)
+    '''
     color_array[my_down_sample_point_edge, ] = color2
     color_array[my_down_sample_point_corner, ] = color3
+    '''
+    k = 0
+    while k < len(BSpline_per_degree_list):
+        color_array[BSpline_per_degree_list[k], ] = [np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1)]
+        k = k + 1
+
+    '''
+    if len(BSpline_two_or_more_degree_list) > 2:
+        color_array[BSpline_two_or_more_degree_list[0], ] = color1 # green
+        color_array[BSpline_two_or_more_degree_list[1], ] = color2 # red
+        color_array[BSpline_two_or_more_degree_list[2], ] = color3 # blue
+    '''
+
     point_cloud.colors = open3d.utility.Vector3dVector(color_array)
     #point_cloud.paint_uniform_color([0.0, 0.0, 0.0])
     open3d.visualization.draw_geometries([point_cloud])

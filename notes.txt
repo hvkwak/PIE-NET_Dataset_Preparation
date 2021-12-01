@@ -1,0 +1,15 @@
+BSplines! Check more of these:
+1. Circle Meeting points -> no corner points
+2. BSplines continue Knick-Punkte -> yes corner points
+
+BSplines with degree 1:
+1. len() <= 5 -> These are lines. If they have contact with circles, they(start/end points) not even corner points. 
+2. len() > 5 -> Possibility that it's a long line. cotnact with circles?
+
+BSplines with degree > 1:
+1. Possibility that there are circle pairs? three or more BSplines to build a circle?
+2. ?
+3. ?
+
+
+https://www.ibiblio.org/e-notes/Splines/basis.html
