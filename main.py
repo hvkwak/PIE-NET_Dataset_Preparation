@@ -16,7 +16,7 @@ from utils import greedy_nearest_neighbor_finder
 from utils import log_string
 from utils import merge_two_half_circles_or_BSpline
 from utils import update_lists_closed
-
+from visualizer import view_point
 from grafkom1Framework import ObjLoader
 
 
@@ -395,6 +395,8 @@ def main():
                 save_this = locals()[tp_name]
                 data['Training_data'][batch_count, 0][tp_name][0, 0] = save_this
             
+            view_point(down_sample_point, np.where(edge_points_label == 1)[0][0], np.where(corner_points_label == 1)[0])
+
         if batch_count == 63:
             file_ = save_prefix+"_"+str(file_count)+".mat"
             scipy.io.savemat(file_, data)
