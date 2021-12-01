@@ -55,7 +55,7 @@ def main():
     batch_count = 0
     file_count = 0
     data = {'Training_data': np.zeros((64, 1), dtype = object)}
-    for i in range(17, model_total_num):
+    for i in range(model_total_num):
         
         # check the feature file if it contains at least a sharp edges
         # and check that models are same.
