@@ -1,6 +1,9 @@
+
+ideas for BSplines:
+
 BSplines! Check more of these:
 1. Circle Meeting points -> no corner points
-2. BSplines continue Knick-Punkte -> yes corner points
+2. BSplines continue Knick-Punkte -> yes corner points # no, there's no such thing.
 
 BSplines with degree 1:
 1. len() <= 5 -> These are lines. If they have contact with circles, they(start/end points) not even corner points. 
@@ -13,3 +16,24 @@ BSplines with degree > 1:
 
 
 https://www.ibiblio.org/e-notes/Splines/basis.html
+
+
+
+
+
+
+Filter All curves
+1. Make circles and Circle-Bsplines(take two splines, connect them, calculate the mean and use the distance to see if they are likely form a circle)
+2. Check if BSplines are connectable. -> Class object -> a large circle?
+2. BSplines with degree == 1:
+	if length short:
+		if it touches a circle: remove it
+		elif no touch: keep it as a line, start/end point to be included in corner points.
+	else: 
+3. BSplines with degree > 1: # these are no parts of circles
+	if length to short:
+		if it touches a circle: remove it
+		elif no touch: keep it as a BSpline, start/end point to be inlcluded in corner points.
+	else:
+		
+	
