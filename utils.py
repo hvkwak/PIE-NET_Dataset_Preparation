@@ -2,7 +2,7 @@ import ast
 import numpy as np
 import itertools
 from tqdm import tqdm
-import open3d
+#import open3d
 
 '''
 import signal
@@ -378,6 +378,7 @@ def another_half_curve_pair_exist(curve, all_curves, circle_pair_index, circle_p
             circle_pair_Forward[0] = True
             return True
         elif curve[0] == candidate[0] and (curve[1][0] == candidate[1][0] and curve[1][-1] == candidate[1][-1]):
+            circle_pair_index[0] = k # index update
             circle_pair_Forward[0] = False
             return True
         k = k + 1
@@ -407,7 +408,8 @@ def merge_two_half_circles_or_BSpline(curve, index_in_all_curves, all_curves, ci
     if circle_pair_Forward[0]:
         curve[1] = curve[1] + all_curves[index_in_all_curves][1][1:]
     else:
-        curve[1] = curve[1] + all_curves[index_in_all_curves][1].reverse()[1:]
+        all_curves[index_in_all_curves][1].reverse()
+        curve[1] = curve[1] + all_curves[index_in_all_curves][1][1:]
     return curve
 
 def update_lists_closed(curve, closed_curves, edge_points_ori):

@@ -21,7 +21,6 @@ from grafkom1Framework import ObjLoader
 
 
 def main():
-
     """ generates the training dataset from ABC Dataset(Koch et al. 2019) suitable for the implementation of 
         PIE-NET: Parametric Inference of Point Cloud Edges (Wang et al. 2020)
 
@@ -82,7 +81,7 @@ def main():
 
             if vertices.shape[0] > 30000: # make sure we have < 30K vertices to keep it simple.
                 print("vertices > 30000. skip this.")
-                log_string("vertices > 35000. skip this.", log_fout)
+                log_string("vertices > 30000. skip this.", log_fout)
                 del vertices
                 del faces
                 del vertex_normals
@@ -400,6 +399,7 @@ def main():
             file_ = save_prefix+"_"+str(file_count)+".mat"
             scipy.io.savemat(file_, data)
             print(file_, "saved.")
+            log_string(str(file_) + " saved.", log_fout)
             batch_count = 0
             file_count = file_count + 1
             data = {'Training_data': np.zeros((64, 1), dtype = object)}
