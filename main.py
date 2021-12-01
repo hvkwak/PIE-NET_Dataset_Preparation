@@ -55,7 +55,7 @@ def main():
     batch_count = 0
     file_count = 0
     data = {'Training_data': np.zeros((64, 1), dtype = object)}
-    for i in range(model_total_num):
+    for i in range(17, model_total_num):
         
         # check the feature file if it contains at least a sharp edges
         # and check that models are same.
@@ -80,8 +80,8 @@ def main():
             vertex_normals = np.array(Loader.vertex_normals)
             del Loader
 
-            if vertices.shape[0] > 35000: # make sure we have < 30K vertices to keep it simple.
-                print("vertices > 35000. skip this.")
+            if vertices.shape[0] > 30000: # make sure we have < 30K vertices to keep it simple.
+                print("vertices > 30000. skip this.")
                 log_string("vertices > 35000. skip this.", log_fout)
                 del vertices
                 del faces
