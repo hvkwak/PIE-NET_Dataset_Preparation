@@ -21,15 +21,29 @@ https://www.ibiblio.org/e-notes/Splines/basis.html
 
 
 
-
+# Update
 Filter All curves
-1. Make circles and Circle-Bsplines(take two splines, connect them, calculate the mean and use the distance to see if they are likely form a circle)
-2. Check if BSplines are connectable. -> Class object -> a large circle?
-2. BSplines with degree == 1:
-	if length short:
-		if it touches a circle: remove it
-		elif no touch: keep it as a line, start/end point to be included in corner points.
-	else: 
+1. Take those with vertices < 30K AND len(all_curves_list) <= 75: ca 50% of all models. 500K still available, we want to keep evtl. 50K.
+2. Take circles and make circles if they are connectable.
+3. Combine Circle-Bsplines(if they exactly match)
+4. Take Multiple BSplines and see if they can form a circle. Use centroid to check, allow approximately small error.
+	if circle possible: build a circle, keep it as a closed curve as a whole.
+	if circle not possible, keep them individually as open curves.
+5. Udpat during 2-4.
+
+BSplines should be filtered accordingly
+3. For all BSplines with degree == 1:
+3.1 if it's too much, let's say > 30% of all curves -> reject this model.
+3.2 if there are no lines, but only BSplines with degree 1 -> reject this model
+3.3 if it touches a closed circle -> remove this BSpline.
+3.4 change the rest of BSplines with degree == 1 into Line.
+
+
+
+
+
+
+more Ideas
 3. BSplines with degree > 1: # these are no parts of circles
 	if length to short:
 		if it touches a circle: remove it

@@ -47,6 +47,114 @@ def timeit(func):
     return wrapper
 '''
 
+class BSplines:
+    # Linked List
+    def __init__(self, curve_num, curve, start_BSpline):
+        self.curve_num = curve_num
+        self.ori_curve = curve
+        self.vertices = self.ori_curve[2]
+        self.neighbor_on_right = None
+        self.neighbor_on_left = None
+        self.part_of_circle = False
+        self.left_available = True
+        self.right_available = True
+        self.available = True
+        self.is_start = start_BSpline
+    
+    def connectable(self, neighbor):
+        if (self.left_available or self.right_available) and (self.available and neighbor.available):
+            if self.neighbor_on_left == None and neighbor.vertices[-1] == self.vertices[0]:
+                return True
+            elif self.neighbor_on_right == None and neighbor.vertices[0] == self.vertices[-1]:
+                return True
+            else:
+                return False
+        else:
+            return False
+    
+    def update(self):
+        if not self.left_available and not self.right_available: self.available = False
+
+    def connect_with(self, neighbor):
+        # connection on left
+        if self.left_available and self.neighbor_on_left == None and neighbor.vertices[-1] == self.vertices[0]:
+            self.neighbor_on_left = neighbor
+            self.left_available = False
+            self.neighbor_on_left.neighbor_on_right = self
+            self.update()
+            neighbor.update()
+        elif self.right_available and self.neighbor_on_right == None and neighbor.vertices[0] == self.vertices[-1]:
+            # connection on right
+            self.neighbor_on_right = neighbor
+            self.right_available = True
+            self.neighbor_on_right.neighbor_on_left = self
+            self.update()
+            neighbor.update()
+
+class BSpline_Connector:
+
+    def __init__(self, start_BSpline):
+        self.start_BSpline = start_BSpline
+        self.start_BSpline.is_start = True
+        self.next = None
+
+    def finish_connection(self, BSpline):
+        if not self.start_BSpline.right_available and not BSpline.left_available and \
+            self.start_BSpline.left_available and BSpline.right_available and \
+            self.start_BSpline.connectable(BSpline):
+            return True
+        elif not self.start_BSpline.left_available and not BSpline.right_available and \
+            self.start_BSpline.right_available and BSpline.left_available and \
+            self.start_BSpline.connectable(BSpline):
+            return True
+        else:
+            return False
+    
+    def next_right(self, BSpline):
+        return BSpline.neighbor_on_right
+
+    def collect_curve_nums(self):        
+        curve_nums = []
+        curve_nums.append(self.start_BSpline.curve_num)
+        current = self.start_BSpline.neighbor_on_right
+        while self.start_BSpline.curve_nums != current.curve_num and not self.start_BSpline.available and not current.available:
+            curve_nums.append(current.curve_num)
+            current = self.next_right(current)
+        return curve_nums
+
+def connection_available(BSpline, BSpline_obj_list, BSpline_Connector_original):
+    BSpline_obj_list_num = len(BSpline_obj_list)
+    if BSpline_Connector_original.finish_connection(BSpline):
+        BSpline_Connector_original.start_BSpline.connect_with(BSpline)
+        return True
+    elif BSpline_obj_list_num == 0: 
+        return False
+    else:
+        for k in range(BSpline_obj_list_num):
+            if BSpline.connectable(BSpline_obj_list[k]):
+                one_less_list = BSpline_obj_list.copy()
+                del one_less_list[k]
+                BSpline.connect_with(BSpline_obj_list[k])
+                return connection_available(BSpline_obj_list[k], one_less_list, BSpline_Connector_original)
+
+'''
+def check_multiple_BSplines(BSpline_list):
+    if len(BSpline_list) == 0: return []
+    BSpline_obj_list = []
+    k = 0
+    for BSpline in BSpline_list:
+        BSpline_obj_list.append(BSplines(k, BSpline, False))
+        k = k + 1
+    
+    curve_num_list = []
+    start_Spline = BSpline_obj_list[0]
+    Connector = BSpline_Connector(start_Spline)
+    while connection_available(start_Spline, BSpline_obj_list[k:], Connector):
+        curve_num_list.append(BSpline_Connector(start_Spline).collect_curve_nums())
+'''
+
+        
+
 def log_string(out_str, log_fout):
     log_fout.write(out_str+'\n')
     log_fout.flush()
@@ -404,12 +512,32 @@ def update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori):
     edge_points_ori = edge_points_ori+curve[2][:]
     return open_curves, corner_points_ori, edge_points_ori
 
+def half_Circles_BSplines(Circle_or_BSpline_list):
+    k = 0
+    Circle_or_BSpline_num = len(Circle_or_BSpline_list)
+    while k < Circle_or_BSpline_num:
+        curve = Circle_or_BSpline_list[k]
+        circle_pair_index = [None]
+        circle_pair_Forward = [None]
+        if curve[2][0] != curve[2][-1] and another_half_curve_pair_exist(curve, Circle_or_BSpline_list[k+1:], circle_pair_index, circle_pair_Forward):
+            # this one consist of a pair of two half-circle curves!
+            idx = k+1+circle_pair_index[0]
+            curve = merge_two_half_circles_or_BSpline(curve, idx, Circle_or_BSpline_list, circle_pair_Forward)
+            del Circle_or_BSpline_list[idx]
+            Circle_or_BSpline_num = Circle_or_BSpline_num - 1
+        else:
+            if curve[2][0] != curve[2][-1]:
+                raise ValueError("this has incomplete circles in the list. skip this.")
+        k = k + 1
+    return Circle_or_BSpline_list
+
 def merge_two_half_circles_or_BSpline(curve, index_in_all_curves, all_curves, circle_pair_Forward):
     if circle_pair_Forward[0]:
         curve[2] = curve[2] + all_curves[index_in_all_curves][2][1:]
     else:
         all_curves[index_in_all_curves][2].reverse()
         curve[2] = curve[2] + all_curves[index_in_all_curves][2][1:]
+    curve[0] = 'Circle'
     return curve
 
 def update_lists_closed(curve, closed_curves, edge_points_ori):

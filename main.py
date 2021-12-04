@@ -12,10 +12,12 @@ from utils import update_lists_open
 from utils import another_half_curve_pair_exist
 from utils import graipher_FPS
 from utils import nearest_neighbor_finder
-from utils import greedy_nearest_neighbor_finder
+#from utils import greedy_nearest_neighbor_finder
 from utils import log_string
 from utils import merge_two_half_circles_or_BSpline
 from utils import update_lists_closed
+from utils import half_Circles_BSplines
+from DoublyLinkedBSplines import group_connectable_BSplines
 from visualizer import view_point
 from grafkom1Framework import ObjLoader
 
@@ -54,7 +56,8 @@ def main():
     batch_count = 0
     file_count = 0
     data = {'Training_data': np.zeros((64, 1), dtype = object)}
-    for i in range(32, model_total_num):
+    curve_num_list = []
+    for i in range(24, model_total_num):
         
         # check the feature file if it contains at least a sharp edges
         # and check that models are same.
@@ -92,55 +95,85 @@ def main():
             try:
                 all_curves = curves_with_vertex_indices(list_ftr_line)
             except:
-                print("skip this.")
+                print("something wrong in curves_with_vertex_indices(). skip this.")
+                log_string("something wrong in curves_with_vertex_indices(). skip this.", log_fout)
                 continue
+            
+            # if there are too many curves, don't use it. S
+            # Setting vertices > 30K AND curve_num > 75 will filter ca. 50% of all CAD Models
+            curve_num = len(all_curves)
+            if curve_num > 50: # this condition AND vertices > 30K may filter ca. 60% of all CAD Models.
+                print("curve_num > 50. skip this.")
+                log_string("curve_num > 50. skip this.", log_fout)
+                continue                
 
-            # (Optional) Filter out/Classify accordingly the curves such as:
-            # 1. Filter out Circles with the different endpoints.
-            # 2. Classify two BSplines that make a circle(same endpoints) as closed curve.
-            # 3. Filter out Several BSplines can make a closed curve.
-            # Note: We just implement the first option. Keep options above in mind for later use.
-
-
-            # Classifications
-            # Open Curves: BSplines and Lines
-            # Closed Curves: Circles
-            # Edge Points: All the vertices of open or closed curve, All the vertices of a line
-            # Corner Points: Start and end points of open curve, Start and end points of Lines
-            # Note: some circles are just divded into two circles with matching endpoints.
-            # These circles should be one circle and added to closed_curves.
-            # Since we'd be dealing with other datasets, accordingly, we keep them as BSpline.
+            # Preprocessing:
+            # (Re)classify / Filter points accordingly!
             open_curves = []
             closed_curves = []
             corner_points_ori = []
             edge_points_ori = []
-            curve_num = len(all_curves)
-
-            # Remove BSplines of degree = 1 in all_curves
-            BSpline_one_degree_list = []
-            BSpline_two_or_more_degree_list = []
-            all_curves_list = []
+            BSpline_list = []
+            Line_list = []
+            Circle_list = []
+            
+            # Group all the curves first.
             k = 0
             while k < curve_num:
                 curve = all_curves[k]
-                if curve[0] == 'BSpline' and curve[1] == 1:
-                    BSpline_one_degree_list.append(curve[2])
-                elif curve[0] == 'BSpline' and curve[1] > 1:
-                    BSpline_two_or_more_degree_list.append(curve[2])
-                all_curves_list.append(curve[2])
+                if curve[0] == 'BSpline': BSpline_list.append(curve)
+                elif curve[0] == 'Line': Line_list.append(curve)
+                elif curve[0] == 'Circle': Circle_list.append(curve)
                 k = k + 1
+            
+            # 1. half Circles AND half BSplines
+            # There are some (half) circles to eventually form a completely closed curve.
+            # if there are cases, where 3 or more 'Circles' can be connected to form a circle, reject the model.
+            i = 0
+            BSpline_num = len(BSpline_list)
+            while i < BSpline_num :
+                if BSpline_list[i][2][0] == BSpline_list[i][2][-1]:
+                    BSpline_list[i][0] = 'Circle'
+                    Circle_list.append(BSpline_list[i])
+                    del BSpline_list[i]
+                    BSpline_num = BSpline_num - 1
+                    i = i - 1
+                i = i + 1
+            ''' 
+            try:
+                Circle_list = half_Circles_BSplines(Circle_list)
+                BSpline_list = half_Circles_BSplines(BSpline_list)
+            except:
+                print("this has incomplete circles in the list. skip this.")
+                log_string("this has incomplete circles in the list. skip this.", log_fout)
+            '''
+            
+            # 2. Check if multiple BSplines can form a circle.
+            BSpline_list = BSpline_list[0:4]
+            if len(BSpline_list) > 1:
+                for i in range(len(BSpline_list)):
+                    print("BSpline_list[", i, "]: ", BSpline_list[i][2][0], BSpline_list[i][2][-1])
+                group_connectable_BSplines(BSpline_list[0:4])
+            continue
 
+            '''
             if len(BSpline_one_degree_list) > 0:
                 print("Visualizing.. BSpline_one_degree_list")
                 view_point(vertices, BSpline_one_degree_list)            
-
+            
             if len(BSpline_two_or_more_degree_list) > 0:
                 print("Visualizing.. BSpline_two_or_more_degree_list")
                 view_point(vertices, BSpline_two_or_more_degree_list)
 
+            if len(Lines_list) > 0:
+                print("Visualizing.. Lines_list")
+                view_point(vertices, Lines_list)
+
             print("Visualizing.. all_curves_list")
             view_point(vertices, all_curves_list)
-            continue
+            '''
+            curve_num_list.append(curve_num)
+            
 
 
             curve_num = len(all_curves)
@@ -198,7 +231,6 @@ def main():
                         edge_points_ori =  edge_points_ori + curve[2][:]
                 '''
                 k = k + 1
-
             del all_curves
 
 
