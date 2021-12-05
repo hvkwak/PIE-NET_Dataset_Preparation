@@ -60,7 +60,7 @@ def main():
     file_count = 0
     data = {'Training_data': np.zeros((64, 1), dtype = object)}
     curve_num_list = []
-    for i in range(24, model_total_num):
+    for i in range(244, model_total_num):
         
         # check the feature file if it contains at least a sharp edges
         # and check that models are same.
@@ -105,10 +105,13 @@ def main():
             # if there are too many curves, don't use it. S
             # Setting vertices > 30K AND curve_num > 75 will filter ca. 50% of all CAD Models
             curve_num = len(all_curves)
-            if curve_num > 50: # this condition AND vertices > 30K may filter ca. 60% of all CAD Models.
-                print("curve_num > 50. skip this.")
-                log_string("curve_num > 50. skip this.", log_fout)
+            '''
+            if curve_num > 300: # this condition AND vertices > 30K may filter ca. 60% of all CAD Models.
+                print("curve_num: ", curve_num)
+                print("curve_num > 200. skip this.")
+                log_string("curve_num > 75. skip this.", log_fout)
                 continue                
+            '''
 
             # Preprocessing:
             # (Re)classify / Filter points accordingly!
@@ -143,6 +146,7 @@ def main():
                 i = i + 1
             
             # 1.1 Check if there are half Circles/BSplines pair, merge them if there's one.
+            '''
             try:
                 Circle_list = half_curves_finder(Circle_list)
                 BSpline_list = half_curves_finder(BSpline_list)
@@ -150,11 +154,12 @@ def main():
                 print("this has incomplete circles in the list. skip this.")
                 log_string("this has incomplete circles in the list. skip this.", log_fout)
                 continue
-            
+            '''
             # 1.2. find BSplines with degree = 0 and classify them accordingly:
             # BSpline with degree = 1 and both start/end points touch circles, remove it from the list
             # BSpline with degree = 1 and no touches -> keep them as line.
             BSpline_list_num = len(BSpline_list)
+            i = 0
             while i < BSpline_list_num:
                 if BSpline_list[i][1] == 1 and touch_in_circles(BSpline_list[i][2], Circle_list):
                     del BSpline_list[i]
@@ -175,8 +180,8 @@ def main():
             BSpline_list_num = len(BSpline_list)
             
             for i in range(BSpline_list_num):
-                visited_verticies.append(BSpline_list_num[i][2][0])
-                visited_verticies.append(BSpline_list_num[i][2][-1])
+                visited_verticies.append(BSpline_list[i][2][0])
+                visited_verticies.append(BSpline_list[i][2][-1])
             
             if (np.bincount(visited_verticies) > 2).sum() > 0:
                 print("there exist at least one vertex that is visited more than twice. skip this.")
@@ -256,6 +261,8 @@ def main():
                                 next_vertice_num_of_circle = temp_Splines[m][2][-1]
                 Circle_list.append(['Circle', None, merged_vertices_list])
 
+            print("Visualizing.. all_curves_list")
+            view_point(vertices, all_curves)
             
             if len(Circle_list) > 0:
                 print("Visualizing.. Circle_list")
@@ -264,13 +271,12 @@ def main():
             if len(BSpline_list) > 0:
                 print("Visualizing.. BSpline_list")
                 view_point(vertices, BSpline_list)
-
+            
             if len(Line_list) > 0:
                 print("Visualizing.. Lines_list")
                 view_point(vertices, Line_list)
-
-            print("Visualizing.. all_curves_list")
-            view_point(vertices, all_curves)
+            
+            continue
             
             curve_num_list.append(curve_num)
             curve_num = len(all_curves)
