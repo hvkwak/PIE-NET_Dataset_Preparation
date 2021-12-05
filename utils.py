@@ -551,7 +551,7 @@ def touch_in_circles(BSpline_list, Circle_list):
     circles_num = len(Circle_list)
     for i in range(circles_num):
         for j in range(circles_num):
-            if BSpline_list[0] in Circle_list[i] and BSpline_list[-1] in Circle_list[j] and i != j:
+            if BSpline_list[0] in Circle_list[i][2] and BSpline_list[-1] in Circle_list[j][2] and i != j:
                 return True
     return False
         
