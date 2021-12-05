@@ -1,7 +1,8 @@
+# Code mostly from https://www.geeksforgeeks.org/print-all-the-cycles-in-an-undirected-graph/
 # Python3 program to print all the cycles
 # in an undirected graph
 N = 100000
- 
+
 # variables to be used
 # in both functions
 graph = [[] for i in range(N)]
@@ -11,7 +12,7 @@ cycles = [[] for i in range(N)]
 # Function to mark the vertex with
 # different colors for different cycles
 def dfs_cycle(u, p, color: list, mark: list, par: list):
-    global cyclenumber
+    #global cyclenumber
  
     # already (completely) visited vertex.
     if color[u] == 2:
@@ -56,24 +57,53 @@ def addEdge(u, v):
     graph[v].append(u)
  
 # Function to print the cycles
-def printCycles(edges, mark: list):
- 
+def returnCycles(edges, mark: list, cycle_list: list):
+    
     # push the edges that into the
     # cycle adjacency list
     for i in range(1, edges + 1):
         if mark[i] != 0:
             cycles[mark[i]].append(i)
- 
+    
     # print all the vertex with same cycle
     for i in range(1, cyclenumber + 1):
- 
-        # Print the i-th cycle
+        cycle_list.append(cycles[i])
+        # Print the i-th cycle  
         print("Cycle Number %d:" % i, end = " ")
         for x in cycles[i]:
             print(x, end = " ")
         print()
+
+    return cycle_list
+
+def cycle_detection_in_BSplines(BSpline_list):
+    BSpline_list_num = len(BSpline_list)
+    for i in range(BSpline_list_num):
+        addEdge(BSpline_list[i][2][0], BSpline_list[i][2][-1])
+    # arrays required to color the
+    # graph, store the parent of node
+    color = [0] * N
+    par = [0] * N
  
+    # mark with unique numbers
+    mark = [0] * N
+ 
+
+    # store the numbers of cycle
+    global cyclenumber
+    cyclenumber = 0
+    edges = 13
+ 
+    # call DFS to mark the cycles
+    dfs_cycle(1, 0, color, mark, par)
+    
+    cycle_list = []
+    # function to print the cycles
+    cycle_list = returnCycles(edges, mark, cycle_list)
+    return cycle_list
+
 # Driver Code
+'''
 if __name__ == "__main__":
  
     # add edges
@@ -106,9 +136,12 @@ if __name__ == "__main__":
  
     # call DFS to mark the cycles
     dfs_cycle(1, 0, color, mark, par)
- 
+    
     # function to print the cycles
-    printCycles(edges, mark)
+    cycle_list = []
+    cycle_list = returnCycles(edges, mark, cycle_list)
+    print(cycle_list)
  
 # This code is contributed by
 # sanjeev2552
+'''

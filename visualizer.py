@@ -78,7 +78,7 @@ def view_point(points, BSpline_per_degree_list):
     '''
     k = 0
     while k < len(BSpline_per_degree_list):
-        color_array[BSpline_per_degree_list[k], ] = [np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1)]
+        color_array[BSpline_per_degree_list[k][2], ] = [np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1)]
         k = k + 1
 
     '''

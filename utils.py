@@ -512,7 +512,7 @@ def update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori):
     edge_points_ori = edge_points_ori+curve[2][:]
     return open_curves, corner_points_ori, edge_points_ori
 
-def half_Circles_BSplines(Circle_or_BSpline_list):
+def half_curves_finder(Circle_or_BSpline_list):
     k = 0
     Circle_or_BSpline_num = len(Circle_or_BSpline_list)
     while k < Circle_or_BSpline_num:
@@ -539,6 +539,22 @@ def merge_two_half_circles_or_BSpline(curve, index_in_all_curves, all_curves, ci
         curve[2] = curve[2] + all_curves[index_in_all_curves][2][1:]
     curve[0] = 'Circle'
     return curve
+
+def degrees_same(temp_Splines):
+    start_degree = temp_Splines[0][1]
+    for i in range(1, len(temp_Splines)):
+        if temp_Splines[i][1] != start_degree:
+            return False
+    return True
+
+def touch_in_circles(BSpline_list, Circle_list):
+    circles_num = len(Circle_list)
+    for i in range(circles_num):
+        for j in range(circles_num):
+            if BSpline_list[0] in Circle_list[i] and BSpline_list[-1] in Circle_list[j] and i != j:
+                return True
+    return False
+        
 
 def update_lists_closed(curve, closed_curves, edge_points_ori):
     """[summary]
