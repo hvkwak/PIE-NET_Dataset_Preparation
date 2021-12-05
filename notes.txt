@@ -1,27 +1,21 @@
 
-ideas for BSplines:
+Just ideas for BSplines:
 
 BSplines! Check more of these:
 1. Circle Meeting points -> no corner points
 2. BSplines continue Knick-Punkte -> yes corner points # no, there's no such thing.
-
 BSplines with degree 1:
 1. len() <= 5 -> These are lines. If they have contact with circles, they(start/end points) not even corner points. 
 2. len() > 5 -> Possibility that it's a long line. cotnact with circles?
-
 BSplines with degree > 1:
 1. Possibility that there are circle pairs? three or more BSplines to build a circle?
-2. ?
-3. ?
-
-
 https://www.ibiblio.org/e-notes/Splines/basis.html
 
 
 
 
 
-# Update
+# 1.Update
 Filter All curves
 1. Take those with vertices < 30K AND len(all_curves_list) <= 75: ca 50% of all models. 500K still available, we want to keep evtl. 50K.
 2. Take circles and make circles if they are connectable.
@@ -41,13 +35,12 @@ BSplines should be filtered accordingly
 
 
 
+# 2.Update more problems!
+1.1 Some of them are still open circles. -> find circle pair and keep them closed.
+1.2 Still open Circles without pairs: keep them open as BSplines
+2. There are Lines just like BSpline of degree = 1 : A Line with its start/end points touching two circles -> remove it.
+4. Consider whether curve_num > 300 filtering a good idea.
+5. corner points, where a line half-circle( or BSpline) meet, keep them as corner points.
 
-
-more Ideas
-3. BSplines with degree > 1: # these are no parts of circles
-	if length to short:
-		if it touches a circle: remove it
-		elif no touch: keep it as a BSpline, start/end point to be inlcluded in corner points.
-	else:
 		
 	
