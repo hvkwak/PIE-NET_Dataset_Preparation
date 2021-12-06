@@ -10,19 +10,21 @@ from utils import delete_newline
 from utils import curves_with_vertex_indices
 from utils import cross_points_finder
 from utils import update_lists_open
-from utils import another_half_curve_pair_exist
+#from utils import another_half_curve_pair_exist
 from utils import graipher_FPS
 from utils import nearest_neighbor_finder
 #from utils import greedy_nearest_neighbor_finder
 from utils import log_string
-from utils import merge_two_half_circles_or_BSpline
+#from utils import merge_two_half_circles_or_BSpline
 from utils import update_lists_closed
 from utils import half_curves_finder
 from utils import touch_in_circles_or_BSplines
-from utils import degrees_same
-from cycle_detection import cycle_detection_in_BSplines
+from utils import touch_in_circle
+#from utils import degrees_same
+from cycle_detection import Cycle_Detector_in_BSplines
 from grafkom1Framework import ObjLoader
-from visualizer import view_point
+#from visualizer import view_point_1
+#from visualizer import view_point
 
 
 def main():
@@ -59,8 +61,7 @@ def main():
     batch_count = 0
     file_count = 0
     data = {'Training_data': np.zeros((64, 1), dtype = object)}
-    curve_num_list = []
-    for i in range(244, model_total_num):
+    for i in range(model_total_num):
         
         # check the feature file if it contains at least a sharp edges
         # and check that models are same.
@@ -84,10 +85,10 @@ def main():
             faces = np.array(Loader.faces)
             vertex_normals = np.array(Loader.vertex_normals)
             del Loader
-
+            
             if vertices.shape[0] > 30000: # make sure we have < 30K vertices to keep it simple.
-                print("vertices > 30000. skip this.")
-                log_string("vertices > 30000. skip this.", log_fout)
+                print("vertices:", vertices.shape[0], " > 30000. skip this.")
+                log_string("vertices " +str(vertices.shape[0])+" > 30000. skip this.", log_fout)
                 del vertices
                 del faces
                 del vertex_normals
@@ -104,10 +105,6 @@ def main():
             curve_num = len(all_curves)
 
             # Preprocessing: (Re)classify / Filter points accordingly!
-            open_curves = []
-            closed_curves = []
-            corner_points_ori = []
-            edge_points_ori = []
             BSpline_list = []
             Line_list = []
             Circle_list = []
@@ -120,19 +117,40 @@ def main():
                 elif curve[0] == 'Line': Line_list.append(curve)
                 elif curve[0] == 'Circle': Circle_list.append(curve)
                 k = k + 1
+
+            #Visualizations
+            '''
+            if len(Circle_list) > 0:
+                print("Visualizing.. Circle_list")
+                view_point(vertices, Circle_list)            
+            if len(BSpline_list) > 0:
+                print("Visualizing.. BSpline_list")
+                view_point(vertices, BSpline_list)
+            if len(Line_list) > 0:
+                print("Visualizing.. Lines_list")
+                view_point(vertices, Line_list)
+            print("Visualizing.. all_curves_list")
+            view_point(vertices, all_curves)
+            '''
             
+
+            if len(BSpline_list) > 300 or len(Circle_list) > 300 or len(Line_list) > 300:
+                print("at least one curve type has > 300 curves. skip this.")
+                log_string("at least one curve type has > 300 curves. skip this.", log_fout)
+                continue
+
             # Find a misclassified BSplines and first classify them correctly into circle,
             # if they have same start and end points.
-            i = 0
+            k = 0
             BSpline_list_num = len(BSpline_list)
-            while i < BSpline_list_num :
-                if BSpline_list[i][2][0] == BSpline_list[i][2][-1]:
-                    BSpline_list[i][0] = 'Circle'
-                    Circle_list.append(BSpline_list[i])
-                    del BSpline_list[i]
+            while k < BSpline_list_num :
+                if BSpline_list[k][2][0] == BSpline_list[k][2][-1]:
+                    BSpline_list[k][0] = 'Circle'
+                    Circle_list.append(BSpline_list[k])
+                    del BSpline_list[k]
                     BSpline_list_num = BSpline_list_num - 1
-                    i = i - 1
-                i = i + 1
+                    k = k - 1
+                k = k + 1
             
             # Check if there are half Circles/BSplines pair, merge them if there's one.
             #BSpline_list.append(['BSpline', 3, [33, 99, 66, 55, 44, 11, 22, 77]] )
@@ -141,28 +159,34 @@ def main():
             Circle_list = half_curves_finder(Circle_list)
 
             # Move Circles in BSplines to Circles.
-            i = 0
+            k = 0
             BSpline_list_num = len(BSpline_list)
-            while i < BSpline_list_num:
-                if BSpline_list[i][0] == 'Circle':
-                    Circle_list.append(BSpline_list[i])
-                    del BSpline_list[i]
+            while k < BSpline_list_num:
+                if BSpline_list[k][0] == 'Circle':
+                    Circle_list.append(BSpline_list[k])
+                    del BSpline_list[k]
                     BSpline_list_num = BSpline_list_num - 1
-                    i = i - 1
-                i = i + 1
-            
+                    k = k - 1
+                k = k + 1
+
             # There are still open curves in Circles. keep them as BSpline.
-            i = 0
+            k = 0
             Circle_list_num = len(Circle_list)
-            while i < Circle_list_num:
-                if Circle_list[i][2][0] != Circle_list[i][2][-1]:
-                    Circle_list[i][0] = 'BSpline'
-                    BSpline_list.append(Circle_list[i])
-                    del Circle_list[i]
+            while k < Circle_list_num:
+                if Circle_list[k][2][0] != Circle_list[k][2][-1]:
+                    Circle_list[k][0] = 'BSpline'
+                    BSpline_list.append(Circle_list[k])
+                    del Circle_list[k]
                     Circle_list_num = Circle_list_num - 1
-                    i = i - 1
-                i = i + 1
-            
+                    k = k - 1
+                k = k + 1
+
+            '''
+            if len(BSpline_list) > 0:
+                print("Visualizing.. BSpline_list")
+                view_point(vertices, BSpline_list)
+            '''
+
             # Find BSplines with degree = 1 and classify them accordingly:
             # BSpline with degree = 1 and both start/end points touch circles, remove it from the list
             # BSpline with degree = 1 and no touches -> keep them as line.
@@ -170,49 +194,79 @@ def main():
             # first take all the BSplines of degree 1
             BSpline_degree_one_list = []
             BSpline_list_num = len(BSpline_list)
-            i = 0
-            while i < BSpline_list_num:
-                if BSpline_list[i][1] == 1:
-                    BSpline_degree_one_list.append(BSpline_list[i])
-                    del BSpline_list[i]
-                    i = i - 1
+            k = 0
+            while k < BSpline_list_num:
+                if BSpline_list[k][1] == 1:
+                    BSpline_degree_one_list.append(BSpline_list[k])
+                    del BSpline_list[k]
+                    k = k - 1
                     BSpline_list_num = BSpline_list_num - 1
-                i = i + 1
+                k = k + 1
 
-            # delete them or add them to Lines.
+            # Delete them or add them to Lines.
             # touching two Circles(or BSplines) should be eliminated.
             BSpline_degree_one_list_num = len(BSpline_degree_one_list)
-            i = 0
-            while i < BSpline_degree_one_list_num:
-                if BSpline_degree_one_list[i][1] == 1 and touch_in_circles_or_BSplines(BSpline_degree_one_list[i][2], Circle_list+BSpline_list):
-                    del BSpline_degree_one_list[i]
-                    i = i - 1
+            k = 0
+            while k < BSpline_degree_one_list_num:
+                if BSpline_degree_one_list[k][1] == 1 and touch_in_circles_or_BSplines(BSpline_degree_one_list[k][2], Circle_list+BSpline_list):
+                    del BSpline_degree_one_list[k]
+                    k = k - 1
                     BSpline_degree_one_list_num = BSpline_degree_one_list_num - 1
-                elif BSpline_degree_one_list[i][1] == 1 and not touch_in_circles_or_BSplines(BSpline_degree_one_list[i][2], Circle_list+BSpline_list):
-                    BSpline_degree_one_list[i][0] = 'Line'
-                    Line_list.append(BSpline_degree_one_list[i])
-                    del BSpline_degree_one_list[i]
-                    i = i - 1
+                elif BSpline_degree_one_list[k][1] == 1 and not touch_in_circles_or_BSplines(BSpline_degree_one_list[k][2], Circle_list+BSpline_list):
+                    BSpline_degree_one_list[k][0] = 'Line'
+                    Line_list.append(BSpline_degree_one_list[k])
+                    del BSpline_degree_one_list[k]
+                    k = k - 1
                     BSpline_degree_one_list_num = BSpline_degree_one_list_num - 1
-                i = i + 1
+                k = k + 1
 
+
+            # same for BSplines with its degree > 1, touching two circles. 
+            BSpline_list_num = len(BSpline_list)
+            k = 0
+            while k < BSpline_list_num:
+                if touch_in_circles_or_BSplines(BSpline_list[k][2], Circle_list):
+                    del BSpline_list[k]
+                    k = k - 1
+                    BSpline_list_num = BSpline_list_num - 1
+                k = k + 1
+
+            # Lines, too. if they touch two circles or BSplines simultaneously, remove them.
             Line_list_num = len(Line_list)
-            i = 0
-            while i < Line_list_num:
-                if touch_in_circles_or_BSplines(Line_list[i][2], Circle_list+BSpline_list):
-                    del Line_list[i]
-                    i = i - 1
+            k = 0
+            while k < Line_list_num:
+                if touch_in_circles_or_BSplines(Line_list[k][2], Circle_list):
+                    del Line_list[k]
+                    k = k - 1
                     Line_list_num = Line_list_num - 1
-                i = i + 1
+                k = k + 1
+
+            # Lines, too. if they touch one circle simultaneously, remove them.
+            list_num = len(Line_list) + len(BSpline_list)
+            temp_list = Line_list + BSpline_list
             
+            k = 0
+            touch_in_circles_ = False
+            while k < list_num:
+                if touch_in_circle(temp_list[k][2], Circle_list):
+                    touch_in_circles_ = True
+                    break
+                k = k + 1
+
+            if touch_in_circles_:
+                print("there is at least one line touching a circle. skip this.")
+                log_string("there is at least one line touching a circle. skip this.", log_fout)
+                continue
+            
+
             # Check if multiple BSplines can form a circle.
             # first check if there are vertices that are "visited" more than twice. 
             visited_verticies = []
             BSpline_list_num = len(BSpline_list)
             
-            for i in range(BSpline_list_num):
-                visited_verticies.append(BSpline_list[i][2][0])
-                visited_verticies.append(BSpline_list[i][2][-1])
+            for k in range(BSpline_list_num):
+                visited_verticies.append(BSpline_list[k][2][0])
+                visited_verticies.append(BSpline_list[k][2][-1])
             
             if (np.bincount(visited_verticies) > 2).sum() > 0:
                 print("there exist at least one vertex that is visited more than twice. skip this.")
@@ -220,8 +274,11 @@ def main():
                 continue
             
             # if there are at least one detected cycle, skip it.
-            detected_cycles_in_BSplines = cycle_detection_in_BSplines(BSpline_list)
-            if len(detected_cycles_in_BSplines) > 0 :
+            print("Detecting a cycle... this can take a while....", end = " ")
+            Cycle_Detector = Cycle_Detector_in_BSplines(BSpline_list)
+            detected_cycles_in_BSplines = Cycle_Detector.run_cycle_detection_in_BSplines()
+            print("Finished!")
+            if detected_cycles_in_BSplines:
                 print("There are at least one detected cycle, skip this.")
                 log_string("there are at least one detected cycle, skip this.", log_fout)
                 continue                
@@ -246,8 +303,6 @@ def main():
                         BSpline_list_num = BSpline_list_num - 1
                     k = k + 1
                 
-
-
                 if not degrees_same(temp_Splines):
                     print("BSplines of this detected cycle have different degrees. skip these Splines")
                     continue
@@ -297,84 +352,53 @@ def main():
                                 next_vertice_num_of_circle = temp_Splines[m][2][-1]
                 Circle_list.append(['Circle', None, merged_vertices_list])
             '''
-
-
-            print("Visualizing.. all_curves_list")
-            view_point(vertices, all_curves)
+        
             
-            if len(Circle_list) > 0:
-                print("Visualizing.. Circle_list")
-                view_point(vertices, Circle_list)            
-            
-            if len(BSpline_list) > 0:
-                print("Visualizing.. BSpline_list")
-                view_point(vertices, BSpline_list)
-            
-            if len(Line_list) > 0:
-                print("Visualizing.. Lines_list")
-                view_point(vertices, Line_list)
-            
-            continue
-            
-            curve_num_list.append(curve_num)
+            # Classifications into open/closed curve AND edge/corner points
+            open_curves = []
+            closed_curves = []
+            corner_points_ori = []
+            edge_points_ori = []
+            all_curves = Line_list + Circle_list + BSpline_list
             curve_num = len(all_curves)
+
             k = 0
             while k < curve_num:
-                # Note that this is a mutable object which is in list.
                 curve = all_curves[k]
-                circle_pair_index = [None]
-                circle_pair_Forward = [None]
-
                 # check if there are (corner) points, where two curves cross or meet.
                 if len(curve[2]) > 2 and k < curve_num-1:
                     for j in range(k+1, curve_num):
                         if len(all_curves[j][2]) > 2:
                             cross_points = cross_points_finder(curve[2], all_curves[j][2])
                             if len(cross_points) > 0:
+                                print("len(cross_points): ", len(cross_points), "> 0.")
                                 log_string("len(cross_points) > 0.", log_fout)
                                 corner_points_ori = corner_points_ori + cross_points
-
-                # classifications
-                if curve[0] == 'Line':
-                    open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
-                elif curve[0] == 'Circle':
-                    if curve[2][0] != curve[2][-1] and another_half_curve_pair_exist(curve, all_curves[k+1:], circle_pair_index, circle_pair_Forward):
-                        # this one consist of a pair of two half-circle curves!
-                        curve = merge_two_half_circles_or_BSpline(curve, k+1+circle_pair_index[0], all_curves, circle_pair_Forward)
-                        closed_curves, edge_points_ori = update_lists_closed(curve, closed_curves, edge_points_ori)
-                        del all_curves[k+1+circle_pair_index[0]]
-                        circle_pair_index = [None]
-                        circle_pair_Forward = [None]
-                        curve_num = curve_num - 1
-                    else:
-                        closed_curves, edge_points_ori = update_lists_closed(curve, closed_curves, edge_points_ori)
-                elif curve[0] == 'BSpline':
-                    if curve[2][0] != curve[2][-1] and another_half_curve_pair_exist(curve, all_curves[k+1:], circle_pair_index, circle_pair_Forward):
-                        curve = merge_two_half_circles_or_BSpline(curve, k+1+circle_pair_index[0], all_curves, circle_pair_Forward)
-                        closed_curves, edge_points_ori = update_lists_closed(curve, closed_curves, edge_points_ori)
-                        del all_curves[k+1+circle_pair_index[0]]
-                        circle_pair_index = [None]
-                        circle_pair_Forward = [None]
-                        curve_num = curve_num - 1
-                    else:
-                        open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
-                '''
-                
-                if curve[0] == 'BSpline' or curve[0] == 'Line':
-                    open_curves, corner_points_ori, edge_points_ori = update_lists(curve, open_curves, corner_points_ori, edge_points_ori)
-                elif curve[0] == 'Circle': # Closed
-                    if curve[2][0] != curve[2][-1] and another_half_curve_pair_exist(curve, all_curves[k:], circle_pair_index):
-                        # this one consist of a pair of two half-circle curves!
-                        all_curves[k+circle_pair_index[0]][0] = 'BSpline' # change the other to BSpline.
-                        curve[0] = 'BSpline' # change it to BSpline.
-                        
-                    else:
-                        closed_curves.append(curve)
-                        edge_points_ori =  edge_points_ori + curve[2][:]
-                '''
                 k = k + 1
             del all_curves
 
+            k = 0
+            Line_Circle_List = Line_list + Circle_list
+            while k < len(Line_Circle_List):
+                # classifications
+                curve = Line_Circle_List[k]
+                if curve[0] == 'Line':
+                    open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
+                elif curve[0] == 'Circle':
+                    closed_curves, edge_points_ori = update_lists_closed(curve, closed_curves, edge_points_ori)
+                k = k + 1
+            del Line_Circle_List
+
+            k = 0
+            while k < len(BSpline_list):
+                curve = BSpline_list[k]
+                if curve[0] == 'BSpline':
+                    if 3 <= len(curve[2]) <= 6 :
+                        corner_points_ori.append(curve[2][len(curve[2])//2])
+                    open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
+                k = k + 1
+
+            del BSpline_list
 
             # if there are more than 256 curves in each section: don't use this model.
             if (len(open_curves) > 256) or (len(closed_curves) > 256): 
@@ -394,8 +418,8 @@ def main():
                             or edge_points_ori.shape[0] > FPS_num or  edge_points_ori.shape[0] > FPS_num
 
             if skip_this_model: 
-                print("problems in (edge/corner)_points_ori. Skip this.")
-                log_string("problems in (edge/corner)_points_ori. Skip this.", log_fout)
+                print("problems in (edge/corner)_points_ori(.shape[0] = 0). Skip this.")
+                log_string("problems in (edge/corner)_points_ori(.shape[0] = 0). Skip this.", log_fout)
                 continue
 
             # Downsampling
@@ -420,9 +444,9 @@ def main():
                 nearest_neighbor_idx_edge_1 = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=0.5)
                 nearest_neighbor_idx_corner_1 = nearest_neighbor_finder(vertices[corner_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=0.5)
                 distance_max_1 = np.max(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_1, :])**2).sum(axis = 1))
-                if distance_max_1 > 1: 
-                    print("distance_max_1 > 1. skip this.")
-                    log_string("distance_max_1 > 1. skip this.", log_fout)
+                if distance_max_1 > 1.5: 
+                    print("distance_max_1: ", distance_max_1, " > 1.5. skip this.")
+                    log_string("distance_max_1: "+str(distance_max_1)+ " > 1. skip this.", log_fout)
                     continue
                 nearest_neighbor_idx_edge = nearest_neighbor_idx_edge_1
                 nearest_neighbor_idx_corner = nearest_neighbor_idx_corner_1
@@ -571,7 +595,10 @@ def main():
                 open_gt_sample_points[n, ...] = down_sample_point[open_gt_256_64_idx[n], ]
                 n = n + 1
             
+            
             print("Ok. save data.")
+            log_string("Ok. save data.", log_fout)
+            #view_point_1(down_sample_point, np.where(edge_points_label == 1)[0], np.where(corner_points_label == 1)[0])
             tp = np.dtype([
                 ('down_sample_point', 'O'),
                 ('edge_points_label', 'O'),
@@ -602,13 +629,18 @@ def main():
         if batch_count == 63:
             file_ = save_prefix+"_"+str(file_count)+".mat"
             scipy.io.savemat(file_, data)
-            print(file_, "saved.")
-            log_string(str(file_) + " saved.", log_fout)
+            #print(file_, "saved.")
+            #log_string(str(file_) + " saved.", log_fout)
             batch_count = 0
             file_count = file_count + 1
             data = {'Training_data': np.zeros((64, 1), dtype = object)}
         else:
             batch_count = batch_count + 1
+            if i == model_total_num -1:
+                file_ = save_prefix+"_"+str(file_count)+"_end"+".mat"
+                scipy.io.savemat(file_, data)
+                #print(file_, "saved.")
+                #log_string(str(file_) + " saved.", log_fout)
 
         list_obj_line = list_obj_file.readline()
         list_ftr_line = list_ftr_file.readline()
@@ -620,4 +652,3 @@ def main():
 
 if __name__ == "__main__": 
     main()
-    

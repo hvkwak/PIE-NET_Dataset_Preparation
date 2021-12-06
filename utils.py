@@ -46,113 +46,6 @@ def timeit(func):
         return result
     return wrapper
 '''
-
-class BSplines:
-    # Linked List
-    def __init__(self, curve_num, curve, start_BSpline):
-        self.curve_num = curve_num
-        self.ori_curve = curve
-        self.vertices = self.ori_curve[2]
-        self.neighbor_on_right = None
-        self.neighbor_on_left = None
-        self.part_of_circle = False
-        self.left_available = True
-        self.right_available = True
-        self.available = True
-        self.is_start = start_BSpline
-    
-    def connectable(self, neighbor):
-        if (self.left_available or self.right_available) and (self.available and neighbor.available):
-            if self.neighbor_on_left == None and neighbor.vertices[-1] == self.vertices[0]:
-                return True
-            elif self.neighbor_on_right == None and neighbor.vertices[0] == self.vertices[-1]:
-                return True
-            else:
-                return False
-        else:
-            return False
-    
-    def update(self):
-        if not self.left_available and not self.right_available: self.available = False
-
-    def connect_with(self, neighbor):
-        # connection on left
-        if self.left_available and self.neighbor_on_left == None and neighbor.vertices[-1] == self.vertices[0]:
-            self.neighbor_on_left = neighbor
-            self.left_available = False
-            self.neighbor_on_left.neighbor_on_right = self
-            self.update()
-            neighbor.update()
-        elif self.right_available and self.neighbor_on_right == None and neighbor.vertices[0] == self.vertices[-1]:
-            # connection on right
-            self.neighbor_on_right = neighbor
-            self.right_available = True
-            self.neighbor_on_right.neighbor_on_left = self
-            self.update()
-            neighbor.update()
-
-class BSpline_Connector:
-
-    def __init__(self, start_BSpline):
-        self.start_BSpline = start_BSpline
-        self.start_BSpline.is_start = True
-        self.next = None
-
-    def finish_connection(self, BSpline):
-        if not self.start_BSpline.right_available and not BSpline.left_available and \
-            self.start_BSpline.left_available and BSpline.right_available and \
-            self.start_BSpline.connectable(BSpline):
-            return True
-        elif not self.start_BSpline.left_available and not BSpline.right_available and \
-            self.start_BSpline.right_available and BSpline.left_available and \
-            self.start_BSpline.connectable(BSpline):
-            return True
-        else:
-            return False
-    
-    def next_right(self, BSpline):
-        return BSpline.neighbor_on_right
-
-    def collect_curve_nums(self):        
-        curve_nums = []
-        curve_nums.append(self.start_BSpline.curve_num)
-        current = self.start_BSpline.neighbor_on_right
-        while self.start_BSpline.curve_nums != current.curve_num and not self.start_BSpline.available and not current.available:
-            curve_nums.append(current.curve_num)
-            current = self.next_right(current)
-        return curve_nums
-
-def connection_available(BSpline, BSpline_obj_list, BSpline_Connector_original):
-    BSpline_obj_list_num = len(BSpline_obj_list)
-    if BSpline_Connector_original.finish_connection(BSpline):
-        BSpline_Connector_original.start_BSpline.connect_with(BSpline)
-        return True
-    elif BSpline_obj_list_num == 0: 
-        return False
-    else:
-        for k in range(BSpline_obj_list_num):
-            if BSpline.connectable(BSpline_obj_list[k]):
-                one_less_list = BSpline_obj_list.copy()
-                del one_less_list[k]
-                BSpline.connect_with(BSpline_obj_list[k])
-                return connection_available(BSpline_obj_list[k], one_less_list, BSpline_Connector_original)
-
-'''
-def check_multiple_BSplines(BSpline_list):
-    if len(BSpline_list) == 0: return []
-    BSpline_obj_list = []
-    k = 0
-    for BSpline in BSpline_list:
-        BSpline_obj_list.append(BSplines(k, BSpline, False))
-        k = k + 1
-    
-    curve_num_list = []
-    start_Spline = BSpline_obj_list[0]
-    Connector = BSpline_Connector(start_Spline)
-    while connection_available(start_Spline, BSpline_obj_list[k:], Connector):
-        curve_num_list.append(BSpline_Connector(start_Spline).collect_curve_nums())
-'''
-
         
 
 def log_string(out_str, log_fout):
@@ -545,14 +438,21 @@ def degrees_same(temp_Splines):
             return False
     return True
 
-def touch_in_circles_or_BSplines(BSpline_list, Circle_list):
+def touch_in_circles_or_BSplines(curve_list, Circle_list):
     circles_num = len(Circle_list)
     for i in range(circles_num):
         for j in range(circles_num):
-            if BSpline_list[0] in Circle_list[i][2] and BSpline_list[-1] in Circle_list[j][2] and i != j:
+            if curve_list[0] in Circle_list[i][2] and curve_list[-1] in Circle_list[j][2] and i != j:
                 return True
     return False
         
+def touch_in_circle(Line_list, Circle_list):
+    circles_num = len(Circle_list)
+    for i in range(circles_num):
+        if Line_list[0] in Circle_list[i][2] or Line_list[-1] in Circle_list[i][2]:
+            return True
+    return False
+                
 
 def update_lists_closed(curve, closed_curves, edge_points_ori):
     """[summary]
