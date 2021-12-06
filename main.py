@@ -18,7 +18,7 @@ from utils import log_string
 from utils import merge_two_half_circles_or_BSpline
 from utils import update_lists_closed
 from utils import half_curves_finder
-from utils import touch_in_circles
+from utils import touch_in_circles_or_BSplines
 from utils import degrees_same
 from cycle_detection import cycle_detection_in_BSplines
 from grafkom1Framework import ObjLoader
@@ -98,23 +98,12 @@ def main():
             try:
                 all_curves = curves_with_vertex_indices(list_ftr_line)
             except:
-                print("something wrong in curves_with_vertex_indices(). skip this.")
-                log_string("something wrong in curves_with_vertex_indices(). skip this.", log_fout)
-                continue
-            
-            # if there are too many curves, don't use it. S
-            # Setting vertices > 30K AND curve_num > 75 will filter ca. 50% of all CAD Models
+                print("there are curves not in [Circle, BSpline, Line]. skip this.")
+                log_string("there are curves not in [Circle, BSpline, Line]. skip this.", log_fout)
+                continue                        
             curve_num = len(all_curves)
-            '''
-            if curve_num > 300: # this condition AND vertices > 30K may filter ca. 60% of all CAD Models.
-                print("curve_num: ", curve_num)
-                print("curve_num > 200. skip this.")
-                log_string("curve_num > 75. skip this.", log_fout)
-                continue                
-            '''
 
-            # Preprocessing:
-            # (Re)classify / Filter points accordingly!
+            # Preprocessing: (Re)classify / Filter points accordingly!
             open_curves = []
             closed_curves = []
             corner_points_ori = []
@@ -123,7 +112,7 @@ def main():
             Line_list = []
             Circle_list = []
             
-            # Group all the curves first.
+            # Group all the curves.
             k = 0
             while k < curve_num:
                 curve = all_curves[k]
@@ -132,50 +121,92 @@ def main():
                 elif curve[0] == 'Circle': Circle_list.append(curve)
                 k = k + 1
             
-            # 1. find a misclassified BSplines and first classify them correctly into circle,
+            # Find a misclassified BSplines and first classify them correctly into circle,
             # if they have same start and end points.
             i = 0
-            BSpline_num = len(BSpline_list)
-            while i < BSpline_num :
+            BSpline_list_num = len(BSpline_list)
+            while i < BSpline_list_num :
                 if BSpline_list[i][2][0] == BSpline_list[i][2][-1]:
                     BSpline_list[i][0] = 'Circle'
                     Circle_list.append(BSpline_list[i])
                     del BSpline_list[i]
-                    BSpline_num = BSpline_num - 1
+                    BSpline_list_num = BSpline_list_num - 1
                     i = i - 1
                 i = i + 1
             
-            # 1.1 Check if there are half Circles/BSplines pair, merge them if there's one.
-            '''
-            try:
-                Circle_list = half_curves_finder(Circle_list)
-                BSpline_list = half_curves_finder(BSpline_list)
-            except:
-                print("this has incomplete circles in the list. skip this.")
-                log_string("this has incomplete circles in the list. skip this.", log_fout)
-                continue
-            '''
-            # 1.2. find BSplines with degree = 0 and classify them accordingly:
+            # Check if there are half Circles/BSplines pair, merge them if there's one.
+            #BSpline_list.append(['BSpline', 3, [33, 99, 66, 55, 44, 11, 22, 77]] )
+            #BSpline_list.append(['BSpline', 3, [77, 99, 66, 55, 44, 11, 22, 33]] )
+            BSpline_list = half_curves_finder(BSpline_list)
+            Circle_list = half_curves_finder(Circle_list)
+
+            # Move Circles in BSplines to Circles.
+            i = 0
+            BSpline_list_num = len(BSpline_list)
+            while i < BSpline_list_num:
+                if BSpline_list[i][0] == 'Circle':
+                    Circle_list.append(BSpline_list[i])
+                    del BSpline_list[i]
+                    BSpline_list_num = BSpline_list_num - 1
+                    i = i - 1
+                i = i + 1
+            
+            # There are still open curves in Circles. keep them as BSpline.
+            i = 0
+            Circle_list_num = len(Circle_list)
+            while i < Circle_list_num:
+                if Circle_list[i][2][0] != Circle_list[i][2][-1]:
+                    Circle_list[i][0] = 'BSpline'
+                    BSpline_list.append(Circle_list[i])
+                    del Circle_list[i]
+                    Circle_list_num = Circle_list_num - 1
+                    i = i - 1
+                i = i + 1
+            
+            # Find BSplines with degree = 1 and classify them accordingly:
             # BSpline with degree = 1 and both start/end points touch circles, remove it from the list
             # BSpline with degree = 1 and no touches -> keep them as line.
+
+            # first take all the BSplines of degree 1
+            BSpline_degree_one_list = []
             BSpline_list_num = len(BSpline_list)
             i = 0
             while i < BSpline_list_num:
-                if BSpline_list[i][1] == 1 and touch_in_circles(BSpline_list[i][2], Circle_list):
-                    del BSpline_list[i]
-                    i = i -1
-                    BSpline_list_num = BSpline_list_num - 1
-                elif BSpline_list[i][1] == 1 and not touch_in_circles(BSpline_list[i][2], Circle_list):
-                    BSpline_list[i][0] = 'Line'
-                    Line_list.append(BSpline_list[i])
+                if BSpline_list[i][1] == 1:
+                    BSpline_degree_one_list.append(BSpline_list[i])
                     del BSpline_list[i]
                     i = i - 1
                     BSpline_list_num = BSpline_list_num - 1
                 i = i + 1
 
+            # delete them or add them to Lines.
+            # touching two Circles(or BSplines) should be eliminated.
+            BSpline_degree_one_list_num = len(BSpline_degree_one_list)
+            i = 0
+            while i < BSpline_degree_one_list_num:
+                if BSpline_degree_one_list[i][1] == 1 and touch_in_circles_or_BSplines(BSpline_degree_one_list[i][2], Circle_list+BSpline_list):
+                    del BSpline_degree_one_list[i]
+                    i = i - 1
+                    BSpline_degree_one_list_num = BSpline_degree_one_list_num - 1
+                elif BSpline_degree_one_list[i][1] == 1 and not touch_in_circles_or_BSplines(BSpline_degree_one_list[i][2], Circle_list+BSpline_list):
+                    BSpline_degree_one_list[i][0] = 'Line'
+                    Line_list.append(BSpline_degree_one_list[i])
+                    del BSpline_degree_one_list[i]
+                    i = i - 1
+                    BSpline_degree_one_list_num = BSpline_degree_one_list_num - 1
+                i = i + 1
+
+            Line_list_num = len(Line_list)
+            i = 0
+            while i < Line_list_num:
+                if touch_in_circles_or_BSplines(Line_list[i][2], Circle_list+BSpline_list):
+                    del Line_list[i]
+                    i = i - 1
+                    Line_list_num = Line_list_num - 1
+                i = i + 1
             
-            # 2. Check if multiple BSplines can form a circle.
-            # 2.1 first check if there are vertices that are "visited" more than twice. 
+            # Check if multiple BSplines can form a circle.
+            # first check if there are vertices that are "visited" more than twice. 
             visited_verticies = []
             BSpline_list_num = len(BSpline_list)
             
@@ -187,10 +218,15 @@ def main():
                 print("there exist at least one vertex that is visited more than twice. skip this.")
                 log_string("there exist at least one vertex that is visited more than twice. skip this.", log_fout)
                 continue
-
-
+            
+            # if there are at least one detected cycle, skip it.
             detected_cycles_in_BSplines = cycle_detection_in_BSplines(BSpline_list)
-            detected_cycles_in_BSplines_num = len(detected_cycles_in_BSplines)
+            if len(detected_cycles_in_BSplines) > 0 :
+                print("There are at least one detected cycle, skip this.")
+                log_string("there are at least one detected cycle, skip this.", log_fout)
+                continue                
+                
+            '''
             i = 0
             while i < detected_cycles_in_BSplines_num: # e.g.) [[3, 4, 5, 6], [11, 12, 13]]
                 parts_num = len(detected_cycles_in_BSplines[i]) # e.g) Cycle Number 1: 3, 4, 5, 6
@@ -260,6 +296,8 @@ def main():
                                 merged_vertices_list += temp_Splines[m][2][1:]
                                 next_vertice_num_of_circle = temp_Splines[m][2][-1]
                 Circle_list.append(['Circle', None, merged_vertices_list])
+            '''
+
 
             print("Visualizing.. all_curves_list")
             view_point(vertices, all_curves)

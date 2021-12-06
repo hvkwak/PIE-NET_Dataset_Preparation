@@ -525,9 +525,7 @@ def half_curves_finder(Circle_or_BSpline_list):
             curve = merge_two_half_circles_or_BSpline(curve, idx, Circle_or_BSpline_list, circle_pair_Forward)
             del Circle_or_BSpline_list[idx]
             Circle_or_BSpline_num = Circle_or_BSpline_num - 1
-        else:
-            if curve[2][0] != curve[2][-1]:
-                raise ValueError("this has incomplete circles in the list. skip this.")
+
         k = k + 1
     return Circle_or_BSpline_list
 
@@ -547,7 +545,7 @@ def degrees_same(temp_Splines):
             return False
     return True
 
-def touch_in_circles(BSpline_list, Circle_list):
+def touch_in_circles_or_BSplines(BSpline_list, Circle_list):
     circles_num = len(Circle_list)
     for i in range(circles_num):
         for j in range(circles_num):
