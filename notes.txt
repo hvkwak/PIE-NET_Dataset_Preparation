@@ -39,8 +39,19 @@ BSplines should be filtered accordingly
 1.1 Some of them are still open circles. -> find circle pair and keep them closed.
 1.2 Still open Circles without pairs: keep them open as BSplines
 2. There are Lines just like BSpline of degree = 1 : A Line with its start/end points touching two circles -> remove it.
-4. Consider whether curve_num > 300 filtering a good idea.
+4. Consider whether curve_num > 300 filtering a good idea.?
 5. corner points, where a line half-circle( or BSpline) meet, keep them as corner points.
 
 		
 	
+
+
+
+
+
+
+# 3. More updates
+1. There are BSplines with 3-6 vertices with it. if these are not in contact with other BSplines at the both end, mark its middle as corner points.
+2. There are BSplines with its degree > 1 but touching two circles at the start/end points. remove this.
+
+
