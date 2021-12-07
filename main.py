@@ -87,9 +87,9 @@ def main():
             vertex_normals = np.array(Loader.vertex_normals)
             del Loader
             
-            if vertices.shape[0] > 30000: # make sure we have < 30K vertices to keep it simple.
-                print("vertices:", vertices.shape[0], " > 30000. skip this.")
-                log_string("vertices " +str(vertices.shape[0])+" > 30000. skip this.", log_fout)
+            if vertices.shape[0] > 35000: # make sure we have < 30K vertices to keep it simple.
+                print("vertices:", vertices.shape[0], " > 35000. skip this.")
+                log_string("vertices " +str(vertices.shape[0])+" > 35000. skip this.", log_fout)
                 del vertices
                 del faces
                 del vertex_normals
