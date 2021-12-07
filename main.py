@@ -541,7 +541,7 @@ def main():
             for k in range(distance_between_corner_points.shape[0]):
                 # check if 10% of the all corner points gathered in a neighborhood with its distance of 5.
                 if (distance_between_corner_points[k,:] < 5).sum() / distance_between_corner_points.shape[0] > 0.1:
-                    too_many_corner_points_in_spot = True
+                    too_many_corner_points_nearby = True
                     break
             if too_many_corner_points_nearby:
                 print("too_many_corner_points_nearby. skip this.")
