@@ -97,8 +97,8 @@ def main():
             
             # Curves with vertex indices: (sharp and not sharp)edges of BSpline, Line, Cycle only.
             if not mostly_sharp_edges(list_ftr_line):
-                print("sharp_false_count/(sharp_true_count+sharp_false_count) > 0.5. skip this.")
-                log_string("sharp_false_count/(sharp_true_count+sharp_false_count) > 0.5. skip this.", log_fout)
+                print("sharp_false_count/(sharp_true_count+sharp_false_count) > 0.1. skip this.")
+                log_string("sharp_false_count/(sharp_true_count+sharp_false_count) > 0.1. skip this.", log_fout)
                 continue
             
             all_curves = []
@@ -470,6 +470,12 @@ def main():
                 print("NN was not successful. skip this.")
                 log_string("NN was not successful. skip this.", log_fout)
                 continue
+            
+
+            if nearest_neighbor_idx_corner.shape[0] > 50:
+                print("corner points > 50. skip this.")
+                log_string("corner points > 50. skip this.", log_fout)
+                continue
 
             # option 2 : clustering of bins
             # First build a cluster nearby multiple ties.
@@ -533,6 +539,8 @@ def main():
             edge_points_residual_vector[nearest_neighbor_idx_edge, :] = vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge, :]
             corner_points_label[nearest_neighbor_idx_corner, ] = 1
             corner_points_residual_vector[nearest_neighbor_idx_corner, ] = vertices[corner_points_ori,:] - down_sample_point[nearest_neighbor_idx_corner, :]
+
+            nearest_neighbor_idx_corner.shape
 
             # check if corner points are "safe"
             distance_between_corner_points = (np.apply_along_axis(np.subtract, 1, down_sample_point[np.where(corner_points_label == 1)[0],:], down_sample_point[np.where(corner_points_label == 1)[0],:])**2).sum(axis = 2)
