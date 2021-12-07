@@ -462,7 +462,7 @@ def main():
                 distance_max_1 = np.max(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_1, :])**2).sum(axis = 1))
                 if distance_max_1 > 1.5: 
                     print("distance_max_1: ", distance_max_1, " > 1.5. skip this.")
-                    log_string("distance_max_1: "+str(distance_max_1)+ " > 1. skip this.", log_fout)
+                    log_string("distance_max_1: "+str(distance_max_1)+ " > 1.5 skip this.", log_fout)
                     continue
                 nearest_neighbor_idx_edge = nearest_neighbor_idx_edge_1
                 nearest_neighbor_idx_corner = nearest_neighbor_idx_corner_1
@@ -539,8 +539,6 @@ def main():
             edge_points_residual_vector[nearest_neighbor_idx_edge, :] = vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge, :]
             corner_points_label[nearest_neighbor_idx_corner, ] = 1
             corner_points_residual_vector[nearest_neighbor_idx_corner, ] = vertices[corner_points_ori,:] - down_sample_point[nearest_neighbor_idx_corner, :]
-
-            nearest_neighbor_idx_corner.shape
 
             # check if corner points are "safe"
             distance_between_corner_points = (np.apply_along_axis(np.subtract, 1, down_sample_point[np.where(corner_points_label == 1)[0],:], down_sample_point[np.where(corner_points_label == 1)[0],:])**2).sum(axis = 2)
