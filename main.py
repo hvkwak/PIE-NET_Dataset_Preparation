@@ -533,7 +533,22 @@ def main():
             edge_points_residual_vector[nearest_neighbor_idx_edge, :] = vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge, :]
             corner_points_label[nearest_neighbor_idx_corner, ] = 1
             corner_points_residual_vector[nearest_neighbor_idx_corner, ] = vertices[corner_points_ori,:] - down_sample_point[nearest_neighbor_idx_corner, :]
-            
+
+            # check if corner points are "safe"
+            distance_between_corner_points = (np.apply_along_axis(np.subtract, 1, down_sample_point[np.where(corner_points_label == 1)[0],:], down_sample_point[np.where(corner_points_label == 1)[0],:])**2).sum(axis = 2)
+            np.fill_diagonal(distance_between_corner_points, np.Inf)
+            too_many_corner_points_nearby = False
+            for k in range(distance_between_corner_points.shape[0]):
+                # check if 10% of the all corner points gathered in a neighborhood with its distance of 5.
+                if (distance_between_corner_points[k,:] < 5).sum() / distance_between_corner_points.shape[0] > 0.1:
+                    too_many_corner_points_in_spot = True
+                    break
+            if too_many_corner_points_nearby:
+                print("too_many_corner_points_nearby. skip this.")
+                log_string("too_many_corner_points_nearby. skip this.", log_fout)
+                continue
+                
+
             m = 0
             for curve in closed_curves:
                 try:

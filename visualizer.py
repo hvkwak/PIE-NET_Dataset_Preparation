@@ -13,12 +13,12 @@ def main():
         view_point_1(ref_down_sample_point, ref_PC_8096_edge_points_label_bin, ref_corner_points_label_bin)
     '''
 
-    my_mat = sio.loadmat('/home/pro2future/Documents/PIE-NET_Dataset_Preparation/0070_0.mat')['Training_data']
-    for i in range(0, 25):
-        my_down_sample_point = my_mat[i, 0]['down_sample_point'][0, 0]
-        my_down_sample_point_edge = np.where(my_mat[i, 0]['edge_points_label'][0, 0][0,:] == 1)[0]
-        my_down_sample_point_corner = np.where(my_mat[i, 0]['corner_points_label'][0, 0][0,:] == 1)[0]
-        view_point_1(my_down_sample_point, my_down_sample_point_edge, my_down_sample_point_corner)
+    my_mat = sio.loadmat('/home/pro2future/Documents/PIE-NET_Dataset_Preparation/0008_0.mat')['Training_data']
+    for i in range(5, 64):
+        down_sample_point = my_mat[i, 0]['down_sample_point'][0, 0]
+        edge_points_label = np.where(my_mat[i, 0]['edge_points_label'][0, 0][0,:] == 1)[0]
+        corner_points_label = np.where(my_mat[i, 0]['corner_points_label'][0, 0][0,:] == 1)[0]
+        view_point_1(down_sample_point, edge_points_label, corner_points_label)
     
     
     '''

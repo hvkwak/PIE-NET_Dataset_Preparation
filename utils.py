@@ -499,7 +499,7 @@ def mostly_sharp_edges(list_ftr_line):
             sharp_true_count = sharp_true_count + 1
         elif line[:9] == "surfaces:": # text file reached surfaces. returns.
             break
-    if sharp_false_count/np.float32(sharp_true_count+sharp_false_count) > 0.5:
+    if sharp_false_count/np.float32(sharp_true_count+sharp_false_count) > 0.1:
         return False
     else:
         return True
