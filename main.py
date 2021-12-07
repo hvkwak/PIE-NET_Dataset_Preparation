@@ -20,6 +20,7 @@ from utils import update_lists_closed
 from utils import half_curves_finder
 from utils import touch_in_circles_or_BSplines
 from utils import touch_in_circle
+from utils import mostly_sharp_edges
 #from utils import degrees_same
 from cycle_detection import Cycle_Detector_in_BSplines
 from grafkom1Framework import ObjLoader
@@ -95,6 +96,11 @@ def main():
                 continue
             
             # Curves with vertex indices: (sharp and not sharp)edges of BSpline, Line, Cycle only.
+            if not mostly_sharp_edges(list_ftr_line):
+                print("sharp_false_count/(sharp_true_count+sharp_false_count) > 0.5. skip this.")
+                log_string("sharp_false_count/(sharp_true_count+sharp_false_count) > 0.5. skip this.", log_fout)
+                continue
+            
             all_curves = []
             try:
                 all_curves = curves_with_vertex_indices(list_ftr_line)
@@ -169,6 +175,16 @@ def main():
                     k = k - 1
                 k = k + 1
 
+            
+            Line_list_num = len(Line_list)
+            k = 0
+            while k < Line_list_num:
+                if touch_in_circles_or_BSplines(Line_list[k][2], Circle_list):
+                    del Line_list[k]
+                    k = k - 1
+                    Line_list_num = Line_list_num - 1
+                k = k + 1
+                
             # There are still open curves in Circles. keep them as BSpline.
             k = 0
             Circle_list_num = len(Circle_list)
@@ -241,7 +257,7 @@ def main():
                     Line_list_num = Line_list_num - 1
                 k = k + 1
 
-            # Lines, too. if they touch one circle simultaneously, remove them.
+            # Lines, too. if they touch one circle, remove them.
             list_num = len(Line_list) + len(BSpline_list)
             temp_list = Line_list + BSpline_list
             

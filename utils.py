@@ -473,6 +473,36 @@ def update_lists_closed(curve, closed_curves, edge_points_ori):
     edge_points_ori = edge_points_ori+curve[2][:]
     return closed_curves, edge_points_ori
 
+def mostly_sharp_edges(list_ftr_line):
+    """ returns sharp curves with vertex indices. 
+
+    Args:
+        list_ftr_line (str): filename of features, .yml.
+
+    Returns:
+        curves: a list of lists of curves in this form: [['Circle', 0, 38, 49, ... 0], ['BSpline', 19, 299, 388, ..]]
+    """
+    f = open(list_ftr_line, "r")
+    lines = f.readlines()
+    in_curve_section = False
+    curves = []
+    #curves
+    #surfaces:
+    sharp_true_count = 0
+    sharp_false_count = 0
+    for idx, line in enumerate(lines):
+        if line[:7] == "curves:": 
+            in_curve_section = True
+        elif (line[:-1] == "  sharp: false") and in_curve_section:
+            sharp_false_count = sharp_false_count + 1
+        elif (line[:-1] == "  sharp: true") and in_curve_section:
+            sharp_true_count = sharp_true_count + 1
+        elif line[:9] == "surfaces:": # text file reached surfaces. returns.
+            break
+    if sharp_false_count/np.float32(sharp_true_count+sharp_false_count) > 0.5:
+        return False
+    else:
+        return True
 
 def curves_with_vertex_indices(list_ftr_line):
     """ returns sharp curves with vertex indices. 
@@ -483,19 +513,17 @@ def curves_with_vertex_indices(list_ftr_line):
     Returns:
         curves: a list of lists of curves in this form: [['Circle', 0, 38, 49, ... 0], ['BSpline', 19, 299, 388, ..]]
     """
-
     f = open(list_ftr_line, "r")
     lines = f.readlines()
     in_curve_section = False
     curves = []
-    #curves
-    #surfaces:
-
     for idx, line in enumerate(lines):
-
         if line[:7] == "curves:": 
             in_curve_section = True
-        elif (line[:-1] == "  sharp: true" or line[:-1] == "  sharp: false") and in_curve_section:
+        #elif (line[:-1] == "  sharp: false") and in_curve_section:
+        #    print("sharp: false")
+        elif (line[:-1] == "  sharp: true") and in_curve_section:
+            #print("sharp: true")
             curve = []
             if lines[idx+1][8:-1] in ["Circle", "BSpline", "Line"]:
                 degree = None
