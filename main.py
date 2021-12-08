@@ -61,7 +61,7 @@ def main():
     
     batch_count = 0
     file_count = 0
-    data = {'Training_data': np.zeros((64, 1), dtype = object)}
+    data = {'batch_count': batch_count, 'Training_data': np.zeros((64, 1), dtype = object)}
     for i in range(model_total_num):
         
         # check the feature file if it contains at least a sharp edges
@@ -88,7 +88,7 @@ def main():
             del Loader
             
             if vertices.shape[0] > 35000: # make sure we have < 30K vertices to keep it simple.
-                print("vertices:", vertices.shape[0], " > 35000. skip this.")
+                print("vertices:", vertices.shape[0], " > 30000. skip this.")
                 log_string("vertices " +str(vertices.shape[0])+" > 35000. skip this.", log_fout)
                 del vertices
                 del faces
@@ -97,8 +97,8 @@ def main():
             
             # Curves with vertex indices: (sharp and not sharp)edges of BSpline, Line, Cycle only.
             if not mostly_sharp_edges(list_ftr_line):
-                print("sharp_false_count/(sharp_true_count+sharp_false_count) > 0.1. skip this.")
-                log_string("sharp_false_count/(sharp_true_count+sharp_false_count) > 0.1. skip this.", log_fout)
+                print("sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.")
+                log_string("sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.", log_fout)
                 continue
             
             all_curves = []
@@ -443,7 +443,8 @@ def main():
             mesh = trimesh.Trimesh(vertices = vertices, faces = faces, vertex_normals = vertex_normals)
 
             # (uniform) random sample 100K surface points: Points in space on the surface of mesh
-            mesh_sample_xyz, _ = trimesh.sample.sample_surface(mesh, 100000)
+            #mesh_sample_xyz, _ = trimesh.sample.sample_surface(mesh, 100000)
+            mesh_sample_xyz, _ = trimesh.sample.sample_surface_even(mesh, 100000)
             del mesh
             # (greedy) Farthest Points Sampling
             down_sample_point = graipher_FPS(mesh_sample_xyz, FPS_num) # dtype: np.float64
@@ -460,7 +461,7 @@ def main():
                 nearest_neighbor_idx_edge_1 = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=0.5)
                 nearest_neighbor_idx_corner_1 = nearest_neighbor_finder(vertices[corner_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=0.5)
                 distance_max_1 = np.max(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_1, :])**2).sum(axis = 1))
-                if distance_max_1 > 1.5: 
+                if distance_max_1 > 1.5:
                     print("distance_max_1: ", distance_max_1, " > 1.5. skip this.")
                     log_string("distance_max_1: "+str(distance_max_1)+ " > 1.5 skip this.", log_fout)
                     continue
@@ -665,22 +666,24 @@ def main():
             
         if batch_count == 63:
             file_ = save_prefix+"_"+str(file_count)+".mat"
+            data['batch_count'] = batch_count
             scipy.io.savemat(file_, data)
             #print(file_, "saved.")
             #log_string(str(file_) + " saved.", log_fout)
             batch_count = 0
             file_count = file_count + 1
-            data = {'Training_data': np.zeros((64, 1), dtype = object)}
+            data = {'batch_count': batch_count, 'Training_data': np.zeros((64, 1), dtype = object)}
         else:
             batch_count = batch_count + 1
-            if i == model_total_num -1:
-                file_ = save_prefix+"_"+str(file_count)+"_end"+".mat"
-                scipy.io.savemat(file_, data)
-                #print(file_, "saved.")
-                #log_string(str(file_) + " saved.", log_fout)
 
         list_obj_line = list_obj_file.readline()
         list_ftr_line = list_ftr_file.readline()
+
+    file_ = save_prefix+"_"+str(file_count)+"_end"+".mat"
+    data['batch_count'] = batch_count
+    scipy.io.savemat(file_, data)
+    #print(file_, "saved.")
+    #log_string(str(file_) + " saved.", log_fout)
 
     list_obj_file.close()
     list_ftr_file.close()

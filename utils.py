@@ -499,10 +499,10 @@ def mostly_sharp_edges(list_ftr_line):
             sharp_true_count = sharp_true_count + 1
         elif line[:9] == "surfaces:": # text file reached surfaces. returns.
             break
-    if sharp_false_count/np.float32(sharp_true_count+sharp_false_count) > 0.1:
-        return False
-    else:
+    if sharp_true_count/np.float32(sharp_true_count+sharp_false_count) > 0.90:
         return True
+    else:
+        return False
 
 def curves_with_vertex_indices(list_ftr_line):
     """ returns sharp curves with vertex indices. 
