@@ -10,7 +10,7 @@ You may find some of these codes useful. First download *.obj and *.yml files fr
 ```bash
 make_list.sh
 ```
-to prepare for dataset generation. Then run other codes accordingly. Please check the details and arguments in advance. <br />
+which generates text files of lists to prepare for further steps. Then run other codes accordingly. Please check the details, directories and arguments in advance. <br />
 
 make_list.sh generates the a text file of filenames. <br />
 main_multiple_screens.sh runs main.sh in multiple screens in linux <br />
