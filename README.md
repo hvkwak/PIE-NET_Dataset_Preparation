@@ -9,7 +9,7 @@ Download *.obj and *.yml files from [ABC Dataset](https://deep-geometry.github.i
 
 You may find some of these codes useful. First run 'make_list.sh' and then run other codes accordingly. Please check the details and arguments in advance. 
 
-make_list.sh - generates the a text file of filenames.
-main_multiple_screens.sh - runs main.sh in multiple screens in linux
-main.sh - runs main.py
-main2.py - there are some datasets that are not size of 64 after running main.py. This brings altogether pack rest datasets to be size of 64. Rests will be discarded.
+make_list.sh - generates the a text file of filenames. <br />
+main_multiple_screens.sh - runs main.sh in multiple screens in linux <br />
+main.sh - runs main.py <br />
+main2.py - there are some datasets that are not size of 64 after running main.py. This brings altogether pack rest datasets to be size of 64. Rests will be discarded.<br />
