@@ -1,0 +1,171 @@
+Processing: 00000002_1ffb81a71e5b402e966b9341..1/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000003_1ffb81a71e5b402e966b9341..2/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000004_1ffb81a71e5b402e966b9341..3/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000005_d4fe04f0f5f84b52bd4f10e4..4/7168
+vertices 113998 > 35000. skip this.
+Processing: 00000006_d4fe04f0f5f84b52bd4f10e4..5/7168
+there exist at least one vertex that is visited more than twice. skip this.
+Processing: 00000007_b33a147f86da49879455d286..6/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000008_9b3d6a97e8de4aa193b81000..7/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000009_9b3d6a97e8de4aa193b81000..8/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000010_b4b99d35e04b4277931f9a9c..9/7168
+vertices 42785 > 35000. skip this.
+Processing: 00000015_b08aa818955948c690fd9b6d..10/7168
+vertices 45589 > 35000. skip this.
+Processing: 00000016_b08aa818955948c690fd9b6d..11/7168
+vertices 96203 > 35000. skip this.
+Processing: 00000017_e8e79d1385fd4c78be414f6c..12/7168
+vertices 1135784 > 35000. skip this.
+Processing: 00000018_e8e79d1385fd4c78be414f6c..13/7168
+vertices 292300 > 35000. skip this.
+Processing: 00000019_e8e79d1385fd4c78be414f6c..14/7168
+vertices 292300 > 35000. skip this.
+Processing: 00000020_ad34a3f60c4a4caa99646600..15/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000022_ad34a3f60c4a4caa99646600..16/7168
+(open/closed)_curves = 0. skip this.
+Processing: 00000026_ad34a3f60c4a4caa99646600..17/7168
+there are curves not in [Circle, BSpline, Line]. skip this.
+Processing: 00000027_ad34a3f60c4a4caa99646600..18/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000028_ad34a3f60c4a4caa99646600..19/7168
+vertices 83133 > 35000. skip this.
+Processing: 00000029_ad34a3f60c4a4caa99646600..20/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000030_ad34a3f60c4a4caa99646600..21/7168
+there are at least one detected cycle, skip this.
+Processing: 00000031_ad34a3f60c4a4caa99646600..22/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000032_ad34a3f60c4a4caa99646600..23/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000034_ad34a3f60c4a4caa99646600..24/7168
+there are curves not in [Circle, BSpline, Line]. skip this.
+Processing: 00000036_b169abf5f2444251b529c688..25/7168
+vertices 94862 > 35000. skip this.
+Processing: 00000037_c7d977f326364e35bb5b5d27..26/7168
+vertices 76051 > 35000. skip this.
+Processing: 00000042_c7d977f326364e35bb5b5d27..27/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000043_c7d977f326364e35bb5b5d27..28/7168
+vertices 73375 > 35000. skip this.
+Processing: 00000047_1a67c6032bbd479492910b39..29/7168
+vertices 116474 > 35000. skip this.
+Processing: 00000049_aa208c45e8734584a147f595..30/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000050_80d90bfdd2e74e709956122a..31/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000053_666139e3bff64d4e8a6ce183..32/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000054_666139e3bff64d4e8a6ce183..33/7168
+(open/closed)_curves = 0. skip this.
+Processing: 00000057_666139e3bff64d4e8a6ce183..34/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000058_666139e3bff64d4e8a6ce183..35/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000059_767e4372b5f94a88a7a17d90..36/7168
+vertices 254844 > 35000. skip this.
+Processing: 00000060_767e4372b5f94a88a7a17d90..37/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000061_767e4372b5f94a88a7a17d90..38/7168
+(open/closed)_curves = 0. skip this.
+Processing: 00000062_767e4372b5f94a88a7a17d90..39/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000063_767e4372b5f94a88a7a17d90..40/7168
+(open/closed)_curves = 0. skip this.
+Processing: 00000065_767e4372b5f94a88a7a17d90..41/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000066_767e4372b5f94a88a7a17d90..42/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000067_767e4372b5f94a88a7a17d90..43/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000068_767e4372b5f94a88a7a17d90..44/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000069_767e4372b5f94a88a7a17d90..45/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000070_767e4372b5f94a88a7a17d90..46/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000071_767e4372b5f94a88a7a17d90..47/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000072_767e4372b5f94a88a7a17d90..48/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000073_767e4372b5f94a88a7a17d90..49/7168
+(open/closed)_curves = 0. skip this.
+Processing: 00000074_767e4372b5f94a88a7a17d90..50/7168
+vertices 57870 > 35000. skip this.
+Processing: 00000075_767e4372b5f94a88a7a17d90..51/7168
+vertices 462042 > 35000. skip this.
+Processing: 00000076_767e4372b5f94a88a7a17d90..52/7168
+(open/closed)_curves = 0. skip this.
+Processing: 00000077_767e4372b5f94a88a7a17d90..53/7168
+there is at least one line touching a circle. skip this.
+Processing: 00000078_767e4372b5f94a88a7a17d90..54/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000079_767e4372b5f94a88a7a17d90..55/7168
+(open/closed)_curves = 0. skip this.
+Processing: 00000080_ed3cecad25c64f7abea4cf64..56/7168
+(open/closed)_curves = 0. skip this.
+Processing: 00000081_201dac73881b409b8d57f008..57/7168
+vertices 72195 > 35000. skip this.
+Processing: 00000088_169bec34317b46e98eb1a403..58/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000089_169bec34317b46e98eb1a403..59/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000090_169bec34317b46e98eb1a403..60/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000091_169bec34317b46e98eb1a403..61/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000093_169bec34317b46e98eb1a403..62/7168
+there are at least one detected cycle, skip this.
+Processing: 00000098_72cf0f9ca5324822a4d41a80..63/7168
+there is at least one line touching a circle. skip this.
+Processing: 00000100_5ed74bccca6f4e89829bcb5e..64/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000102_5ed74bccca6f4e89829bcb5e..65/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000103_52f7124261ae4c558f800775..66/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000104_52f7124261ae4c558f800775..67/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000105_52f7124261ae4c558f800775..68/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000106_52f7124261ae4c558f800775..69/7168
+(open/closed)_curves = 0. skip this.
+Processing: 00000107_601f37ef630741969a417e51..70/7168
+(open/closed)_curves = 0. skip this.
+Processing: 00000110_ce24e0cbec8e45c89735d148..71/7168
+vertices 132008 > 35000. skip this.
+Processing: 00000111_ce24e0cbec8e45c89735d148..72/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000112_ce24e0cbec8e45c89735d148..73/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000113_ce24e0cbec8e45c89735d148..74/7168
+vertices 95085 > 35000. skip this.
+Processing: 00000114_ce24e0cbec8e45c89735d148..75/7168
+vertices 64874 > 35000. skip this.
+Processing: 00000115_ce24e0cbec8e45c89735d148..76/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000116_ce24e0cbec8e45c89735d148..77/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000117_ce24e0cbec8e45c89735d148..78/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000118_ce24e0cbec8e45c89735d148..79/7168
+vertices 71540 > 35000. skip this.
+Processing: 00000119_ce24e0cbec8e45c89735d148..80/7168
+(open/closed)_curves = 0. skip this.
+Processing: 00000120_ce24e0cbec8e45c89735d148..81/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000121_43c44d81ee2f44428314b518..82/7168
+vertices 237445 > 35000. skip this.
+Processing: 00000123_b70e8b6a4f0046dc80a97c57..83/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000124_807e1c7fc3594af09fd6f7c4..84/7168
+vertices 37193 > 35000. skip this.
+Processing: 00000125_e18c7feacfb54f3880659b43..85/7168
+sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.
+Processing: 00000126_e18c7feacfb54f3880659b43..86/7168

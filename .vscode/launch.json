@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args":["/raid/home/hyovin.kwak/all/obj/0000_list_obj.txt", "/raid/home/hyovin.kwak/all/obj/0000_list_features.txt", "0000", "/raid/home/hyovin.kwak/PIE-NET_Dataset_Preparation/log/"]
+            "args":["/raid/home/hyovin.kwak/all/obj/0085_list_obj.txt", "/raid/home/hyovin.kwak/all/obj/0085_list_features.txt", "0085", "/raid/home/hyovin.kwak/PIE-NET_Dataset_Preparation/log/"]
             
 
         }

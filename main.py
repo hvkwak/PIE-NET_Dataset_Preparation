@@ -47,7 +47,6 @@ def main():
     list_obj_file = open(args[0], "r") # "/raid/home/hyovin.kwak/all/obj/${1}_list_obj.txt"
     list_ftr_file = open(args[1], "r") # "/raid/home/hyovin.kwak/all/obj/${1}_list_yml.txt"
     save_prefix = args[2] # $foldernum
-    #FPS_num = int(args[3]) 8096
     FPS_num = 8096
     log_dir = args[3]     # "/raid/home/hyovin.kwak/PIE-NET_Dataset_Preparation/log/"
     log_file_name = save_prefix+'generate_dataset_log.txt'
@@ -96,7 +95,7 @@ def main():
                 continue
             
             # Curves with vertex indices: (sharp and not sharp)edges of BSpline, Line, Cycle only.
-            if not mostly_sharp_edges(list_ftr_line):
+            if not mostly_sharp_edges(list_ftr_line, 0.90):
                 print("sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.")
                 log_string("sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.", log_fout)
                 continue
@@ -413,7 +412,6 @@ def main():
                         corner_points_ori.append(curve[2][len(curve[2])//2])
                     open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
                 k = k + 1
-
             del BSpline_list
 
             # if there are more than 256 curves in each section: don't use this model.
@@ -472,7 +470,6 @@ def main():
                 log_string("NN was not successful. skip this.", log_fout)
                 continue
             
-
             if nearest_neighbor_idx_corner.shape[0] > 50:
                 print("corner points > 50. skip this.")
                 log_string("corner points > 50. skip this.", log_fout)
@@ -526,20 +523,36 @@ def main():
             open_gt_res = np.zeros((256, 6), dtype=np.float32)
             open_gt_sample_points = np.zeros((256, 64, 3), dtype=np.float32)
             open_gt_mask = np.zeros((256, 64), dtype=np.uint8)
-            closed_gt_256_64_idx = np.zeros((256, 64), dtype=np.uint8)
+            closed_gt_256_64_idx = np.zeros((256, 64), dtype=np.uint16)
             closed_gt_mask = np.zeros((256, 64), dtype=np.uint8)
             closed_gt_type = np.zeros((256, 1), dtype=np.uint8)
             closed_gt_res = np.zeros((256, 3), dtype=np.float32)
-            closed_gt_sample_points = np.zeros((256, 64, 3), dtype=np.uint8)
+            closed_gt_sample_points = np.zeros((256, 64, 3), dtype=np.float32)
             closed_gt_valid_mask = np.zeros((256, 1), dtype=np.uint8)
             closed_gt_pair_idx = np.zeros((256, 1), dtype=np.uint16)
             
-            # and compute them
-            # down_sample_point is already there.
+                        
             edge_points_label[nearest_neighbor_idx_edge] = 1
             edge_points_residual_vector[nearest_neighbor_idx_edge, :] = vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge, :]
             corner_points_label[nearest_neighbor_idx_corner, ] = 1
             corner_points_residual_vector[nearest_neighbor_idx_corner, ] = vertices[corner_points_ori,:] - down_sample_point[nearest_neighbor_idx_corner, :]
+
+            # normalize them to keep all in [-0.5, 0.5]
+            max_x_in_this_model = np.max([np.max(down_sample_point[:, 0]), np.abs(np.min(down_sample_point[:, 0]))])
+            max_y_in_this_model = np.max([np.max(down_sample_point[:, 1]), np.abs(np.min(down_sample_point[:, 1]))])
+            max_z_in_this_model = np.max([np.max(down_sample_point[:, 2]), np.abs(np.min(down_sample_point[:, 2]))])
+            max_in_this_model = np.max([max_x_in_this_model, max_y_in_this_model, max_z_in_this_model])
+
+            if max_in_this_model > 0.5:
+                down_sample_point[:,0] = (down_sample_point[:, 0] / (max_in_this_model*2.0))
+                down_sample_point[:,1] = (down_sample_point[:, 1] / (max_in_this_model*2.0))
+                down_sample_point[:,2] = (down_sample_point[:, 2] / (max_in_this_model*2.0))
+                edge_points_residual_vector[:,0] = (edge_points_residual_vector[:, 0] / (max_in_this_model*2.0))
+                edge_points_residual_vector[:,1] = (edge_points_residual_vector[:, 1] / (max_in_this_model*2.0))
+                edge_points_residual_vector[:,2] = (edge_points_residual_vector[:, 2] / (max_in_this_model*2.0))
+                corner_points_residual_vector[:,0] = (corner_points_residual_vector[:, 0] / (max_in_this_model*2.0))
+                corner_points_residual_vector[:,1] = (corner_points_residual_vector[:, 1] / (max_in_this_model*2.0))
+                corner_points_residual_vector[:,2] = (corner_points_residual_vector[:, 2] / (max_in_this_model*2.0))
 
             # check if corner points are "safe"
             distance_between_corner_points = (np.apply_along_axis(np.subtract, 1, down_sample_point[np.where(corner_points_label == 1)[0],:], down_sample_point[np.where(corner_points_label == 1)[0],:])**2).sum(axis = 2)
@@ -666,10 +679,8 @@ def main():
             
         if batch_count == 63:
             file_ = save_prefix+"_"+str(file_count)+".mat"
-            data['batch_count'] = batch_count
+            data['batch_count'] = batch_count+1
             scipy.io.savemat(file_, data)
-            #print(file_, "saved.")
-            #log_string(str(file_) + " saved.", log_fout)
             batch_count = 0
             file_count = file_count + 1
             data = {'batch_count': batch_count, 'Training_data': np.zeros((64, 1), dtype = object)}
@@ -679,11 +690,10 @@ def main():
         list_obj_line = list_obj_file.readline()
         list_ftr_line = list_ftr_file.readline()
 
-    file_ = save_prefix+"_"+str(file_count)+"_end"+".mat"
-    data['batch_count'] = batch_count
-    scipy.io.savemat(file_, data)
-    #print(file_, "saved.")
-    #log_string(str(file_) + " saved.", log_fout)
+    if batch_count > 0:
+        file_ = save_prefix+"_"+str(file_count)+"_end"+".mat"
+        data['batch_count'] = batch_count
+        scipy.io.savemat(file_, data)
 
     list_obj_file.close()
     list_ftr_file.close()

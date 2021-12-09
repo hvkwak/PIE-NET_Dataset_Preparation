@@ -13,7 +13,7 @@ def main():
     my_mat_down_sample_point_max = 0.0
     my_mat_down_sample_point_min = 0.0
 
-    for i in range(0, 64):
+    for i in range(64):
         ref_down_sample_point = ref_mat[i, 0]['down_sample_point'][0, 0]
         ref_PC_8096_edge_points_label_bin = np.where(ref_mat[i, 0]['PC_8096_edge_points_label_bin'][0, 0][:, 0] == 1)[0]
         ref_corner_points_label_bin = np.where(ref_mat[i, 0]['corner_points_label'][0, 0][:, 0] == 1)[0]
@@ -21,10 +21,10 @@ def main():
         edge_points_label = np.where(my_mat[i, 0]['edge_points_label'][0, 0][0,:] == 1)[0]
         corner_points_label = np.where(my_mat[i, 0]['corner_points_label'][0, 0][0,:] == 1)[0]
 
-        #print("max", i, "X: ", np.max(ref_down_sample_point[:, 0]))
-        #print("max", i, "Y: ", np.max(ref_down_sample_point[:, 1]))
-        #print("max", i, "Z: ", np.max(ref_down_sample_point[:, 2]))
-        #print("min", i, " ", np.min(ref_down_sample_point))
+        print("max", i, "X: ", np.max(ref_down_sample_point[:, 0]))
+        print("max", i, "Y: ", np.max(ref_down_sample_point[:, 1]))
+        print("max", i, "Z: ", np.max(ref_down_sample_point[:, 2]))
+        print("min", i, " ", np.min(ref_down_sample_point))
         ref_mat_down_sample_point_max += np.max(ref_down_sample_point)
         ref_mat_down_sample_point_min += np.min(ref_down_sample_point)
         my_mat_down_sample_point_max += np.max(down_sample_point)
@@ -39,7 +39,6 @@ def main():
     print("ref down_sample_point in [", ref_mat_down_sample_point_min, ", ", ref_mat_down_sample_point_max, "]")
     print("my down_sample_point in [", my_mat_down_sample_point_min, ", ", my_mat_down_sample_point_max, "]")
 
-        
     for i in range(0, 64):
         ref_down_sample_point = ref_mat[i, 0]['down_sample_point'][0, 0]
         ref_PC_8096_edge_points_label_bin = np.where(ref_mat[i, 0]['PC_8096_edge_points_label_bin'][0, 0][:, 0] == 1)[0]
@@ -52,53 +51,6 @@ def main():
         view_point_1(down_sample_point, edge_points_label, corner_points_label)
         #print("corner_points_label: ", corner_points_label.shape)
     
-
-
-
-
-    '''
-    from scipy.interpolate import splprep, splev
-    x1 = np.array([0, 0, 0], dtype = np.float64)
-    x2 = np.array([0, 0.3, 0.3], dtype = np.float64)
-    x3 = np.array([0, 0.5, 1], dtype = np.float64)
-    tck, u = splprep([x1, x2, x3], k = 2, s = 0)
-    new_points = splev(u, tck)
-    #points = np.concatenate((np.stack([x1, x2, x3]), np.stack(new_points)), axis = 0)
-    view_point(new_points)
-    
-    x_new = np.zeros((42))
-    y_new = np.zeros((42))
-    phi = np.linspace(0, 2.*np.pi, 40)
-    r = 0.5 + np.cos(phi)         # polar coords
-    x, y = r * np.cos(phi), r * np.sin(phi)    # convert to cartesian
-    x_new[0:40] = x
-    y_new[0:40] = y
-    x_new[40] = 2
-    y_new[40] = 2
-    x_new[41] = 2
-    y_new[41] = 0
-    from scipy.interpolate import splprep, splev
-    tck, u = splprep([x_new, y_new], k = 1, s=0)
-    new_points = splev(u, tck)
-    import matplotlib.pyplot as plt
-    fig, ax = plt.subplots()
-    ax.plot(x_new, y_new, 'ro')
-    ax.plot(new_points[0], new_points[1], 'r-')
-    plt.show()
-    
-    phi = np.linspace(0, 2.*np.pi, 40)
-    r = 0.5 + np.cos(phi)         # polar coords
-    x, y = r * np.cos(phi), r * np.sin(phi)    # convert to cartesian
-    from scipy.interpolate import splprep, splev
-    tck, u = splprep([x, y], k = 0, s=1)
-    new_points = splev(u, tck)
-    import matplotlib.pyplot as plt
-    fig, ax = plt.subplots()
-    ax.plot(x, y, 'ro')
-    ax.plot(new_points[0], new_points[1], 'r-')
-    plt.show()
-    '''
-
 def view_point_1(points, my_down_sample_point_edge, my_down_sample_point_corner):
     point_cloud = open3d.geometry.PointCloud()
     point_cloud.points = open3d.utility.Vector3dVector(points)    

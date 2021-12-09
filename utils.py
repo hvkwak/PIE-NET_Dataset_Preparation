@@ -5,32 +5,6 @@ from tqdm import tqdm
 #import open3d
 
 '''
-import signal
-from contextlib import contextmanager
-
-
-@contextmanager
-def timeout(time):
-    # code from https://www.jujens.eu/posts/en/2018/Jun/02/python-timeout-function/
-    # Register a function to raise a TimeoutError on the signal.
-    signal.signal(signal.SIGALRM, raise_timeout)
-    # Schedule the signal to be sent after ``time``.
-    signal.alarm(time)
-
-    try:
-        yield
-    except TimeoutError:
-        pass
-    finally:
-        # Unregister the signal so it won't be triggered
-        # if the timeout is not reached.
-        signal.signal(signal.SIGALRM, signal.SIG_IGN)
-
-
-def raise_timeout(signum, frame):
-    raise TimeoutError
-
-
 def timeit(func):
     """A wrapper function which calculates time for each execution of a function. 
     Code by Graipher from https://codereview.stackexchange.com/questions/179561/farthest-point-algorithm-in-python
@@ -46,7 +20,6 @@ def timeit(func):
         return result
     return wrapper
 '''
-        
 
 def log_string(out_str, log_fout):
     log_fout.write(out_str+'\n')
@@ -103,22 +76,6 @@ def greedy_nearest_neighbor_finder(edge_or_corner_points, down_sample_point):
         distances[:, memory_arr[i]] = np.Inf
         i = i+1
     return np.array(memory_arr)
-    '''
-    argmin_per_row = np.argmin(distances, axis=1)
-    memory_arr = [None]*pts_num
-    i = 1
-    while i != pts_num:
-        row_idx, col_idx = distances.argmin() // distances.shape[1], distances.argmin()%distances.shape[1]
-        if memory_arr[row_idx] == None:
-            print("point_num: ", i, " distance: ", distances[row_idx, col_idx])
-            memory_arr[row_idx] = col_idx
-            distances[:, col_idx] = np.Inf
-            i = i+1
-        else:
-            distances[row_idx, col_idx] = np.Inf
-    return np.array(memory_arr)
-    '''
-    
     
 def nearest_neighbor_finder(edge_or_corner_points, down_sample_point, use_clustering, neighbor_distance):
     
@@ -289,7 +246,6 @@ def calc_distances(p0, points):
     elif len(p0.shape) == 1 and len(points.shape) == 2:
         return ((p0 - points)**2).sum(axis=1)
     """
-    # remember that 
     return np.sqrt(((p0 - points)**2).sum(axis = len(points.shape) - 1))
 
 
@@ -342,14 +298,7 @@ def delete_spaces(line):
 
 
 def cross_points_finder(curve, other_curve):
-    """[summary]
-
-    Args:
-        curve ([type]): [description]
-        other_curve ([type]): [description]
-
-    Returns:
-        [type]: [description]
+    """returns points that meet somewhere BUT not in start/end points.
     """    
     cross_points = []
     for i in curve[1:-1]:
@@ -360,15 +309,7 @@ def cross_points_finder(curve, other_curve):
 
 
 def another_half_curve_pair_exist(curve, all_curves, circle_pair_index, circle_pair_Forward):
-    """[summary]
-
-    Args:
-        curve ([type]): [description]
-        all_curves ([type]): [description]
-        circle_pair_index ([type]): [description]
-
-    Returns:
-        [type]: [description]
+    """returns true if there are another half curve pair to form a complete circle.
     """    
     k = 0        
     for candidate in all_curves:
@@ -386,20 +327,8 @@ def another_half_curve_pair_exist(curve, all_curves, circle_pair_index, circle_p
     return False
 
 def update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori):
-    """[summary]
-
-    Args:
-        curve ([type]): [description]
-        open_curves ([type]): [description]
-        corner_points_ori ([type]): [description]
-        edge_points_ori ([type]): [description]
+    """updates open curve list
     """    
-    '''
-    open_curves.append(curve)
-    corner_points_ori.append(curve[2][0])
-    corner_points_ori.append(curve[2][-1])
-    edge_points_ori =  edge_points_ori + curve[2][:]
-    '''
     open_curves.append(curve)
     corner_points_ori = corner_points_ori+[curve[2][0], curve[2][-1]]
     edge_points_ori = edge_points_ori+curve[2][:]
@@ -455,26 +384,12 @@ def touch_in_circle(Line_list, Circle_list):
                 
 
 def update_lists_closed(curve, closed_curves, edge_points_ori):
-    """[summary]
-
-    Args:
-        curve ([type]): [description]
-        open_curves ([type]): [description]
-        corner_points_ori ([type]): [description]
-        edge_points_ori ([type]): [description]
-    """    
-    '''
-    open_curves.append(curve)
-    corner_points_ori.append(curve[2][0])
-    corner_points_ori.append(curve[2][-1])
-    edge_points_ori =  edge_points_ori + curve[2][:]
-    '''
     closed_curves.append(curve)
     edge_points_ori = edge_points_ori+curve[2][:]
     return closed_curves, edge_points_ori
 
-def mostly_sharp_edges(list_ftr_line):
-    """ returns sharp curves with vertex indices. 
+def mostly_sharp_edges(list_ftr_line, threshold):
+    """ returns True if this CAD Model mostly consists of sharp edges. 
 
     Args:
         list_ftr_line (str): filename of features, .yml.
@@ -485,12 +400,10 @@ def mostly_sharp_edges(list_ftr_line):
     f = open(list_ftr_line, "r")
     lines = f.readlines()
     in_curve_section = False
-    curves = []
-    #curves
-    #surfaces:
+        
     sharp_true_count = 0
     sharp_false_count = 0
-    for idx, line in enumerate(lines):
+    for _, line in enumerate(lines):
         if line[:7] == "curves:": 
             in_curve_section = True
         elif (line[:-1] == "  sharp: false") and in_curve_section:
@@ -499,7 +412,7 @@ def mostly_sharp_edges(list_ftr_line):
             sharp_true_count = sharp_true_count + 1
         elif line[:9] == "surfaces:": # text file reached surfaces. returns.
             break
-    if sharp_true_count/np.float32(sharp_true_count+sharp_false_count) > 0.90:
+    if sharp_true_count/np.float32(sharp_true_count+sharp_false_count) > threshold:
         return True
     else:
         return False
