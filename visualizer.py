@@ -7,10 +7,11 @@ from scipy.interpolate import splprep, splev
 
 def main():
 
-    test_pred_99_mat = sio.loadmat('/raid/home/hyovin.kwak/PIE-NET/main/test_result/test_pred_99.mat')
+    #test_pred_99_mat = sio.loadmat('/raid/home/hyovin.kwak/PIE-NET/main/test_result/test_pred_99.mat')
+    test_pred_99_mat = sio.loadmat('/home/pro2future/Documents/PIE-NET_Dataset_Preparation/test_pred_99.mat')
 
     i = 0
-    test_pred_99_mat_ori_input_i = test_pred_99_mat['input_point_cloud'][i, 0]['down_sample_point'][0, 0]
+    input_i = test_pred_99_mat['input_point_cloud'][i, 0]['down_sample_point'][0, 0]
     test_pred_99_mat_ori_edge_points_label_i = test_pred_99_mat['labels_edge_p'][i, :]
     test_pred_99_mat_ori_corner_points_label_i = test_pred_99_mat['labels_corner_p'][i, :]
     test_pred_99_mat_pred_edge_points_label_i = softmax(test_pred_99_mat['pred_labels_edge_p'][i, :], axis = 1)
@@ -18,11 +19,8 @@ def main():
     test_pred_99_mat_pred_edge_points_label_i = test_pred_99_mat_pred_edge_points_label_i[:, 1] > 0.7
     test_pred_99_mat_pred_corner_points_label_i = test_pred_99_mat_pred_corner_points_label_i[:, 1] > 0.9
 
-    # edge points prediction
-
-    view_point_1(test_pred_99_mat_ori_input_i, test_pred_99_mat_ori_edge_points_label_i, test_pred_99_mat_pred_edge_points_label_i)
-
-    print()
+    # edge points prediction, green: GT, red: Prediction
+    view_point_1(input_i, test_pred_99_mat_ori_edge_points_label_i, test_pred_99_mat_pred_edge_points_label_i)
     
     '''
     i = 0
@@ -85,21 +83,21 @@ def main():
         #print("corner_points_label: ", corner_points_label.shape)
     '''
     
-def view_point_1(points, GT, PRED):
+def view_point_1(points, gt, pred):
     point_cloud = open3d.geometry.PointCloud()
     point_cloud.points = open3d.utility.Vector3dVector(points)    
     color1 = [0.0, 0.99, 0.0] # BSpline one degree, green
     color2 = [0.0, 0.0, 0.99] # blue
     color3 = [0.99, 0, 0.0] # red
-    #color4 = [np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1)]
+    
     color_array1 = np.zeros_like(points)
-    color_array1[GT, ] = color1
+    color_array1[np.where(gt == 1)[0], ] = color1
 
     color_array2 = np.zeros_like(points)
-    color_array2[PRED, ] = color3
+    color_array2[np.where(pred == 1)[0], ] = color3
 
     point_cloud.colors = open3d.utility.Vector3dVector(color_array1)
-    point_cloud.colors = open3d.utility.Vector3dVector(color_array2)
+    #point_cloud.colors = open3d.utility.Vector3dVector(color_array2)
     #point_cloud.paint_uniform_color([0.0, 0.0, 0.0])
     open3d.visualization.draw_geometries([point_cloud])
 
