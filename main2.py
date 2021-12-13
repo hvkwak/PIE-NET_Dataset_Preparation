@@ -17,9 +17,9 @@ def main():
         loadpath = "/raid/home/hyovin.kwak/PIE-NET_Dataset_Preparation/mat_after_main1/" + train_matrices_names_list[k]
         ref_mat = sio.loadmat(loadpath)['Training_data']
         end_count = sio.loadmat(loadpath)['batch_count'][0, 0]
-        if train_matrices_names_list[k][-7:] == "end.mat": 
-            end_count = end_count - 1
-        elif train_matrices_names_list[k][-7:] != "end.mat": end_count += 1
+        #if train_matrices_names_list[k][-7:] == "end.mat": 
+        #    end_count = end_count - 1
+        #elif train_matrices_names_list[k][-7:] != "end.mat": end_count += 1
         i = 0
         while i < end_count:
             down_sample_point = ref_mat[i, 0]['down_sample_point'][0, 0]
