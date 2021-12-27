@@ -5,7 +5,7 @@ This set of codes generate the datasets suitable for PIE-NET: Parametric Inferen
 Results from Section 3.1 of the paper were reproducible. No Warranty, No Liability.
 
 ## How to use / Brief Descriptions
-You may find some of codes in <mark>utils</mark> useful. First download *.obj and *.yml files from [ABC Dataset](https://deep-geometry.github.io/abc-dataset/), then run 
+You may find some of codes in utils useful. First download *.obj and *.yml files from [ABC Dataset](https://deep-geometry.github.io/abc-dataset/), then run 
 
 ```bash
 make_list.sh
