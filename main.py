@@ -531,7 +531,7 @@ def main():
             closed_gt_valid_mask = np.zeros((256, 1), dtype=np.uint8)
             closed_gt_pair_idx = np.zeros((256, 1), dtype=np.uint16)
             
-                        
+
             edge_points_label[nearest_neighbor_idx_edge] = 1
             edge_points_residual_vector[nearest_neighbor_idx_edge, :] = vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge, :]
             corner_points_label[nearest_neighbor_idx_corner, ] = 1

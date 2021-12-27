@@ -7,20 +7,104 @@ from scipy.interpolate import splprep, splev
 
 def main():
 
+    ref_mat = sio.loadmat('/home/pro2future/Documents/PIE-NET_Dataset_Preparation/5.mat')
+    my_mat = sio.loadmat('/home/pro2future/Documents/PIE-NET_Dataset_Preparation/3.mat')
+
+    down_sample_point = ref_mat['Training_data'][0, 0]['down_sample_point'][0, 0]
+    closed_curves = ref_mat['Training_data'][0, 0]['closed_gt_256_64_idx'][0, 0] 
+    #view_point_4(down_sample_point)
+    view_point_4(down_sample_point[closed_curves][203, : ,:])
+    #view_point_4(np.concatenate(down_sample_point[closed_curves]))
+    print()
     #test_pred_99_mat = sio.loadmat('/raid/home/hyovin.kwak/PIE-NET/main/test_result/test_pred_99.mat')
-    test_pred_99_mat = sio.loadmat('/home/pro2future/Documents/PIE-NET_Dataset_Preparation/test_pred_99.mat')
-
+    #test_pred_99_mat = sio.loadmat('/home/pro2future/Documents/PIE-NET_Dataset_Preparation/test_pred_99.mat')
+    #i = 0
+    '''
     i = 0
-    input_i = test_pred_99_mat['input_point_cloud'][i, 0]['down_sample_point'][0, 0]
-    test_pred_99_mat_ori_edge_points_label_i = test_pred_99_mat['labels_edge_p'][i, :]
-    test_pred_99_mat_ori_corner_points_label_i = test_pred_99_mat['labels_corner_p'][i, :]
-    test_pred_99_mat_pred_edge_points_label_i = softmax(test_pred_99_mat['pred_labels_edge_p'][i, :], axis = 1)
-    test_pred_99_mat_pred_corner_points_label_i = softmax(test_pred_99_mat['pred_labels_corner_p'][i, :], axis = 1)
-    test_pred_99_mat_pred_edge_points_label_i = test_pred_99_mat_pred_edge_points_label_i[:, 1] > 0.7
-    test_pred_99_mat_pred_corner_points_label_i = test_pred_99_mat_pred_corner_points_label_i[:, 1] > 0.9
+    down_sample_point = test_pred_99_mat['input_point_cloud'][i, 0]['down_sample_point'][0, 0]
+    edge_points_label_i = test_pred_99_mat['labels_edge_p'][i, :]
+    corner_points_label_i = test_pred_99_mat['labels_corner_p'][i, :]
+    pred_edge_points_label_i = softmax(test_pred_99_mat['pred_labels_edge_p'][i, :], axis = 1)
+    pred_corner_points_label_i = softmax(test_pred_99_mat['pred_labels_corner_p'][i, :], axis = 1)
+    pred_edge_points_label_i = pred_edge_points_label_i[:, 1] > 0.8
+    pred_corner_points_label_i = pred_corner_points_label_i[:, 1] > 0.9
 
-    # edge points prediction, green: GT, red: Prediction
-    view_point_1(input_i, test_pred_99_mat_ori_edge_points_label_i, test_pred_99_mat_pred_edge_points_label_i)
+    # edge points prediction, 
+    # green: true positives
+    # blue: false negatives
+    # red: false positives
+    # edge
+    # view_point_1(down_sample_point, edge_points_label_i, pred_edge_points_label_i)
+    # corner
+    # view_point_1(down_sample_point, corner_points_label_i, pred_corner_points_label_i)
+
+    # with regression corrections
+    # blue: without correction
+    # red: with correction
+    # view_point_2(down_sample_point, test_pred_99_mat['pred_reg_edge_p'][i, :], edge_points_label_i)
+    # view_point_2(down_sample_point, test_pred_99_mat['pred_reg_corner_p'][i, :], corner_points_label_i)
+    '''
+
+def view_point_4(closed_curves):
+    point_cloud = open3d.geometry.PointCloud()
+    point_cloud.points = open3d.utility.Vector3dVector(closed_curves)    
+    #color1 = [0.0, 0.99, 0.0] # BSpline one degree, green
+    #color2 = [0.0, 0.0, 0.99] # blue, GT.
+    #color3 = [0.99, 0, 0.0] # red, prediction
+    #color_array = np.zeros_like(closed_curves)
+    #color_array[np.where(gt == 1)[0], ] = color2 # blue
+    #color_array[np.where(pred == 1)[0], ] = color3 # red
+    #color_array[np.intersect1d(np.where(gt == 1)[0], np.where(pred == 1)[0]), ] = color1 # green
+    #point_cloud.colors = open3d.utility.Vector3dVector(color_array)
+    open3d.visualization.draw_geometries([point_cloud])
+
+
+def view_point_2(down_sample_point, pred_reg, edge_points_label_i):
+    down_sample_point2 = down_sample_point.copy()
+    #down_sample_point[:, 0] = down_sample_point[:, 0] + 1
+    points = np.concatenate([down_sample_point2, down_sample_point+pred_reg])
+    partA = np.concatenate([edge_points_label_i, np.zeros_like(edge_points_label_i)])
+    partB = np.concatenate([np.zeros_like(edge_points_label_i), edge_points_label_i])
+    color2 = [0.0, 0.0, 0.99] # blue, without correction
+    color3 = [0.99, 0, 0.0] # red, with correction
+    point_cloud = open3d.geometry.PointCloud()
+    point_cloud.points = open3d.utility.Vector3dVector(points)
+    color_array = np.zeros_like(points)
+    color_array[np.where(partA == 1)[0], ] = color2 # blue
+    color_array[np.where(partB == 1)[0], ] = color3 # red
+    point_cloud.colors = open3d.utility.Vector3dVector(color_array)
+    open3d.visualization.draw_geometries([point_cloud])
+
+
+def view_point_1(points, gt, pred):
+    point_cloud = open3d.geometry.PointCloud()
+    point_cloud.points = open3d.utility.Vector3dVector(points)    
+    color1 = [0.0, 0.99, 0.0] # BSpline one degree, green
+    color2 = [0.0, 0.0, 0.99] # blue, GT.
+    color3 = [0.99, 0, 0.0] # red, prediction
+    color_array = np.zeros_like(points)
+    color_array[np.where(gt == 1)[0], ] = color2 # blue
+    color_array[np.where(pred == 1)[0], ] = color3 # red
+    color_array[np.intersect1d(np.where(gt == 1)[0], np.where(pred == 1)[0]), ] = color1 # green
+    point_cloud.colors = open3d.utility.Vector3dVector(color_array)
+    open3d.visualization.draw_geometries([point_cloud])
+
+def view_point(points, BSpline_per_degree_list):
+    point_cloud = open3d.geometry.PointCloud()
+    point_cloud.points = open3d.utility.Vector3dVector(points)    
+    color1 = [0.0, 0.99, 0.0] # BSpline one degree, green
+    color2 = [0.0, 0.0, 0.99] # edge, blue
+    color3 = [0.99, 0, 0.0] # corner, red
+    color4 = [np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1)]
+    color_array = np.zeros_like(points)
+
+    k = 0
+    while k < len(BSpline_per_degree_list):
+        color_array[BSpline_per_degree_list[k][2], ] = [np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1)]
+        k = k + 1
+    point_cloud.colors = open3d.utility.Vector3dVector(color_array)
+    #point_cloud.paint_uniform_color([0.0, 0.0, 0.0])
+    open3d.visualization.draw_geometries([point_cloud])
     
     '''
     i = 0
@@ -82,45 +166,6 @@ def main():
         view_point_1(down_sample_point, edge_points_label, corner_points_label)
         #print("corner_points_label: ", corner_points_label.shape)
     '''
-    
-def view_point_1(points, gt, pred):
-    point_cloud = open3d.geometry.PointCloud()
-    point_cloud.points = open3d.utility.Vector3dVector(points)    
-    color1 = [0.0, 0.99, 0.0] # BSpline one degree, green
-    color2 = [0.0, 0.0, 0.99] # blue
-    color3 = [0.99, 0, 0.0] # red
-    
-    color_array1 = np.zeros_like(points)
-    color_array1[np.where(gt == 1)[0], ] = color1
-
-    color_array2 = np.zeros_like(points)
-    color_array2[np.where(pred == 1)[0], ] = color3
-
-    point_cloud.colors = open3d.utility.Vector3dVector(color_array1)
-    #point_cloud.colors = open3d.utility.Vector3dVector(color_array2)
-    #point_cloud.paint_uniform_color([0.0, 0.0, 0.0])
-    open3d.visualization.draw_geometries([point_cloud])
-
-
-
-def view_point(points, BSpline_per_degree_list):
-    point_cloud = open3d.geometry.PointCloud()
-    point_cloud.points = open3d.utility.Vector3dVector(points)    
-    color1 = [0.0, 0.99, 0.0] # BSpline one degree, green
-    color2 = [0.0, 0.0, 0.99] # edge, blue
-    color3 = [0.99, 0, 0.0] # corner, red
-    color4 = [np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1)]
-    color_array = np.zeros_like(points)
-
-    k = 0
-    while k < len(BSpline_per_degree_list):
-        color_array[BSpline_per_degree_list[k][2], ] = [np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1)]
-        k = k + 1
-
-    point_cloud.colors = open3d.utility.Vector3dVector(color_array)
-    #point_cloud.paint_uniform_color([0.0, 0.0, 0.0])
-    open3d.visualization.draw_geometries([point_cloud])
-
 
 if __name__ == "__main__": 
     main()
