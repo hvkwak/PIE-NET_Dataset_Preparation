@@ -87,7 +87,7 @@ def main():
             del Loader
             
             if vertices.shape[0] > 35000: # make sure we have < 30K vertices to keep it simple.
-                print("vertices:", vertices.shape[0], " > 30000. skip this.")
+                print("vertices:", vertices.shape[0], " > 35000. skip this.")
                 log_string("vertices " +str(vertices.shape[0])+" > 35000. skip this.", log_fout)
                 del vertices
                 del faces
@@ -138,7 +138,7 @@ def main():
             view_point(vertices, all_curves)
             '''
             
-
+            # skip if there are too many specific type of curves
             if len(BSpline_list) > 300 or len(Circle_list) > 300 or len(Line_list) > 300:
                 print("at least one curve type has > 300 curves. skip this.")
                 log_string("at least one curve type has > 300 curves. skip this.", log_fout)
@@ -542,7 +542,7 @@ def main():
             np.fill_diagonal(distance_between_corner_points, np.Inf)
             too_many_corner_points_nearby = False
             for k in range(distance_between_corner_points.shape[0]):
-                # check if 10% of the all corner points gathered in a neighborhood with its distance of 5.
+                # check if 10% of the all corner points gathered in a neighborhood within the distance of 5.
                 if (distance_between_corner_points[k,:] < 5).sum() / distance_between_corner_points.shape[0] > 0.1:
                     too_many_corner_points_nearby = True
                     break
@@ -569,13 +569,14 @@ def main():
                 corner_points_residual_vector[:,2] = (corner_points_residual_vector[:, 2] / (max_in_this_model*2.0))
                 
             m = 0
+            closed_curve_NN_search_failed = False
             for curve in closed_curves:
                 try:
                     closed_gt_pair_idx[m,0] = nearest_neighbor_finder(vertices[np.array([curve[2][0]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
                 except:
                     print("NN for closed_gt_pair_idx was not successful. skip this.")
                     log_string("NN for closed_gt_pair_idx was not successful. skip this.", log_fout)
-                    continue
+                    closed_curve_NN_search_failed = True
                 closed_gt_valid_mask[m, 0] = 1
                 # closed_gt_256_64_idx
                 if curve[2][0] == curve[2][-1]: curve[2] = curve[2][:-1] # update if these two indicies are same.
@@ -587,18 +588,20 @@ def main():
                     except:
                         print("NN for closed_gt_256_64_idx was not successful. skip this.")
                         log_string("NN for closed_gt_256_64_idx was not successful. skip this.", log_fout)
-                        continue                        
+                        closed_curve_NN_search_failed = True
+                        continue
                     #closed_gt_256_64_idx[i, 63] = curve[2][-1]
                     closed_gt_mask[m, 0:64] = 1
                 else:
                     indicies_num = len(curve[2])
                     closed_gt_mask[m, 0:indicies_num] = 1
                     closed_gt_256_64_idx[m, :] = curve[2] + [curve[2][-1]]*(64 - indicies_num)
-
+                
+                
                 # closed_gt_type, closed_type_onehot
                 if curve[0] == "Circle": closed_gt_type[m,0] = 1
                 
-                # open_gt_res
+                # closed_gt_res
                 res1 = vertices[curve[2][0], ]-down_sample_point[closed_gt_pair_idx[m, ][0], ]
                 closed_gt_res[m, ] = np.array([res1])
 
@@ -606,13 +609,17 @@ def main():
                 closed_gt_sample_points[m, ...] = down_sample_point[closed_gt_256_64_idx[m], ]
                 m = m + 1
 
+            if closed_curve_NN_search_failed: continue
+
             n = 0
+            open_curve_NN_search_failed = False
             for curve in open_curves:
                 try:
                     open_gt_pair_idx[n, ] = nearest_neighbor_finder(vertices[np.array([curve[2][0], curve[2][-1]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
                 except:
                     print("NN for open_gt_pair_idx was not successful. skip this.")
                     log_string("NN for open_gt_pair_idx was not successful. skip this.", log_fout)
+                    open_curve_NN_search_failed = True
                     continue
                 open_gt_valid_mask[n, 0] = 1
                 # open_gt_256_64_idx
@@ -624,6 +631,7 @@ def main():
                     except:
                         print("NN for open_gt_256_64_idx was not successful. skip this.")
                         log_string("NN for open_gt_256_64_idx was not successful. skip this.", log_fout)
+                        open_curve_NN_search_failed = True
                         continue
                     open_gt_256_64_idx[n, 63] = curve[2][-1]
                     open_gt_mask[n, 0:64] = 1
@@ -644,7 +652,7 @@ def main():
                 # open_gt_sample_points
                 open_gt_sample_points[n, ...] = down_sample_point[open_gt_256_64_idx[n], ]
                 n = n + 1
-            
+            if open_curve_NN_search_failed: continue
             
             print("Ok. save data.")
             log_string("Ok. save data.", log_fout)
