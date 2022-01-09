@@ -10,12 +10,14 @@ def main():
     ref_mat = sio.loadmat('/home/pro2future/Documents/PIE-NET_Dataset_Preparation/5.mat')
     my_mat = sio.loadmat('/home/pro2future/Documents/PIE-NET_Dataset_Preparation/3.mat')
 
-    down_sample_point = ref_mat['Training_data'][0, 0]['down_sample_point'][0, 0]
-    closed_curves = ref_mat['Training_data'][0, 0]['closed_gt_256_64_idx'][0, 0] 
-    #view_point_4(down_sample_point)
-    view_point_4(down_sample_point[closed_curves][203, : ,:])
-    #view_point_4(np.concatenate(down_sample_point[closed_curves]))
-    print()
+    for i in range(64):
+        down_sample_point = ref_mat['Training_data'][i, 0]['down_sample_point'][0, 0]
+        #closed_curves = ref_mat['Training_data'][0, 0]['closed_gt_256_64_idx'][0, 0] 
+        #view_point_4(down_sample_point)
+        #view_point_4(down_sample_point[closed_curves][203, : ,:])
+        #view_point_4(np.concatenate(down_sample_point[closed_curves]))
+        view_point_4(down_sample_point)
+        print()
     #test_pred_99_mat = sio.loadmat('/raid/home/hyovin.kwak/PIE-NET/main/test_result/test_pred_99.mat')
     #test_pred_99_mat = sio.loadmat('/home/pro2future/Documents/PIE-NET_Dataset_Preparation/test_pred_99.mat')
     #i = 0
