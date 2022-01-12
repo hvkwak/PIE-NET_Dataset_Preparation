@@ -134,7 +134,8 @@ def main():
 def corner_pair_label_generator(sample_points, \
                                 sample_256_64_idx, \
                                 sample_pair_idx, \
-                                sample_valid_mask, \
+                                sample_valid_mask_pair, \
+                                sample_valid_mask_256_64, \
                                 sample_corner_pairs_available, \
                                 points_cloud, \
                                 batch_open_gt_pair_idx, \
@@ -142,17 +143,21 @@ def corner_pair_label_generator(sample_points, \
                                 # add more gt_*
 
     batch_num = len(sample_corner_pairs_available)    
-    labels = np.zeros((batch_num, 256, 64), dtype = np.int32) # output should be (batch_num, 256, 64, 2)
+    sample_valid_mask_256_64_labels_for_loss = np.zeros((batch_num, 256, 64), dtype = np.int32) # output should be (batch_num, 256, 64, 2)
+    sample_valid_mask_pair_labels_for_loss = np.zeros((batch_num, 256, 1), dtype = np.int16)
     points_cloud_np = points_cloud.numpy()
     dist_threshold = 0.01
+
+    # sample_valid_mask_256_64    
     
     for i in range(batch_num):
         # per batch
         if sample_corner_pairs_available[i]:
-            current_open_gt_valid_mask = sample_valid_mask[i].numpy()
+            sample_valid_mask_pair_numpy = sample_valid_mask_pair[i].numpy()
             k = 0
             found_in_gt_open_pair = False
-            while current_open_gt_valid_mask[k][0] == 1:
+            while sample_valid_mask_pair_numpy[k][0] == 1:
+
                 # per curve pair k in one batch
                 if sample_pair_idx[i][k].numpy() in batch_open_gt_pair_idx[i, :, :]:
                     found_in_gt_open_pair = True
@@ -161,14 +166,16 @@ def corner_pair_label_generator(sample_points, \
                     # gt_idx = np.where(batch_open_gt_pair_idx[i][k].numpy() in my_mat['open_gt_pair_idx'][0, 0])[0][0]
                     # my_mat[0, 0]['open_gt_256_64_idx'][gt_idx, :]
                     mask = np.in1d(sample_256_64_idx[i][k].numpy(), batch_open_gt_256_64_idx[i, :, :][gt_idx])
-                    labels[i, k, :] = mask.astype(np.int32)
+                    sample_valid_mask_256_64_labels_for_loss[i, k, :] = mask.astype(np.int32)*sample_valid_mask_256_64[i, k, :]
+                    sample_valid_mask_pair_labels_for_loss[i, k, 0] = 1
                 elif np.flip(sample_pair_idx[i][k].numpy()) in batch_open_gt_pair_idx[i, :, :]:
                     found_in_gt_open_pair = True
                     gt_idx = np.where(np.flip(sample_pair_idx[i][k].numpy()) in batch_open_gt_pair_idx[i, :, :])[0]
                     # my_mat[0, 0]['open_gt_256_64_idx'][gt_idx, :]
                     mask = np.in1d(sample_pair_idx[i][k].numpy(), batch_open_gt_256_64_idx[i, :, :][gt_idx])
                     # update here labels
-                    labels[i, k, :] = mask.astype(np.int32)
+                    sample_valid_mask_256_64_labels_for_loss[i, k, :] = mask.astype(np.int32)*sample_valid_mask_256_64[i, k, :]
+                    sample_valid_mask_pair_labels_for_loss[i, k, 0] = 1
 
                 if not found_in_gt_open_pair:
                 # not exact match, but see if there is one nearby.
@@ -176,23 +183,24 @@ def corner_pair_label_generator(sample_points, \
                     distance = np.sqrt(np.sum((points_cloud_np[i][sample_pair_idx[i][k].numpy(), :] - points_cloud_np[i][batch_open_gt_pair_idx[i, :, :], :])**2, axis = 2))
                     if (distance < np.array([dist_threshold, dist_threshold])).all(axis = 1).sum() > 0:
                         found_in_gt_open_pair = True
-                        gt_indices = np.where((distance < np.array([0.01, 0.01])).all(axis = 1))[0]
+                        gt_indices = np.where((distance < np.array([dist_threshold, dist_threshold])).all(axis = 1))[0]
                         gt_idx = gt_indices[np.argmin(distance[gt_indices, :].mean(axis = 1))]
                         mask = np.in1d(sample_256_64_idx[i][k].numpy(), batch_open_gt_256_64_idx[i, :, :][gt_idx])
-                        labels[i, k, :] = mask.astype(np.int32)
+                        sample_valid_mask_256_64_labels_for_loss[i, k, :] = mask.astype(np.int32)*sample_valid_mask_256_64[i, k, :]
+                        sample_valid_mask_pair_labels_for_loss[i, k, 0] = 1
                 
                 if not found_in_gt_open_pair:
                     distance = np.sqrt(np.sum((points_cloud_np[i][np.flip(sample_pair_idx[i][k].numpy()), :] - points_cloud_np[i][batch_open_gt_pair_idx[i, :, :], :])**2, axis = 2))
                     if (distance < np.array([dist_threshold, dist_threshold])).all(axis = 1).sum() > 0:
                         found_in_gt_open_pair = True
-                        gt_indices = np.where((distance < np.array([0.01, 0.01])).all(axis = 1))[0]
+                        gt_indices = np.where((distance < np.array([dist_threshold, dist_threshold])).all(axis = 1))[0]
                         gt_idx = gt_indices[np.argmin(distance[gt_indices, :].mean(axis = 1))]
                         mask = np.in1d(sample_256_64_idx[i][k].numpy(), batch_open_gt_256_64_idx[i, :, :][gt_idx])
-                        labels[i, k, :] = mask.astype(np.int32)
+                        sample_valid_mask_256_64_labels_for_loss[i, k, :] = mask.astype(np.int32)*sample_valid_mask_256_64[i, k, :]
+                        sample_valid_mask_pair_labels_for_loss[i, k, 0] = 1
                 k = k+1
-        else:
-            labels[i, ...] = np.zeros((256, 64), dtype = np.int32)
-    return labels
+
+    return sample_valid_mask_256_64_labels_for_loss, sample_valid_mask_pair_labels_for_loss
 
 
 if __name__ == "__main__": 
