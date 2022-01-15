@@ -615,7 +615,7 @@ def main():
             open_curve_NN_search_failed = False
             for curve in open_curves:
                 try:
-                    open_gt_pair_idx[n,:] = nearest_neighbor_finder(vertices[np.array([curve[2][0], curve[2][-1]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                    open_gt_pair_idx[n,] = nearest_neighbor_finder(vertices[np.array([curve[2][0], curve[2][-1]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
                 except:
                     print("NN for open_gt_pair_idx was not successful. skip this.")
                     log_string("NN for open_gt_pair_idx was not successful. skip this.", log_fout)
@@ -642,8 +642,14 @@ def main():
                     open_gt_mask[n, 0:(middle_idx_num+2)] = 1
                     #open_gt_256_64_idx[n, :] = curve[2] + [curve[2][-1]]*(64 - indicies_num)
                     open_gt_256_64_idx[n, 0] = open_gt_pair_idx[n, 0]
-                    open_gt_256_64_idx[n, 1:(middle_idx_num+1)] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:-1], len(curve[2][1:-1]))),:], down_sample_point, use_clustering=False, neighbor_distance=1)
-                    open_gt_256_64_idx[n, (middle_idx_num+2):64] = open_gt_pair_idx[n, 1]
+                    try:
+                        open_gt_256_64_idx[n, 1:(middle_idx_num+1)] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:-1], len(curve[2][1:-1]))),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                    except:
+                        print("NN for open_gt_256_64_idx[n, 1:(middle_idx_num+1)] was not successful. skip this.")
+                        log_string("NN for open_gt_256_64_idx[n, 1:(middle_idx_num+1)] was not successful. skip this.", log_fout)
+                        open_curve_NN_search_failed = True
+                        continue
+                    open_gt_256_64_idx[n, (middle_idx_num+1):64] = open_gt_pair_idx[n, 1]
 
                 # open_gt_type, open_type_onehot
                 if curve[0] == "BSpline": open_gt_type[n,0], open_type_onehot[n, ] = 1, np.array([0, 1, 0, 0])
