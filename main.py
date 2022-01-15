@@ -615,7 +615,7 @@ def main():
             open_curve_NN_search_failed = False
             for curve in open_curves:
                 try:
-                    open_gt_pair_idx[n, ] = nearest_neighbor_finder(vertices[np.array([curve[2][0], curve[2][-1]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                    open_gt_pair_idx[n,:] = nearest_neighbor_finder(vertices[np.array([curve[2][0], curve[2][-1]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
                 except:
                     print("NN for open_gt_pair_idx was not successful. skip this.")
                     log_string("NN for open_gt_pair_idx was not successful. skip this.", log_fout)
@@ -625,7 +625,8 @@ def main():
                 # open_gt_256_64_idx
                 if len(curve[2]) > 64:
                     # take start/end points + sample 62 points = 64 points
-                    open_gt_256_64_idx[n, 0] = curve[2][0]
+                    #open_gt_256_64_idx[n, 0] = curve[2][0]
+                    open_gt_256_64_idx[n, 0] = open_gt_pair_idx[n,0]
                     try:
                         open_gt_256_64_idx[n, 1:63] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:-1], len(curve[2][1:-1]))[:62]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
                     except:
@@ -633,12 +634,16 @@ def main():
                         log_string("NN for open_gt_256_64_idx was not successful. skip this.", log_fout)
                         open_curve_NN_search_failed = True
                         continue
-                    open_gt_256_64_idx[n, 63] = curve[2][-1]
+                    #open_gt_256_64_idx[n, 63] = curve[2][-1]
+                    open_gt_256_64_idx[n, 63] = open_gt_pair_idx[n,1]
                     open_gt_mask[n, 0:64] = 1
                 else:
-                    indicies_num = len(curve[2])
-                    open_gt_mask[n, 0:indicies_num] = 1
-                    open_gt_256_64_idx[n, :] = curve[2] + [curve[2][-1]]*(64 - indicies_num)
+                    middle_idx_num = len(curve[2]) - 2
+                    open_gt_mask[n, 0:(middle_idx_num+2)] = 1
+                    #open_gt_256_64_idx[n, :] = curve[2] + [curve[2][-1]]*(64 - indicies_num)
+                    open_gt_256_64_idx[n, 0] = open_gt_pair_idx[n, 0]
+                    open_gt_256_64_idx[n, 1:(middle_idx_num+1)] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:-1], len(curve[2][1:-1]))),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                    open_gt_256_64_idx[n, (middle_idx_num+2):64] = open_gt_pair_idx[n, 1]
 
                 # open_gt_type, open_type_onehot
                 if curve[0] == "BSpline": open_gt_type[n,0], open_type_onehot[n, ] = 1, np.array([0, 1, 0, 0])
