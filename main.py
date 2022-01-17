@@ -21,9 +21,12 @@ from utils import half_curves_finder
 from utils import touch_in_circles_or_BSplines
 from utils import touch_in_circle
 from utils import mostly_sharp_edges
+from utils import Check_Connect_Circles
 #from utils import degrees_same
 from cycle_detection import Cycle_Detector_in_BSplines
 from grafkom1Framework import ObjLoader
+from utils import PathLength
+from LongestPath import Graph
 #from visualizer import view_point_1
 #from visualizer import view_point
 
@@ -61,10 +64,8 @@ def main():
     batch_count = 0
     file_count = 0
     data = {'batch_count': batch_count, 'Training_data': np.zeros((64, 1), dtype = object)}
-    for i in range(model_total_num):
+    for i in range(6075, model_total_num):
         
-        # check the feature file if it contains at least a sharp edges
-        # and check that models are same.
         model_name_obj = "_".join(list_obj_lines[i].split('/')[-1].split('_')[0:2])
         model_name_ftr = "_".join(list_ftr_lines[i].split('/')[-1].split('_')[0:2])
         model_name_obj = delete_newline(model_name_obj)
@@ -79,16 +80,17 @@ def main():
                 ".."+str(i+1) + "/" + str(model_total_num))
             log_string("Processing: "+ model_name_ftr+ ".."+str(i+1) + "/" + str(model_total_num), log_fout)
 
-            # load the object file: all vertices / faces of a Model with at least one sharp edge.
+            # load the object file: all vertices / faces
             Loader = ObjLoader(list_obj_line)
             vertices = np.array(Loader.vertices)
             faces = np.array(Loader.faces)
             vertex_normals = np.array(Loader.vertex_normals)
             del Loader
             
-            if vertices.shape[0] > 35000: # make sure we have < 30K vertices to keep it simple.
-                print("vertices:", vertices.shape[0], " > 35000. skip this.")
-                log_string("vertices " +str(vertices.shape[0])+" > 35000. skip this.", log_fout)
+            # make sure we have < 30K vertices to keep it simple.
+            if vertices.shape[0] > 40000: 
+                print("vertices:", vertices.shape[0], " > 40000. skip this.")
+                log_string("vertices " +str(vertices.shape[0])+" > 40000. skip this.", log_fout)
                 del vertices
                 del faces
                 del vertex_normals
@@ -100,6 +102,7 @@ def main():
                 log_string("sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.", log_fout)
                 continue
             
+            # if there are curves not the type of one of Circle, BSpline, Line, skip this.
             all_curves = []
             try:
                 all_curves = curves_with_vertex_indices(list_ftr_line)
@@ -138,7 +141,7 @@ def main():
             view_point(vertices, all_curves)
             '''
             
-            # skip if there are too many specific type of curves
+            # skip if there are one type of curves too much.
             if len(BSpline_list) > 300 or len(Circle_list) > 300 or len(Line_list) > 300:
                 print("at least one curve type has > 300 curves. skip this.")
                 log_string("at least one curve type has > 300 curves. skip this.", log_fout)
@@ -157,13 +160,11 @@ def main():
                     k = k - 1
                 k = k + 1
             
-            # Check if there are half Circles/BSplines pair, merge them if there's one.
-            #BSpline_list.append(['BSpline', 3, [33, 99, 66, 55, 44, 11, 22, 77]] )
-            #BSpline_list.append(['BSpline', 3, [77, 99, 66, 55, 44, 11, 22, 33]] )
-            BSpline_list = half_curves_finder(BSpline_list)
-            Circle_list = half_curves_finder(Circle_list)
+            # Check if there are half Circles/BSplines pair, merge them if there's one.            
+            BSpline_list = half_curves_finder(BSpline_list, vertices)
+            Circle_list = half_curves_finder(Circle_list, vertices)
 
-            # Move Circles in BSplines to Circles.
+            # Run this once more to see if there are new Circles from BSplines.
             k = 0
             BSpline_list_num = len(BSpline_list)
             while k < BSpline_list_num:
@@ -174,7 +175,7 @@ def main():
                     k = k - 1
                 k = k + 1
 
-            
+            # check if a line touches circles_or_BSplines
             Line_list_num = len(Line_list)
             k = 0
             while k < Line_list_num:
@@ -183,29 +184,57 @@ def main():
                     k = k - 1
                     Line_list_num = Line_list_num - 1
                 k = k + 1
-                
-            # There are still open curves in Circles. keep them as BSpline.
+
+            # Circles should be also classified into three categories: Full Circle, HalfCircles and BSpline.
+            FullCircles = []
+            Circle_list_num = len(Circle_list)
+            k = 0
+            while k < Circle_list_num:
+                if Circle_list[k][2][0] == Circle_list[k][2][-1]:
+                    FullCircles.append(Circle_list[k])
+                    del Circle_list[k]
+                    k = k - 1
+                    Circle_list_num = Circle_list_num - 1
+                k = k + 1
+            
+            # Add one more function: there can be HalfCircles!
+            # Divide them into two categories: Half Circle or BSpline.
+            HalfCircle_list = []
             k = 0
             Circle_list_num = len(Circle_list)
             while k < Circle_list_num:
                 if Circle_list[k][2][0] != Circle_list[k][2][-1]:
-                    Circle_list[k][0] = 'BSpline'
-                    BSpline_list.append(Circle_list[k])
-                    del Circle_list[k]
-                    Circle_list_num = Circle_list_num - 1
-                    k = k - 1
+                    point1_idx = Circle_list[k][2][0]
+                    point2_idx = Circle_list[k][2][-1]
+                    point1 = vertices[point1_idx, :]
+                    point2 = vertices[point2_idx, :]
+                    middle = (point1 + point2)/2.0
+                    distances = np.sqrt(((middle - vertices[Circle_list[k][2], :])**2).sum(axis = 1))
+                    small_std = np.std(distances, dtype = np.float64) < 0.025
+
+                    if len(Circle_list[k][2]) > 3 and small_std:
+                        Circle_list[k][0] == 'HalfCircle'
+                        HalfCircle_list.append(Circle_list[k])
+                        del Circle_list[k]
+                        Circle_list_num = Circle_list_num - 1
+                        k = k - 1
+                    else:
+                        Circle_list[k][0] = 'BSpline'
+                        BSpline_list.append(Circle_list[k])
+                        del Circle_list[k]
+                        Circle_list_num = Circle_list_num - 1
+                        k = k - 1                    
                 k = k + 1
-
             '''
-            if len(BSpline_list) > 0:
-                print("Visualizing.. BSpline_list")
-                view_point(vertices, BSpline_list)
+            while PathLength(Circle_list, nodes) > 1:
+                HalfCircle_list, Circle_list = Check_Connect_Circles(nodes, vertices, HalfCircle_list, Circle_list, BSpline_list)
             '''
 
+            
+            Circle_list = FullCircles
             # Find BSplines with degree = 1 and classify them accordingly:
             # BSpline with degree = 1 and both start/end points touch circles, remove it from the list
             # BSpline with degree = 1 and no touches -> keep them as line.
-
             # first take all the BSplines of degree 1
             BSpline_degree_one_list = []
             BSpline_list_num = len(BSpline_list)
@@ -217,7 +246,6 @@ def main():
                     k = k - 1
                     BSpline_list_num = BSpline_list_num - 1
                 k = k + 1
-
             # Delete them or add them to Lines.
             # touching two Circles(or BSplines) should be eliminated.
             BSpline_degree_one_list_num = len(BSpline_degree_one_list)
@@ -296,77 +324,8 @@ def main():
             if detected_cycles_in_BSplines:
                 print("There are at least one detected cycle, skip this.")
                 log_string("there are at least one detected cycle, skip this.", log_fout)
-                continue                
+                continue
                 
-            '''
-            i = 0
-            while i < detected_cycles_in_BSplines_num: # e.g.) [[3, 4, 5, 6], [11, 12, 13]]
-                parts_num = len(detected_cycles_in_BSplines[i]) # e.g) Cycle Number 1: 3, 4, 5, 6
-                temp_Splines = []
-                elements_num = 0
-
-                # for cycle number i:
-                k = 0
-                BSpline_list_num = len(BSpline_list)
-                while k < BSpline_list_num:
-                    if BSpline_list[k][2][0] in detected_cycles_in_BSplines[i] and \
-                        BSpline_list[k][2][-1] in detected_cycles_in_BSplines[i]:
-                        elements_num = elements_num + len(BSpline_list[k][2])
-                        temp_Splines.append(BSpline_list[k])
-                        del BSpline_list[k]
-                        k = k - 1
-                        BSpline_list_num = BSpline_list_num - 1
-                    k = k + 1
-                
-                if not degrees_same(temp_Splines):
-                    print("BSplines of this detected cycle have different degrees. skip these Splines")
-                    continue
-                
-                avg_length = elements_num / np.float32(parts_num)
-                different_length = False
-                # check if the splines have similar length. not too similar -> continue.
-                for n in range(parts_num):
-                    if np.abs(len(temp_Splines[n]) - avg_length) > 2:
-                        different_length = True
-                if different_length:
-                    print("Splines for this cycle have too different length. skip this.")
-                    log_string("Splines for this cycle have too different length. skip this.", log_fout)
-                
-            
-                centroid_x = 0.0
-                centroid_y = 0.0
-                centroid_z = 0.0
-                vertices_num = 0
-                # for all Splines of a cycle:
-                for k in range(parts_num):
-                    vertices_num += len(temp_Splines[k])
-                    x, y, z = vertices[temp_Splines[k], :].sum(axis = 1)
-                    centroid_x += x
-                    centroid_y += y
-                    centroid_z += z
-                
-                centroid_x = centroid_x / np.float32(vertices_num)
-                centroid_y = centroid_y / np.float32(vertices_num)
-                centroid_z = centroid_z / np.float32(vertices_num)
-                
-                distances = np.sum(((centroid_x, centroid_y, centroid_z) - vertices[temp_Splines[k], :])**2, axis = 0)
-                mean_distance = np.mean(distances)
-                
-                merged_vertices_list = []
-                if ((mean_distance - distances)**2 < 1).sum() == distances.shape[0]:
-                    print("A possible circle found.")
-                    start_vertice_num_of_circle = detected_cycles_in_BSplines[i][0]
-                    next_start_vertice_num_of_circle = None
-                    while len(temp_Splines) != 0:
-                        for m in range(len(temp_Splines)): 
-                            if temp_Splines[m][2][0] == start_vertice_num_of_circle:
-                                merged_vertices_list += temp_Splines[m][2]
-                                next_vertice_num_of_circle = temp_Splines[m][2][-1]
-                            if temp_Splines[m][2][0] == next_vertice_num_of_circle:
-                                merged_vertices_list += temp_Splines[m][2][1:]
-                                next_vertice_num_of_circle = temp_Splines[m][2][-1]
-                Circle_list.append(['Circle', None, merged_vertices_list])
-            '''
         
             
             # Classifications into open/closed curve AND edge/corner points
@@ -380,7 +339,7 @@ def main():
             k = 0
             while k < curve_num:
                 curve = all_curves[k]
-                # check if there are (corner) points, where two curves cross or meet.
+                # check if there are (corner) points, where two curves cross or meet. like an alphabet X
                 if len(curve[2]) > 2 and k < curve_num-1:
                     for j in range(k+1, curve_num):
                         if len(all_curves[j][2]) > 2:
@@ -405,14 +364,18 @@ def main():
             del Line_Circle_List
 
             k = 0
-            while k < len(BSpline_list):
-                curve = BSpline_list[k]
+            BSpline_HalfCircle_List = BSpline_list + HalfCircle_list
+            while k < len(BSpline_HalfCircle_List):
+                curve = BSpline_HalfCircle_List[k]
                 if curve[0] == 'BSpline':
                     if 3 <= len(curve[2]) <= 6 :
                         corner_points_ori.append(curve[2][len(curve[2])//2])
                     open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
+                elif curve[0] == 'HalfCircle':
+                    open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
                 k = k + 1
             del BSpline_list
+            del HalfCircle_list
 
             # if there are more than 256 curves in each section: don't use this model.
             if (len(open_curves) > 256) or (len(closed_curves) > 256): 
@@ -456,8 +419,8 @@ def main():
             # option 1 : no clustering, just take nearest neighbors. Ties shoud be handled again with nearest neighbor
             # concept around the tie point of a down_sample_point
             try:
-                nearest_neighbor_idx_edge_1 = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=0.5)
-                nearest_neighbor_idx_corner_1 = nearest_neighbor_finder(vertices[corner_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=0.5)
+                nearest_neighbor_idx_edge_1 = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                nearest_neighbor_idx_corner_1 = nearest_neighbor_finder(vertices[corner_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=1)
                 distance_max_1 = np.max(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_1, :])**2).sum(axis = 1))
                 if distance_max_1 > 1.5:
                     print("distance_max_1: ", distance_max_1, " > 1.5. skip this.")
@@ -518,7 +481,7 @@ def main():
             open_gt_pair_idx = np.zeros((256, 2), dtype=np.uint16)
             open_gt_valid_mask = np.zeros((256, 1), dtype=np.uint8)
             open_gt_256_64_idx = np.zeros((256, 64), dtype=np.uint16)
-            open_gt_type = np.zeros((256, 1), dtype=np.uint8) # Note: BSpline and Lines, so two label types: 1, 2
+            open_gt_type = np.zeros((256, 1), dtype=np.uint8) # Note: BSpline, Lines, HalfCircle so three label types: 1, 2, 3, zero for NullClass
             open_type_onehot = np.zeros((256, 4), dtype=np.uint8)
             open_gt_res = np.zeros((256, 6), dtype=np.float32)
             open_gt_sample_points = np.zeros((256, 64, 3), dtype=np.float32)
@@ -570,21 +533,29 @@ def main():
                 
             m = 0
             closed_curve_NN_search_failed = False
+            down_sample_point_copy = down_sample_point.copy()
             for curve in closed_curves:
+                # first element
                 try:
-                    closed_gt_pair_idx[m,0] = nearest_neighbor_finder(vertices[np.array([curve[2][0]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                    closed_gt_pair_idx[m,0] = nearest_neighbor_finder(vertices[np.array([curve[2][0]]),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
+                    closed_gt_256_64_idx[m, 0] = closed_gt_pair_idx[m,0]
+                    # make the point unavailable.
+                    down_sample_point_copy[closed_gt_pair_idx[m,0], :] = np.Inf
                 except:
                     print("NN for closed_gt_pair_idx was not successful. skip this.")
                     log_string("NN for closed_gt_pair_idx was not successful. skip this.", log_fout)
                     closed_curve_NN_search_failed = True
                 closed_gt_valid_mask[m, 0] = 1
-                # closed_gt_256_64_idx
+                
                 if curve[2][0] == curve[2][-1]: curve[2] = curve[2][:-1] # update if these two indicies are same.
+
+                # the rest of them!
                 if len(curve[2]) > 64:
                     # take start/end points + sample 62 points = 64 points
-                    closed_gt_256_64_idx[m, 0] = curve[2][0]
                     try:
-                        closed_gt_256_64_idx[m, 1:64] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:], len(curve[2][1:]))[:63]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                        closed_gt_256_64_idx[m, 1:64] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:], len(curve[2][1:]))[:63]),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
+                        # make the point unavailable.
+                        down_sample_point_copy[closed_gt_256_64_idx[m, 1:64], :] = np.Inf
                     except:
                         print("NN for closed_gt_256_64_idx was not successful. skip this.")
                         log_string("NN for closed_gt_256_64_idx was not successful. skip this.", log_fout)
@@ -593,67 +564,82 @@ def main():
                     #closed_gt_256_64_idx[i, 63] = curve[2][-1]
                     closed_gt_mask[m, 0:64] = 1
                 else:
-                    indicies_num = len(curve[2])
-                    closed_gt_mask[m, 0:indicies_num] = 1
-                    closed_gt_256_64_idx[m, :] = curve[2] + [curve[2][-1]]*(64 - indicies_num)
+                    try:
+                        closed_gt_256_64_idx[m, 1:len(curve[2][1:])+1] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:], len(curve[2][1:]))[:len(curve[2][1:])]),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
+                        # make the point unavailable.
+                        down_sample_point_copy[closed_gt_256_64_idx[m, 1:len(curve[2][1:])+1], :] = np.Inf
+                    except:
+                        print("NN for closed_gt_256_64_idx len() < 64 was not successful. skip this.")
+                        log_string("NN for closed_gt_256_64_idx len() < 64 was not successful. skip this.", log_fout)
+                        closed_curve_NN_search_failed = True
+                        continue
+                    closed_gt_256_64_idx[m, len(curve[2][1:])+1:] = closed_gt_256_64_idx[m, len(curve[2][1:])]
+                    closed_gt_mask[m, :len(curve[2])] = 1
                 
                 
                 # closed_gt_type, closed_type_onehot
                 if curve[0] == "Circle": closed_gt_type[m,0] = 1
                 
                 # closed_gt_res
-                res1 = vertices[curve[2][0], ]-down_sample_point[closed_gt_pair_idx[m, ][0], ]
+                res1 = vertices[curve[2][0], ]-down_sample_point[closed_gt_pair_idx[m,][0], ]
                 closed_gt_res[m, ] = np.array([res1])
 
                 # open_gt_sample_points
                 closed_gt_sample_points[m, ...] = down_sample_point[closed_gt_256_64_idx[m], ]
                 m = m + 1
-
             if closed_curve_NN_search_failed: continue
+
+
 
             n = 0
             open_curve_NN_search_failed = False
+            down_sample_point_copy = down_sample_point.copy()
             for curve in open_curves:
+                # first and last element
                 try:
-                    open_gt_pair_idx[n,] = nearest_neighbor_finder(vertices[np.array([curve[2][0], curve[2][-1]]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                    open_gt_pair_idx[n,] = nearest_neighbor_finder(vertices[np.array([curve[2][0], curve[2][-1]]),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
+                    open_gt_256_64_idx[n, 0] = open_gt_pair_idx[n,0]
+                    open_gt_valid_mask[n, 0] = 1
+                    down_sample_point_copy[open_gt_pair_idx[n,0], :] = np.Inf
+                    down_sample_point_copy[open_gt_pair_idx[n,1], :] = np.Inf
                 except:
                     print("NN for open_gt_pair_idx was not successful. skip this.")
                     log_string("NN for open_gt_pair_idx was not successful. skip this.", log_fout)
                     open_curve_NN_search_failed = True
                     continue
-                open_gt_valid_mask[n, 0] = 1
+                
                 # open_gt_256_64_idx
                 if len(curve[2]) > 64:
-                    # take start/end points + sample 62 points = 64 points
-                    #open_gt_256_64_idx[n, 0] = curve[2][0]
-                    open_gt_256_64_idx[n, 0] = open_gt_pair_idx[n,0]
+                    # sample start/end points + sample 62 points = 64 points
                     try:
-                        open_gt_256_64_idx[n, 1:63] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:-1], len(curve[2][1:-1]))[:62]),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                        open_gt_256_64_idx[n, 1:63] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:-1], len(curve[2][1:-1]))[:62]),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
+                        down_sample_point_copy[open_gt_256_64_idx[n, 1:63],:] = np.Inf
                     except:
                         print("NN for open_gt_256_64_idx was not successful. skip this.")
                         log_string("NN for open_gt_256_64_idx was not successful. skip this.", log_fout)
                         open_curve_NN_search_failed = True
                         continue
-                    #open_gt_256_64_idx[n, 63] = curve[2][-1]
                     open_gt_256_64_idx[n, 63] = open_gt_pair_idx[n,1]
                     open_gt_mask[n, 0:64] = 1
                 else:
                     middle_idx_num = len(curve[2]) - 2
-                    open_gt_mask[n, 0:(middle_idx_num+2)] = 1
                     #open_gt_256_64_idx[n, :] = curve[2] + [curve[2][-1]]*(64 - indicies_num)
-                    open_gt_256_64_idx[n, 0] = open_gt_pair_idx[n, 0]
                     try:
-                        open_gt_256_64_idx[n, 1:(middle_idx_num+1)] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:-1], len(curve[2][1:-1]))),:], down_sample_point, use_clustering=False, neighbor_distance=1)
+                        open_gt_256_64_idx[n, 1:(middle_idx_num+1)] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:-1], len(curve[2][1:-1]))),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
+                        down_sample_point_copy[open_gt_256_64_idx[n, 1:(middle_idx_num+1)],:] = np.Inf
                     except:
                         print("NN for open_gt_256_64_idx[n, 1:(middle_idx_num+1)] was not successful. skip this.")
                         log_string("NN for open_gt_256_64_idx[n, 1:(middle_idx_num+1)] was not successful. skip this.", log_fout)
                         open_curve_NN_search_failed = True
                         continue
                     open_gt_256_64_idx[n, (middle_idx_num+1):64] = open_gt_pair_idx[n, 1]
+                    open_gt_mask[n, 0:(middle_idx_num+2)] = 1
 
-                # open_gt_type, open_type_onehot
-                if curve[0] == "BSpline": open_gt_type[n,0], open_type_onehot[n, ] = 1, np.array([0, 1, 0, 0])
-                else: open_gt_type[n,0], open_type_onehot[n, ] = 2, np.array([0, 0, 1, 0]) # "Line"
+
+                # open_gt_type, open_type_onehot BSpline, Lines, HalfCircle
+                if curve[0] == 'BSpline': open_gt_type[n,0], open_type_onehot[n, ] = 1, np.array([0, 1, 0, 0])
+                elif curve[0] == 'Line' : open_gt_type[n,0], open_type_onehot[n, ] = 2, np.array([0, 0, 1, 0]) # "Line"
+                elif curve[0] == 'HalfCircle' : open_gt_type[n,0], open_type_onehot[n, ] = 3, np.array([0, 0, 0, 1]) # "HalfCircle"
                 
                 # open_gt_res
                 res1 = vertices[curve[2][0], ]-down_sample_point[open_gt_pair_idx[n, ][0], ]

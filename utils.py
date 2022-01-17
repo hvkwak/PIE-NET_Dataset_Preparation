@@ -1,8 +1,88 @@
 import ast
 import numpy as np
 import itertools
+from LongestPath import Graph
 from tqdm import tqdm
 #import open3d
+
+
+def PathLength(Circle_list, nodes):
+    max_digit = 0
+    for circle in Circle_list:
+        if max_digit < np.max([circle[2][0], circle[2][-1]]): max_digit = np.max([circle[2][0], circle[2][-1]])
+    
+    CurvesConnector = Graph(max_digit+1)
+    for k in range(len(Circle_list)):
+        CurvesConnector.addEdge(Circle_list[k][2][0], Circle_list[k][2][-1])
+
+    node, node_2, LongDis = CurvesConnector.LongestPathLength()
+    nodes[0] = node
+    nodes[1] = node_2
+    return LongDis
+
+def Check_Connect_Circles(nodes, vertices, HalfCircle_list, Circle_list, BSpline_list):
+    # connect the circles and determine whether it is half circle or BSpline.
+
+    # note that
+    # nodes[0] is start node
+    # nodes[1] is end node
+    assert nodes[0] != nodes[1]
+    nodes.sort()
+
+    merged = [None, None, []]
+    temp_idx_list = []
+    start_node_found = False
+    end_node_found = False
+    while not start_node_found or not end_node_found:
+        for k in range(len(Circle_list)):
+            # found the first node
+            if not start_node_found and nodes[0] == Circle_list[k][2][0] and nodes[1] != Circle_list[k][2][-1]:
+                start_node_found = True
+                merged[2] = merged[2] + Circle_list[k][2]
+                nodes[0] = Circle_list[k][2][-1]
+                temp_idx_list.append(k)
+                #del Circle_list[k]
+                break
+            # next nodes
+            elif start_node_found and nodes[0] == Circle_list[k][2][0] and nodes[1] != Circle_list[k][2][-1]:
+                merged[2] = merged[2] + Circle_list[k][2][1:]
+                nodes[0] = Circle_list[k][2][-1]
+                temp_idx_list.append(k)
+                #del Circle_list[k]
+                break
+            # final node
+            elif start_node_found and nodes[0] == Circle_list[k][2][0] and nodes[1] == Circle_list[k][2][-1]:
+                end_node_found = True
+                merged[2] = merged[2] + Circle_list[k][2][1:]
+                temp_idx_list.append(k)
+                #del Circle_list[k]
+                break
+
+    # check wheter merged is half circle or BSpline
+    point1_idx = merged[2][0]
+    point2_idx = merged[2][-1]
+    point1 = vertices[point1_idx, :]
+    point2 = vertices[point2_idx, :]
+    middle = (point1 + point2)/2.0
+    distances = np.sqrt(((middle - vertices[merged[2][1:-1], :])**2).sum(axis = 1))
+    small_std = np.std(distances, dtype = np.float64) < 0.025
+    if len(merged[2]) > 3 and small_std:
+        merged[0] = "HalfCircle"
+        merged[1] = True
+        HalfCircle_list.append(merged)
+        Circle_list = [i for j, i in enumerate(Circle_list) if j not in temp_idx_list]
+    else:
+        for curve_idx in temp_idx_list:
+            Circle_list[curve_idx][0] = "BSpline"
+            BSpline_list.append(Circle_list[curve_idx])
+        Circle_list = [i for j, i in enumerate(Circle_list) if j not in temp_idx_list]
+
+    nodes[0] = None
+    nodes[1] = None
+    return HalfCircle_list, Circle_list
+
+
+
 
 '''
 def timeit(func):
@@ -334,7 +414,7 @@ def update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori):
     edge_points_ori = edge_points_ori+curve[2][:]
     return open_curves, corner_points_ori, edge_points_ori
 
-def half_curves_finder(Circle_or_BSpline_list):
+def half_curves_finder(Circle_or_BSpline_list, vertices):
     k = 0
     Circle_or_BSpline_num = len(Circle_or_BSpline_list)
     while k < Circle_or_BSpline_num:
@@ -342,23 +422,30 @@ def half_curves_finder(Circle_or_BSpline_list):
         circle_pair_index = [None]
         circle_pair_Forward = [None]
         if curve[2][0] != curve[2][-1] and another_half_curve_pair_exist(curve, Circle_or_BSpline_list[k+1:], circle_pair_index, circle_pair_Forward):
-            # this one consist of a pair of two half-circle curves!
+            # this one consist of a pair of possible two half-circle curves.
             idx = k+1+circle_pair_index[0]
-            curve = merge_two_half_circles_or_BSpline(curve, idx, Circle_or_BSpline_list, circle_pair_Forward)
-            del Circle_or_BSpline_list[idx]
-            Circle_or_BSpline_num = Circle_or_BSpline_num - 1
-
+            new_curve = merge_two_half_circles_or_BSpline(curve, idx, Circle_or_BSpline_list, circle_pair_Forward)
+            if is_circle(new_curve, vertices):
+                Circle_or_BSpline_list[k] = new_curve
+                del Circle_or_BSpline_list[idx]
+                Circle_or_BSpline_num = Circle_or_BSpline_num - 1
         k = k + 1
     return Circle_or_BSpline_list
 
+def is_circle(new_curve, vertices):
+    centroid = vertices[new_curve[2], :].mean(axis = 1)
+    return np.std(np.sqrt(np.sum((centroid - vertices[new_curve[2], :])**2, axis = 1))) < 0.025
+
 def merge_two_half_circles_or_BSpline(curve, index_in_all_curves, all_curves, circle_pair_Forward):
+    new_all_curves = all_curves.copy()
+    new_curve = curve.copy()
     if circle_pair_Forward[0]:
-        curve[2] = curve[2] + all_curves[index_in_all_curves][2][1:]
+        new_curve[2] = new_curve[2] + new_all_curves[index_in_all_curves][2][1:]
     else:
-        all_curves[index_in_all_curves][2].reverse()
-        curve[2] = curve[2] + all_curves[index_in_all_curves][2][1:]
-    curve[0] = 'Circle'
-    return curve
+        new_all_curves[index_in_all_curves][2].reverse()
+        new_curve[2] = new_curve[2] + new_all_curves[index_in_all_curves][2][1:]
+    new_curve[0] = 'Circle'
+    return new_curve
 
 def degrees_same(temp_Splines):
     start_degree = temp_Splines[0][1]

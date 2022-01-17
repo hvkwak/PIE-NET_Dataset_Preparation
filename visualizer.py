@@ -94,10 +94,10 @@ def view_point_1(points, gt, pred):
 def view_point(points, BSpline_per_degree_list):
     point_cloud = open3d.geometry.PointCloud()
     point_cloud.points = open3d.utility.Vector3dVector(points)    
-    color1 = [0.0, 0.99, 0.0] # BSpline one degree, green
-    color2 = [0.0, 0.0, 0.99] # edge, blue
-    color3 = [0.99, 0, 0.0] # corner, red
-    color4 = [np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1)]
+    #color1 = [0.0, 0.99, 0.0] # BSpline one degree, green
+    #color2 = [0.0, 0.0, 0.99] # edge, blue
+    #color3 = [0.99, 0, 0.0] # corner, red
+    #color4 = [np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1)]
     color_array = np.zeros_like(points)
 
     k = 0
