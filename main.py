@@ -64,7 +64,7 @@ def main():
     batch_count = 0
     file_count = 0
     data = {'batch_count': batch_count, 'Training_data': np.zeros((64, 1), dtype = object)}
-    for i in range(6075, model_total_num):
+    for i in range(model_total_num):
         
         model_name_obj = "_".join(list_obj_lines[i].split('/')[-1].split('_')[0:2])
         model_name_ftr = "_".join(list_ftr_lines[i].split('/')[-1].split('_')[0:2])

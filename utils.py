@@ -246,7 +246,7 @@ def nearest_neighbor_finder(edge_or_corner_points, down_sample_point, use_cluste
         # generate permutations of available_neighbors.
         available_neighbors = available_neighbor_search(idx, down_sample_pts_used, down_sample_point, unique, counts, clustered = use_clustering)
         assert len(available_neighbors) == current_edge_points_num
-        if current_edge_points_num > 5: 
+        if current_edge_points_num > 6: 
             print("WARNING: too much Permutations. skip this.")
             raise ValueError("perm.shape[0] > 50000.")
         perm = np.array(list(itertools.permutations(available_neighbors, current_edge_points_num)))
@@ -433,8 +433,8 @@ def half_curves_finder(Circle_or_BSpline_list, vertices):
     return Circle_or_BSpline_list
 
 def is_circle(new_curve, vertices):
-    centroid = vertices[new_curve[2], :].mean(axis = 1)
-    return np.std(np.sqrt(np.sum((centroid - vertices[new_curve[2], :])**2, axis = 1))) < 0.025
+    centroid = vertices[new_curve[2], :].mean(axis = 0)
+    return np.std(np.sqrt(np.sum((centroid - vertices[new_curve[2], :])**2, axis = 1))) < 0.1
 
 def merge_two_half_circles_or_BSpline(curve, index_in_all_curves, all_curves, circle_pair_Forward):
     new_all_curves = all_curves.copy()
