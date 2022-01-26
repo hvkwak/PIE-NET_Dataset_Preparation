@@ -4,49 +4,55 @@ import scipy.io as sio
 from scipy.special import softmax
 from scipy.interpolate import splprep, splev
 
+def data_preparation_check(mat_num = 1):
+
+    my_mat = sio.loadmat('/home/pro2future/Documents/PIE-NET_Dataset_Preparation/3.mat')
+
+    for i in range(0, mat_num):
+
+        # basics
+        down_sample_point = my_mat['Training_data'][i, 0]['down_sample_point'][0, 0]
+        edge_points_label = my_mat['Training_data'][i, 0]['edge_points_label'][0, 0]
+        edge_points_residual_vector = my_mat['Training_data'][i, 0]['edge_points_residual_vector'][0, 0]
+        corner_points_label = my_mat['Training_data'][i, 0]['corner_points_label'][0, 0]
+        corner_points_residual_vector = my_mat['Training_data'][i, 0]['corner_points_residual_vector'][0, 0]
+        
+        # open gts
+        open_gt_pair_idx = my_mat['Training_data'][i, 0]['open_gt_pair_idx'][0, 0]
+        open_gt_valid_mask = my_mat['Training_data'][i, 0]['open_gt_valid_mask'][0, 0]
+        open_gt_256_64_idx = my_mat['Training_data'][i, 0]['open_gt_256_64_idx'][0, 0]
+        open_gt_type = my_mat['Training_data'][i, 0]['open_gt_type'][0, 0]
+        open_gt_res = my_mat['Training_data'][i, 0]['open_gt_res'][0, 0]
+        open_gt_sample_points = my_mat['Training_data'][i, 0]['open_gt_sample_points'][0, 0]
+        open_gt_mask = my_mat['Training_data'][i, 0]['open_gt_mask'][0, 0]
+        
+        # CHECK three visualizations:
+
+        # 1. R down_sample_point, 
+        #    B edge_points_label, 
+        #    G edge_points_residual_vector
+
+        # 2. R down_sample_point, 
+        #    B corner_points_label, 
+        #    G corner_points_residual_vector
+
+        # 3. Based on: open_gt_pair_idx & open_gt_valid_mask & open_gt_type & open_gt_mask
+        #    Check:    open_gt_256_64_idx in down_sample_points
+        #    ADD:      open_gt_res
+        #    
+        # Make sure that..
+        # open_gt_sample_points == down_sample_points[open_gt_256_64_idx, ...]
+        # open_gt_pair_idx == (open_gt_256_64_idx[0], open_gt_256_64_idx[-1])
+
 
 def main():
 
-    ref_mat = sio.loadmat('/home/pro2future/Documents/PIE-NET_Dataset_Preparation/5.mat')
-    my_mat = sio.loadmat('/home/pro2future/Documents/PIE-NET_Dataset_Preparation/3.mat')
+    data_preparation_check()
 
-    for i in range(64):
-        down_sample_point = ref_mat['Training_data'][i, 0]['down_sample_point'][0, 0]
-        #closed_curves = ref_mat['Training_data'][0, 0]['closed_gt_256_64_idx'][0, 0] 
-        #view_point_4(down_sample_point)
-        #view_point_4(down_sample_point[closed_curves][203, : ,:])
-        #view_point_4(np.concatenate(down_sample_point[closed_curves]))
-        view_point_4(down_sample_point)
-        print()
-    #test_pred_99_mat = sio.loadmat('/raid/home/hyovin.kwak/PIE-NET/main/test_result/test_pred_99.mat')
-    #test_pred_99_mat = sio.loadmat('/home/pro2future/Documents/PIE-NET_Dataset_Preparation/test_pred_99.mat')
-    #i = 0
-    '''
-    i = 0
-    down_sample_point = test_pred_99_mat['input_point_cloud'][i, 0]['down_sample_point'][0, 0]
-    edge_points_label_i = test_pred_99_mat['labels_edge_p'][i, :]
-    corner_points_label_i = test_pred_99_mat['labels_corner_p'][i, :]
-    pred_edge_points_label_i = softmax(test_pred_99_mat['pred_labels_edge_p'][i, :], axis = 1)
-    pred_corner_points_label_i = softmax(test_pred_99_mat['pred_labels_corner_p'][i, :], axis = 1)
-    pred_edge_points_label_i = pred_edge_points_label_i[:, 1] > 0.8
-    pred_corner_points_label_i = pred_corner_points_label_i[:, 1] > 0.9
+    
+    
 
-    # edge points prediction, 
-    # green: true positives
-    # blue: false negatives
-    # red: false positives
-    # edge
-    # view_point_1(down_sample_point, edge_points_label_i, pred_edge_points_label_i)
-    # corner
-    # view_point_1(down_sample_point, corner_points_label_i, pred_corner_points_label_i)
-
-    # with regression corrections
-    # blue: without correction
-    # red: with correction
-    # view_point_2(down_sample_point, test_pred_99_mat['pred_reg_edge_p'][i, :], edge_points_label_i)
-    # view_point_2(down_sample_point, test_pred_99_mat['pred_reg_corner_p'][i, :], corner_points_label_i)
-    '''
-
+'''
 def view_point_4(closed_curves):
     point_cloud = open3d.geometry.PointCloud()
     point_cloud.points = open3d.utility.Vector3dVector(closed_curves)    
@@ -108,7 +114,7 @@ def view_point(points, BSpline_per_degree_list):
     #point_cloud.paint_uniform_color([0.0, 0.0, 0.0])
     open3d.visualization.draw_geometries([point_cloud])
     
-    '''
+    
     i = 0
     my_mat = sio.loadmat('/raid/home/hyovin.kwak/PIE-NET_Dataset_Preparation/0.mat')['Training_data']
     down_sample_point = my_mat[i, 0]['down_sample_point'][0, 0]
@@ -168,6 +174,7 @@ def view_point(points, BSpline_per_degree_list):
         view_point_1(down_sample_point, edge_points_label, corner_points_label)
         #print("corner_points_label: ", corner_points_label.shape)
     '''
+
 
 if __name__ == "__main__": 
     main()

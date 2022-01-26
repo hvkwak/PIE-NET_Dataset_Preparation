@@ -6,7 +6,6 @@ DEVICE_BATCH_SIZE = 8
 
 
 
-
 def main():
 
     # eventually it has to return the tensor...    

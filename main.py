@@ -87,27 +87,33 @@ def main():
             vertex_normals = np.array(Loader.vertex_normals)
             del Loader
             
+            # Type1
             # make sure we have < 30K vertices to keep it simple.
-            if vertices.shape[0] > 40000: 
+            if vertices.shape[0] > 30000: 
                 print("vertices:", vertices.shape[0], " > 40000. skip this.")
+                log_string("Type 1", log_fout)
                 log_string("vertices " +str(vertices.shape[0])+" > 40000. skip this.", log_fout)
                 del vertices
                 del faces
                 del vertex_normals
                 continue
             
+            #Type2
             # Curves with vertex indices: (sharp and not sharp)edges of BSpline, Line, Cycle only.
-            if not mostly_sharp_edges(list_ftr_line, 0.90):
-                print("sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.")
-                log_string("sharp_true_count/(sharp_true_count+sharp_false_count) < 0.90. skip this.", log_fout)
+            if not mostly_sharp_edges(list_ftr_line, threshold=0.30):
+                print("sharp_true_count/(sharp_true_count+sharp_false_count) < 0.30. skip this.")
+                log_string("Type 2", log_fout)
+                log_string("sharp_true_count/(sharp_true_count+sharp_false_count) < 0.30. skip this.", log_fout)
                 continue
             
-            # if there are curves not the type of one of Circle, BSpline, Line, skip this.
+            # Type3
+            # This has curves other than Circle, BSpline or Line, skip this.
             all_curves = []
             try:
                 all_curves = curves_with_vertex_indices(list_ftr_line)
             except:
                 print("there are curves not in [Circle, BSpline, Line]. skip this.")
+                log_string("Type 3", log_fout)
                 log_string("there are curves not in [Circle, BSpline, Line]. skip this.", log_fout)
                 continue                        
             curve_num = len(all_curves)
@@ -116,7 +122,6 @@ def main():
             BSpline_list = []
             Line_list = []
             Circle_list = []
-            
             # Group all the curves.
             k = 0
             while k < curve_num:
@@ -125,25 +130,11 @@ def main():
                 elif curve[0] == 'Line': Line_list.append(curve)
                 elif curve[0] == 'Circle': Circle_list.append(curve)
                 k = k + 1
-
-            #Visualizations
-            '''
-            if len(Circle_list) > 0:
-                print("Visualizing.. Circle_list")
-                view_point(vertices, Circle_list)            
-            if len(BSpline_list) > 0:
-                print("Visualizing.. BSpline_list")
-                view_point(vertices, BSpline_list)
-            if len(Line_list) > 0:
-                print("Visualizing.. Lines_list")
-                view_point(vertices, Line_list)
-            print("Visualizing.. all_curves_list")
-            view_point(vertices, all_curves)
-            '''
             
             # skip if there are one type of curves too much.
             if len(BSpline_list) > 300 or len(Circle_list) > 300 or len(Line_list) > 300:
                 print("at least one curve type has > 300 curves. skip this.")
+                log_string("Type 4", log_fout)
                 log_string("at least one curve type has > 300 curves. skip this.", log_fout)
                 continue
 
@@ -159,11 +150,9 @@ def main():
                     BSpline_list_num = BSpline_list_num - 1
                     k = k - 1
                 k = k + 1
-            
             # Check if there are half Circles/BSplines pair, merge them if there's one.            
             BSpline_list = half_curves_finder(BSpline_list, vertices)
             Circle_list = half_curves_finder(Circle_list, vertices)
-
             # Run this once more to see if there are new Circles from BSplines.
             k = 0
             BSpline_list_num = len(BSpline_list)
@@ -263,7 +252,6 @@ def main():
                     BSpline_degree_one_list_num = BSpline_degree_one_list_num - 1
                 k = k + 1
 
-
             # same for BSplines with its degree > 1, touching two circles. 
             BSpline_list_num = len(BSpline_list)
             k = 0
@@ -287,7 +275,6 @@ def main():
             # Lines, too. if they touch one circle, remove them.
             list_num = len(Line_list) + len(BSpline_list)
             temp_list = Line_list + BSpline_list
-            
             k = 0
             touch_in_circles_ = False
             while k < list_num:
@@ -295,12 +282,11 @@ def main():
                     touch_in_circles_ = True
                     break
                 k = k + 1
-
             if touch_in_circles_:
                 print("there is at least one line touching a circle. skip this.")
+                log_string("Type 5", log_fout)
                 log_string("there is at least one line touching a circle. skip this.", log_fout)
                 continue
-            
 
             # Check if multiple BSplines can form a circle.
             # first check if there are vertices that are "visited" more than twice. 
@@ -313,6 +299,7 @@ def main():
             
             if (np.bincount(visited_verticies) > 2).sum() > 0:
                 print("there exist at least one vertex that is visited more than twice. skip this.")
+                log_string("Type 6", log_fout)
                 log_string("there exist at least one vertex that is visited more than twice. skip this.", log_fout)
                 continue
             
@@ -323,12 +310,14 @@ def main():
             print("Finished!")
             if detected_cycles_in_BSplines:
                 print("There are at least one detected cycle, skip this.")
+                log_string("Type 7", log_fout)
                 log_string("there are at least one detected cycle, skip this.", log_fout)
                 continue
                 
         
-            
+            #
             # Classifications into open/closed curve AND edge/corner points
+            #
             open_curves = []
             closed_curves = []
             corner_points_ori = []
@@ -346,6 +335,7 @@ def main():
                             cross_points = cross_points_finder(curve[2], all_curves[j][2])
                             if len(cross_points) > 0:
                                 print("len(cross_points): ", len(cross_points), "> 0.")
+                                log_string("Type 8", log_fout)
                                 log_string("len(cross_points) > 0.", log_fout)
                                 corner_points_ori = corner_points_ori + cross_points
                 k = k + 1
@@ -380,12 +370,16 @@ def main():
             # if there are more than 256 curves in each section: don't use this model.
             if (len(open_curves) > 256) or (len(closed_curves) > 256): 
                 print("(open/closed)_curves > 256. skip this.")
+                log_string("Type 9", log_fout)
                 log_string("(open/closed)_curves > 256. skip this.", log_fout)
                 continue
 
-            if (len(open_curves) == 0) or (len(closed_curves) == 0): 
-                print("(open/closed)_curves = 0. skip this.")
-                log_string("(open/closed)_curves = 0. skip this.", log_fout)
+            # if (len(open_curves) == 0) or (len(closed_curves) == 0): 
+            # just reject the object if there are no open_curves
+            if (len(open_curves) == 0): 
+                print("open_curves = 0. skip this.")
+                log_string("Type 10", log_fout)
+                log_string("open_curves = 0. skip this.", log_fout)
                 continue
 
             # make the list unique
@@ -396,6 +390,7 @@ def main():
 
             if skip_this_model: 
                 print("problems in (edge/corner)_points_ori(.shape[0] = 0). Skip this.")
+                log_string("Type 11", log_fout)
                 log_string("problems in (edge/corner)_points_ori(.shape[0] = 0). Skip this.", log_fout)
                 continue
 
@@ -424,18 +419,21 @@ def main():
                 distance_max_1 = np.max(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_1, :])**2).sum(axis = 1))
                 if distance_max_1 > 1.5:
                     print("distance_max_1: ", distance_max_1, " > 1.5. skip this.")
+                    log_string("Type 12", log_fout)
                     log_string("distance_max_1: "+str(distance_max_1)+ " > 1.5 skip this.", log_fout)
                     continue
                 nearest_neighbor_idx_edge = nearest_neighbor_idx_edge_1
                 nearest_neighbor_idx_corner = nearest_neighbor_idx_corner_1
             except:
                 print("NN was not successful. skip this.")
+                log_string("Type 13", log_fout)
                 log_string("NN was not successful. skip this.", log_fout)
                 continue
             
-            if nearest_neighbor_idx_corner.shape[0] > 50:
-                print("corner points > 50. skip this.")
-                log_string("corner points > 50. skip this.", log_fout)
+            if nearest_neighbor_idx_corner.shape[0] > 23:
+                print("corner points > 23. skip this.")
+                log_string("Type 14", log_fout)
+                log_string("corner points > 23. skip this.", log_fout)
                 continue
 
             # option 2 : clustering of bins
@@ -497,7 +495,7 @@ def main():
 
             edge_points_label[nearest_neighbor_idx_edge] = 1
             edge_points_residual_vector[nearest_neighbor_idx_edge, :] = vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge, :]
-            corner_points_label[nearest_neighbor_idx_corner, ] = 1
+            corner_points_label[nearest_neighbor_idx_corner] = 1
             corner_points_residual_vector[nearest_neighbor_idx_corner, ] = vertices[corner_points_ori,:] - down_sample_point[nearest_neighbor_idx_corner, :]
 
             # check if corner points are "safe"
@@ -506,11 +504,12 @@ def main():
             too_many_corner_points_nearby = False
             for k in range(distance_between_corner_points.shape[0]):
                 # check if 10% of the all corner points gathered in a neighborhood within the distance of 5.
-                if (distance_between_corner_points[k,:] < 5).sum() / distance_between_corner_points.shape[0] > 0.1:
+                if (distance_between_corner_points[k,:] < 5.0).sum() / distance_between_corner_points.shape[0] > 0.1:
                     too_many_corner_points_nearby = True
                     break
             if too_many_corner_points_nearby:
                 print("too_many_corner_points_nearby. skip this.")
+                log_string("Type 15", log_fout)
                 log_string("too_many_corner_points_nearby. skip this.", log_fout)
                 continue
                 
@@ -530,7 +529,7 @@ def main():
                 corner_points_residual_vector[:,0] = (corner_points_residual_vector[:, 0] / (max_in_this_model*2.0))
                 corner_points_residual_vector[:,1] = (corner_points_residual_vector[:, 1] / (max_in_this_model*2.0))
                 corner_points_residual_vector[:,2] = (corner_points_residual_vector[:, 2] / (max_in_this_model*2.0))
-                
+
             m = 0
             closed_curve_NN_search_failed = False
             down_sample_point_copy = down_sample_point.copy()
@@ -543,6 +542,7 @@ def main():
                     down_sample_point_copy[closed_gt_pair_idx[m,0], :] = np.Inf
                 except:
                     print("NN for closed_gt_pair_idx was not successful. skip this.")
+                    log_string("Type 16", log_fout)
                     log_string("NN for closed_gt_pair_idx was not successful. skip this.", log_fout)
                     closed_curve_NN_search_failed = True
                 closed_gt_valid_mask[m, 0] = 1
@@ -558,6 +558,7 @@ def main():
                         down_sample_point_copy[closed_gt_256_64_idx[m, 1:64], :] = np.Inf
                     except:
                         print("NN for closed_gt_256_64_idx was not successful. skip this.")
+                        log_string("Type 17", log_fout)
                         log_string("NN for closed_gt_256_64_idx was not successful. skip this.", log_fout)
                         closed_curve_NN_search_failed = True
                         continue
@@ -570,6 +571,7 @@ def main():
                         down_sample_point_copy[closed_gt_256_64_idx[m, 1:len(curve[2][1:])+1], :] = np.Inf
                     except:
                         print("NN for closed_gt_256_64_idx len() < 64 was not successful. skip this.")
+                        log_string("Type 18", log_fout)
                         log_string("NN for closed_gt_256_64_idx len() < 64 was not successful. skip this.", log_fout)
                         closed_curve_NN_search_failed = True
                         continue
@@ -589,8 +591,6 @@ def main():
                 m = m + 1
             if closed_curve_NN_search_failed: continue
 
-
-
             n = 0
             open_curve_NN_search_failed = False
             down_sample_point_copy = down_sample_point.copy()
@@ -604,6 +604,7 @@ def main():
                     down_sample_point_copy[open_gt_pair_idx[n,1], :] = np.Inf
                 except:
                     print("NN for open_gt_pair_idx was not successful. skip this.")
+                    log_string("Type 19", log_fout)
                     log_string("NN for open_gt_pair_idx was not successful. skip this.", log_fout)
                     open_curve_NN_search_failed = True
                     continue
@@ -616,6 +617,7 @@ def main():
                         down_sample_point_copy[open_gt_256_64_idx[n, 1:63],:] = np.Inf
                     except:
                         print("NN for open_gt_256_64_idx was not successful. skip this.")
+                        log_string("Type 20", log_fout)
                         log_string("NN for open_gt_256_64_idx was not successful. skip this.", log_fout)
                         open_curve_NN_search_failed = True
                         continue
@@ -629,12 +631,12 @@ def main():
                         down_sample_point_copy[open_gt_256_64_idx[n, 1:(middle_idx_num+1)],:] = np.Inf
                     except:
                         print("NN for open_gt_256_64_idx[n, 1:(middle_idx_num+1)] was not successful. skip this.")
+                        log_string("Type 21", log_fout)
                         log_string("NN for open_gt_256_64_idx[n, 1:(middle_idx_num+1)] was not successful. skip this.", log_fout)
                         open_curve_NN_search_failed = True
                         continue
                     open_gt_256_64_idx[n, (middle_idx_num+1):64] = open_gt_pair_idx[n, 1]
                     open_gt_mask[n, 0:(middle_idx_num+2)] = 1
-
 
                 # open_gt_type, open_type_onehot BSpline, Lines, HalfCircle
                 if curve[0] == 'BSpline': open_gt_type[n,0], open_type_onehot[n, ] = 1, np.array([0, 1, 0, 0])

@@ -133,7 +133,7 @@ def label_creator(num_points, nearest_neighbor_idx):
         return PC_points_label_bin
     else:
         return np.zeros((num_points, 1), dtype = np.int8)
-
+'''
 def greedy_nearest_neighbor_finder(edge_or_corner_points, down_sample_point):
     """finds a nearest neighbor from point of edge_or_corner_points in down_sample_point and return their indicies in
         down_sample_point.
@@ -156,6 +156,7 @@ def greedy_nearest_neighbor_finder(edge_or_corner_points, down_sample_point):
         distances[:, memory_arr[i]] = np.Inf
         i = i+1
     return np.array(memory_arr)
+'''    
     
 def nearest_neighbor_finder(edge_or_corner_points, down_sample_point, use_clustering, neighbor_distance):
     
@@ -246,9 +247,9 @@ def nearest_neighbor_finder(edge_or_corner_points, down_sample_point, use_cluste
         # generate permutations of available_neighbors.
         available_neighbors = available_neighbor_search(idx, down_sample_pts_used, down_sample_point, unique, counts, clustered = use_clustering)
         assert len(available_neighbors) == current_edge_points_num
-        if current_edge_points_num > 6: 
+        if current_edge_points_num > 7: 
             print("WARNING: too much Permutations. skip this.")
-            raise ValueError("perm.shape[0] > 50000.")
+            raise ValueError("WARNING: too much Permutations. skip this.")
         perm = np.array(list(itertools.permutations(available_neighbors, current_edge_points_num)))
         """
         if perm.shape[0] > 50000: 
