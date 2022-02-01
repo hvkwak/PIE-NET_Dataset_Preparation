@@ -1,88 +1,9 @@
 import open3d
 import numpy as np
 import scipy.io as sio
-import visualizer_class
-#from scipy.special import softmax
-#from scipy.interpolate import splprep, splev
+from functools import partial
 
 def main():
-
-    my_mat = sio.loadmat('/home/pro2future/Documents/PIE-NET_Dataset_Preparation/visualizations/0.mat')
-    mat_num = 1
-    Visualizer = visualizer_class.Visualizer_Prep()
-
-    for i in range(0, mat_num):
-        # basics
-        Visualizer.down_sample_point = my_mat['Training_data'][i, 0]['down_sample_point'][0, 0]
-        Visualizer.edge_points_label = my_mat['Training_data'][i, 0]['edge_points_label'][0, 0]
-        Visualizer.edge_points_residual_vector = my_mat['Training_data'][i, 0]['edge_points_residual_vector'][0, 0]
-        Visualizer.corner_points_label = my_mat['Training_data'][i, 0]['corner_points_label'][0, 0]
-        Visualizer.corner_points_residual_vector = my_mat['Training_data'][i, 0]['corner_points_residual_vector'][0, 0]
-        
-        # open gts
-        Visualizer.open_gt_pair_idx = my_mat['Training_data'][i, 0]['open_gt_pair_idx'][0, 0]
-        Visualizer.open_gt_valid_mask = my_mat['Training_data'][i, 0]['open_gt_valid_mask'][0, 0]
-        Visualizer.open_gt_256_64_idx = my_mat['Training_data'][i, 0]['open_gt_256_64_idx'][0, 0]
-        Visualizer.open_gt_type = my_mat['Training_data'][i, 0]['open_gt_type'][0, 0]
-        Visualizer.open_gt_res = my_mat['Training_data'][i, 0]['open_gt_res'][0, 0]
-        Visualizer.open_gt_sample_points = my_mat['Training_data'][i, 0]['open_gt_sample_points'][0, 0]
-        Visualizer.open_gt_mask = my_mat['Training_data'][i, 0]['open_gt_mask'][0, 0]
-        Visualizer.task = 1
-        
-        # CHECK three visualizations:
-
-        # Task1
-        # 1. R down_sample_point, 
-        #    B edge_points_label, 
-        #    G down_sample_point+edge_points_residual_vector = corrected edge points
-        # 2. R down_sample_point, 
-        #    B corner_points_label, 
-        #    G down_sample_point+corner_points_residual_vector = corrected edge points
-        Visualizer.generate_point_label_list()
-        Visualizer.generate_corrected_points_list()
-        assert len(Visualizer.point_label_list) == len(Visualizer.corrected_points_list)
-        Visualizer.visualize1()
-        '''
-        Visualizer.visualize1(down_sample_point = down_sample_point,\
-                  point_label_list = [edge_points_label,corner_points_label], \
-                  corrected_points_list = [down_sample_point+edge_points_residual_vector, down_sample_point+corner_points_residual_vector], \
-                  task = 1)
-        '''
-        '''
-        down_sample_point = my_mat['Training_data'][i, 0]['down_sample_point'][0, 0]
-        edge_points_label = my_mat['Training_data'][i, 0]['edge_points_label'][0, 0]
-        edge_points_residual_vector = my_mat['Training_data'][i, 0]['edge_points_residual_vector'][0, 0]
-        corner_points_label = my_mat['Training_data'][i, 0]['corner_points_label'][0, 0]
-        corner_points_residual_vector = my_mat['Training_data'][i, 0]['corner_points_residual_vector'][0, 0]
-        
-        # open gts
-        open_gt_pair_idx = my_mat['Training_data'][i, 0]['open_gt_pair_idx'][0, 0]
-        open_gt_valid_mask = my_mat['Training_data'][i, 0]['open_gt_valid_mask'][0, 0]
-        open_gt_256_64_idx = my_mat['Training_data'][i, 0]['open_gt_256_64_idx'][0, 0]
-        open_gt_type = my_mat['Training_data'][i, 0]['open_gt_type'][0, 0]
-        open_gt_res = my_mat['Training_data'][i, 0]['open_gt_res'][0, 0]
-        open_gt_sample_points = my_mat['Training_data'][i, 0]['open_gt_sample_points'][0, 0]
-        open_gt_mask = my_mat['Training_data'][i, 0]['open_gt_mask'][0, 0]
-        task = 1
-        aa = [edge_points_label,corner_points_label]
-        bb = [down_sample_point+edge_points_residual_vector, down_sample_point+corner_points_residual_vector]
-
-        vis = open3d.visualization.Visualizer()
-        vis.create_window()
-        vis.add_geometry()
-        point_cloud = open3d.geometry.PointCloud()
-        point_cloud.points = open3d.utility.Vector3dVector(np.concatenate([arrayR, arrayG], axis = 0))
-        point_cloud.colors = open3d.utility.Vector3dVector(color_array)
-        '''
-
-
-
-
-
-
-
-
-
 
         # 3. Based on: open_gt_pair_idx & open_gt_valid_mask & open_gt_type & open_gt_mask
         #    Check:    open_gt_256_64_idx in down_sample_points
@@ -255,6 +176,91 @@ def view_point(points, BSpline_per_degree_list):
         #print("corner_points_label: ", corner_points_label.shape)
     '''
 
+def update_visualization(vis, arrayR, listB, listG, k):
 
-if __name__ == "__main__": 
-    main()    
+    assert len(listB) == len(listG)
+    color1 = [0.5, 0.5, 0.5]   # gray
+    color2 = [0.0, 0.0, 0.99] # blue
+    color3 = [0.0, 0.99, 0.0] # green
+
+    # arrayR and take first
+    arrayR = down_sample_point
+    arrayB = listB[k]
+    arrayG = listG[k]
+    assert np.sum((arrayR[np.where(arrayB!=1)[0] ,] - arrayG[np.where(arrayB!=1)[0] ,])**2) == 0.0
+    assert np.where(arrayB == 1)[0].max() < arrayR.shape[0]
+
+    # colors
+    arrayG = listG[k][np.where(arrayB == 1)[0], ]
+    color_array = np.zeros_like(np.concatenate([arrayR, arrayG], axis = 0))
+    color_array[:arrayR.shape[0], :] = color1
+    color_array[np.where(arrayB == 1)[0], :] = color2
+    color_array[arrayR.shape[0]:, ] = color3    
+
+    point_cloud.points = open3d.utility.Vector3dVector(np.concatenate([arrayR, arrayG], axis = 0))
+    point_cloud.colors = open3d.utility.Vector3dVector(color_array)
+    vis.update_geometry(point_cloud)
+    vis.poll_events()
+    vis.update_renderer()
+    vis.run()
+    k = k + 1
+
+if __name__ == "__main__":
+    
+    # Task1
+    # 1. R down_sample_point, 
+    #    B edge_points_label, 
+    #    G down_sample_point+edge_points_residual_vector = corrected edge points
+    # 2. R down_sample_point, 
+    #    B corner_points_label, 
+    #    G down_sample_point+corner_points_residual_vector = corrected edge points
+    my_mat = sio.loadmat('/home/hyobin/Documents/PIE-NET_Dataset_Preparation/visualizations/0.mat')
+    color1 = [0.5, 0.5, 0.5]   # gray
+    color2 = [0.0, 0.0, 0.99] # blue
+    color3 = [0.0, 0.99, 0.0] # green
+    mat_num = 10
+
+    for i in range(0, mat_num):
+        # sec 3.1.
+        down_sample_point = my_mat['Training_data'][i, 0]['down_sample_point'][0, 0]
+        edge_points_label = my_mat['Training_data'][i, 0]['edge_points_label'][0, 0]
+        edge_points_residual_vector = my_mat['Training_data'][i, 0]['edge_points_residual_vector'][0, 0]
+        corner_points_label = my_mat['Training_data'][i, 0]['corner_points_label'][0, 0]
+        corner_points_residual_vector = my_mat['Training_data'][i, 0]['corner_points_residual_vector'][0, 0]
+        
+        # sec 3.2.
+        open_gt_pair_idx = my_mat['Training_data'][i, 0]['open_gt_pair_idx'][0, 0]
+        open_gt_valid_mask = my_mat['Training_data'][i, 0]['open_gt_valid_mask'][0, 0]
+        open_gt_256_64_idx = my_mat['Training_data'][i, 0]['open_gt_256_64_idx'][0, 0]
+        open_gt_type = my_mat['Training_data'][i, 0]['open_gt_type'][0, 0]
+        open_gt_res = my_mat['Training_data'][i, 0]['open_gt_res'][0, 0]
+        open_gt_sample_points = my_mat['Training_data'][i, 0]['open_gt_sample_points'][0, 0]
+        open_gt_mask = my_mat['Training_data'][i, 0]['open_gt_mask'][0, 0]
+
+        listB = [edge_points_label, corner_points_label]
+        listG = [down_sample_point+edge_points_residual_vector, down_sample_point+corner_points_residual_vector]
+
+        # arrayR and take first
+        arrayR = down_sample_point
+        arrayB = listB[0]
+        arrayG = listG[0]
+        assert np.sum((arrayR[np.where(arrayB!=1)[0] ,] - arrayG[np.where(arrayB!=1)[0] ,])**2) == 0.0
+        assert np.where(arrayB == 1)[0].max() < arrayR.shape[0]
+
+        # colors
+        arrayG = listG[0][np.where(arrayB == 1)[0], ]
+        color_array = np.zeros_like(np.concatenate([arrayR, arrayG], axis = 0))
+        color_array[:arrayR.shape[0], :] = color1
+        color_array[np.where(arrayB == 1)[0], :] = color2
+        color_array[arrayR.shape[0]:, ] = color3
+        
+        # create visualizer
+        k = 1
+        point_cloud = open3d.geometry.PointCloud()
+        point_cloud.points = open3d.utility.Vector3dVector(np.concatenate([down_sample_point, arrayG], axis = 0))
+        point_cloud.colors = open3d.utility.Vector3dVector(color_array)
+        vis = open3d.visualization.VisualizerWithKeyCallback()
+        vis.create_window()
+        vis.register_key_callback(257, partial(update_visualization, arrayR = down_sample_point, listB = listB, listG = listG, k = k))
+        vis.add_geometry(point_cloud)
+        vis.run()
