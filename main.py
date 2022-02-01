@@ -1,7 +1,6 @@
 import os
 import sys
 import numpy as np
-from numpy.core.fromnumeric import mean
 import trimesh
 import scipy.io
 import random
@@ -163,7 +162,8 @@ def main():
                     BSpline_list_num = BSpline_list_num - 1
                     k = k - 1
                 k = k + 1
-
+            
+            '''
             # check if a line touches circles_or_BSplines
             Line_list_num = len(Line_list)
             k = 0
@@ -173,6 +173,7 @@ def main():
                     k = k - 1
                     Line_list_num = Line_list_num - 1
                 k = k + 1
+            '''
 
             # Circles should be also classified into three categories: Full Circle, HalfCircles and BSpline.
             FullCircles = []
@@ -186,7 +187,6 @@ def main():
                     Circle_list_num = Circle_list_num - 1
                 k = k + 1
             
-            # Add one more function: there can be HalfCircles!
             # Divide them into two categories: Half Circle or BSpline.
             HalfCircle_list = []
             k = 0
@@ -240,11 +240,11 @@ def main():
             BSpline_degree_one_list_num = len(BSpline_degree_one_list)
             k = 0
             while k < BSpline_degree_one_list_num:
-                if BSpline_degree_one_list[k][1] == 1 and touch_in_circles_or_BSplines(BSpline_degree_one_list[k][2], Circle_list+BSpline_list):
+                if BSpline_degree_one_list[k][1] == 1 and touch_in_circles_or_BSplines(BSpline_degree_one_list[k][2], Circle_list):
                     del BSpline_degree_one_list[k]
                     k = k - 1
                     BSpline_degree_one_list_num = BSpline_degree_one_list_num - 1
-                elif BSpline_degree_one_list[k][1] == 1 and not touch_in_circles_or_BSplines(BSpline_degree_one_list[k][2], Circle_list+BSpline_list):
+                elif BSpline_degree_one_list[k][1] == 1 and not touch_in_circles_or_BSplines(BSpline_degree_one_list[k][2], Circle_list):
                     BSpline_degree_one_list[k][0] = 'Line'
                     Line_list.append(BSpline_degree_one_list[k])
                     del BSpline_degree_one_list[k]
@@ -262,7 +262,7 @@ def main():
                     BSpline_list_num = BSpline_list_num - 1
                 k = k + 1
 
-            # Lines, too. if they touch two circles or BSplines simultaneously, remove them.
+            # Lines, too. if they touch two full circles simultaneously, remove them.
             Line_list_num = len(Line_list)
             k = 0
             while k < Line_list_num:
@@ -272,7 +272,7 @@ def main():
                     Line_list_num = Line_list_num - 1
                 k = k + 1
 
-            # Lines, too. if they touch one circle, remove them.
+            # Lines, too. if they touch one circle, it sounds too complicated. skip them.
             list_num = len(Line_list) + len(BSpline_list)
             temp_list = Line_list + BSpline_list
             k = 0
@@ -313,8 +313,6 @@ def main():
                 log_string("Type 7", log_fout)
                 log_string("there are at least one detected cycle, skip this.", log_fout)
                 continue
-                
-        
             #
             # Classifications into open/closed curve AND edge/corner points
             #
