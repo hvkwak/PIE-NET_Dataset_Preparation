@@ -24,15 +24,16 @@ from utils import Check_Connect_Circles
 #from utils import degrees_same
 from cycle_detection import Cycle_Detector_in_BSplines
 from grafkom1Framework import ObjLoader
-from utils import PathLength
-from LongestPath import Graph
+#from utils import PathLength
+#from LongestPath import Graph
 #from visualizer import view_point_1
 #from visualizer import view_point
 import open3d
 from functools import partial
 
 
-def main():
+if __name__ == "__main__": 
+
     """ generates the training dataset from ABC Dataset(Koch et al. 2019) suitable for the implementation of 
         PIE-NET: Parametric Inference of Point Cloud Edges (Wang et al. 2020)
 
@@ -111,7 +112,7 @@ def main():
             # This has curves other than Circle, BSpline or Line, skip this.
             all_curves = []
             try:
-                all_curves = curves_with_vertex_indices(list_ftr_line)
+                all_curves = curves_with_vertex_indices(list_ftr_line, take_sharp_false = True)
             except:
                 print("there are curves not in [Circle, BSpline, Line]. skip this.")
                 log_string("Type 3", log_fout)
@@ -156,14 +157,17 @@ def main():
 
             # Check if there are half Circles/BSplines pair, merge them if there's one.
             BSpline_Circle_list = rest_curve_finder(BSpline_list + Circle_list, vertices)
+            #print("len(BSpline_Circle_list): ", len(BSpline_Circle_list))
             BSpline_list = []
             Circle_list = []
             k = 0
+            curve_num = len(BSpline_Circle_list)
             while k < curve_num:
                 curve = BSpline_Circle_list[k]
                 if curve[0] == 'BSpline': BSpline_list.append(curve)
                 elif curve[0] == 'Circle': Circle_list.append(curve)
                 k = k + 1
+                #print(k)
             
             '''
             # check if a line touches circles_or_BSplines
@@ -330,8 +334,9 @@ def main():
                 vis.close()
 
             s = 1 # 
-            def update_visualization(vis, vertices, BSpline_list, Line_list, OpenCircle_list):
+            def update_visualization(vis, vertices, BSpline_list, Line_list, OpenCircle_list, Circle_list):
                 global s
+                print("s: ", s)
                 # k just stands for k-th element in listB and listG
                 #assert len(listB) == len(listG)
                 #colorG = [0.5, 0.5, 0.5]   # gray
@@ -341,21 +346,22 @@ def main():
 
                 # arrayR and take first
                 #arrayR = down_sample_point
-                if s == 0:
-                    color = color1
-                elif s == 1:
+                if s == 1:
                     curves = Line_list
-                    color = color2
+                    color = color1 # red
                 elif s == 2:
+                    curves = Circle_list
+                    color = color2 # lightblue
+                elif s == 3:
                     curves = OpenCircle_list
-                    color = color3
+                    color = color3 # green
                 
                 curves_idx = []
                 for i in range(len(curves)):
                     curves_idx = curves_idx + curves[i][2]
                 color_array = np.zeros_like(vertices)
                 color_array[curves_idx, :] = color
-                if s < 2:
+                if s < 3:
                     s += 1
                 point_cloud.points = open3d.utility.Vector3dVector(vertices)
                 point_cloud.colors = open3d.utility.Vector3dVector(color_array)
@@ -364,7 +370,6 @@ def main():
                 vis.update_renderer()
                 #vis.run()
 
-
             curves_idx = []
             lines_idx = []
             for i in range(len(BSpline_list)):
@@ -372,7 +377,7 @@ def main():
                     lines_idx = lines_idx + BSpline_list[i][2]
                 curves_idx = curves_idx + BSpline_list[i][2]
             color_array = np.zeros_like(vertices)
-            color_array[curves_idx, :] = [0.99, 0.0, 0.0] # BSplines red
+            color_array[curves_idx, :] = [0.0, 0.0, 0.99] # BSplines red
             if len(lines_idx) > 0:
                 color_array[lines_idx, :] = [0.0, 0.99, 0.99] # exceptions
             # create point clouds and visualizers
@@ -382,7 +387,7 @@ def main():
 
             vis = open3d.visualization.VisualizerWithKeyCallback()
             vis.create_window()
-            vis.register_key_callback(87, partial(update_visualization, vertices = vertices, BSpline_list = BSpline_list, Line_list = Line_list, OpenCircle_list = OpenCircle_list)) # W    
+            vis.register_key_callback(87, partial(update_visualization, vertices = vertices, BSpline_list = BSpline_list, Line_list = Line_list, OpenCircle_list = OpenCircle_list, Circle_list = Circle_list)) # W    
             '''
             vis.register_key_callback(69, partial(update_visualization32, \
                                                 down_sample_point = down_sample_point, \
@@ -399,7 +404,7 @@ def main():
             vis.run()
 
 
-
+    '''
             #
             # Classifications into open/closed curve AND edge/corner points
             #
@@ -521,32 +526,7 @@ def main():
                 log_string("corner points > 23. skip this.", log_fout)
                 continue
 
-            # option 2 : clustering of bins
-            # First build a cluster nearby multiple ties.
-            '''
-            try:
-                best_max = np.Inf
-                for l in np.arange(0.8, 1.2, 0.1):
-                    neighbor_distance = l
-                    nearest_neighbor_idx_edge_2 = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point, use_clustering=True, neighbor_distance=neighbor_distance)
-                    distance_max_2 = np.max(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_2, :])**2).sum(axis = 1))
-                    if distance_max_2 < best_max:
-                        best_neighbor_distance = l
 
-                neighbor_distance = best_neighbor_distance
-                nearest_neighbor_idx_edge_2 = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point, use_clustering=True, neighbor_distance=neighbor_distance)
-                nearest_neighbor_idx_corner_2 = nearest_neighbor_finder(vertices[corner_points_ori,:], down_sample_point, use_clustering=True, neighbor_distance=neighbor_distance)
-                distance_max_2 = np.max(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_2, :])**2).sum(axis = 1))    
-                log_string('distance_max_2: '+str(distance_max_2), log_fout)
-                if distance_max_2 > 10: 
-                    print("distance_max_2 > 10. skip this.")
-                    continue
-            except:
-                print("nearest_neighbor_finder was not successful. skip this.")
-                continue
-            nearest_neighbor_idx_edge = nearest_neighbor_idx_edge_2
-            nearest_neighbor_idx_corner = nearest_neighbor_idx_corner_2
-            '''
 
             # option 3: greedy. Just random shuffle the indicies and take distance matrix and take minimums.
             #nearest_neighbor_idx_edge_3 = greedy_nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point)
@@ -785,12 +765,11 @@ def main():
         file_ = save_prefix+"_"+str(file_count)+"_end"+".mat"
         data['batch_count'] = batch_count
         scipy.io.savemat(file_, data)
+    '''
 
     list_obj_file.close()
     list_ftr_file.close()
     log_fout.close()
 
 
-if __name__ == "__main__": 
-    main()
 

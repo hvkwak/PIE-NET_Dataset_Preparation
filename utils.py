@@ -416,7 +416,7 @@ def update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori):
     edge_points_ori = edge_points_ori+curve[2][:]
     return open_curves, corner_points_ori, edge_points_ori
 
-def half_curves_finder(Circle_or_BSpline_list, vertices):
+def rest_curve_finder(Circle_or_BSpline_list, vertices):
     k = 0
     Circle_or_BSpline_num = len(Circle_or_BSpline_list)
     while k < Circle_or_BSpline_num:
