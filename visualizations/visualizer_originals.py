@@ -2,6 +2,7 @@ import numpy as np
 import open3d
 import os
 import sys
+sys.path.append("/home/pro2future/Documents/PIE-NET_Dataset_Preparation/")
 from utils import *
 from grafkom1Framework import ObjLoader
 from functools import partial
@@ -34,7 +35,7 @@ if __name__ == "__main__":
     file_count = 0
     data = {'batch_count': batch_count, 'Training_data': np.zeros((64, 1), dtype = object)}
     take_sharp_false = True
-    for i in range(model_total_num):
+    for i in range(545, model_total_num):
         
         model_name_obj = "_".join(list_obj_lines[i].split('/')[-1].split('_')[0:2])
         model_name_ftr = "_".join(list_ftr_lines[i].split('/')[-1].split('_')[0:2])
@@ -126,15 +127,14 @@ if __name__ == "__main__":
             global k
             # k just stands for k-th element in listB and listG
             #assert len(listB) == len(listG)
-            colorG = [0.5, 0.5, 0.5]   # gray
+            #colorG = [0.5, 0.5, 0.5]   # gray
             color1 = [0.99, 0.0, 0.0] # red Bspline
-            color2 = [0.0, 0.0, 0.99] # blue Line
+            color2 = [0.0, 0.99, 0.99] # blue Line
             color3 = [0.0, 0.99, 0.0] # green Circle
 
             # arrayR and take first
             #arrayR = down_sample_point
             if k == 0:
-                curves = BSpline_list
                 color = color1
             elif k == 1:
                 curves = Line_list
@@ -205,11 +205,15 @@ if __name__ == "__main__":
         '''               
 
         curves_idx = []
+        lines_idx = []
         for i in range(len(BSpline_list)):
+            if k == 1 and BSpline_list[i][1] == 1:
+                lines_idx = lines_idx + BSpline_list[i][2]
             curves_idx = curves_idx + BSpline_list[i][2]
         color_array = np.zeros_like(vertices)
-        color_array[curves_idx, :] = [0.99, 0.0, 0.0] # BSplines
-
+        color_array[curves_idx, :] = [0.99, 0.0, 0.0] # BSplines red
+        if len(lines_idx) > 0:
+            color_array[lines_idx, :] = [0.0, 0.99, 0.99] # exceptions, blue
         # create point clouds and visualizers
         point_cloud = open3d.geometry.PointCloud()
         point_cloud.points = open3d.utility.Vector3dVector(vertices)

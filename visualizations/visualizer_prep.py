@@ -12,7 +12,7 @@ if __name__ == "__main__":
     # 2. R down_sample_point, 
     #    B corner_points_label, 
     #    G down_sample_point+corner_points_residual_vector = corrected edge points
-    my_mat = sio.loadmat('/home/hyobin/Documents/PIE-NET_Dataset_Preparation/visualizations/0.mat')
+    my_mat = sio.loadmat('/home/pro2future/Documents/PIE-NET_Dataset_Preparation/visualizations/0.mat')
     color1 = [0.5, 0.5, 0.5]   # gray
     color2 = [0.0, 0.0, 0.99] # blue
     color3 = [0.0, 0.99, 0.0] # green
