@@ -16,7 +16,7 @@ from utils import nearest_neighbor_finder
 from utils import log_string
 #from utils import merge_two_half_circles_or_BSpline
 from utils import update_lists_closed
-from utils import half_curves_finder
+from utils import rest_curve_finder
 from utils import touch_in_circles_or_BSplines
 from utils import touch_in_circle
 from utils import mostly_sharp_edges
@@ -88,7 +88,7 @@ def main():
             
             # Type1
             # make sure we have < 30K vertices to keep it simple.
-            if vertices.shape[0] > 30000: 
+            if vertices.shape[0] > 45000: 
                 print("vertices:", vertices.shape[0], " > 40000. skip this.")
                 log_string("Type 1", log_fout)
                 log_string("vertices " +str(vertices.shape[0])+" > 40000. skip this.", log_fout)
@@ -139,6 +139,7 @@ def main():
 
             # Find a misclassified BSplines and first classify them correctly into circle,
             # if they have same start and end points.
+            '''
             k = 0
             BSpline_list_num = len(BSpline_list)
             while k < BSpline_list_num :
@@ -149,18 +150,17 @@ def main():
                     BSpline_list_num = BSpline_list_num - 1
                     k = k - 1
                 k = k + 1
-            # Check if there are half Circles/BSplines pair, merge them if there's one.            
-            BSpline_list = half_curves_finder(BSpline_list, vertices)
-            Circle_list = half_curves_finder(Circle_list, vertices)
-            # Run this once more to see if there are new Circles from BSplines.
+            '''
+
+            # Check if there are half Circles/BSplines pair, merge them if there's one.
+            BSpline_Circle_list = rest_curve_finder(BSpline_list + Circle_list, vertices)
+            BSpline_list = []
+            Circle_list = []
             k = 0
-            BSpline_list_num = len(BSpline_list)
-            while k < BSpline_list_num:
-                if BSpline_list[k][0] == 'Circle':
-                    Circle_list.append(BSpline_list[k])
-                    del BSpline_list[k]
-                    BSpline_list_num = BSpline_list_num - 1
-                    k = k - 1
+            while k < curve_num:
+                curve = BSpline_Circle_list[k]
+                if curve[0] == 'BSpline': BSpline_list.append(curve)
+                elif curve[0] == 'Circle': Circle_list.append(curve)
                 k = k + 1
             
             '''
@@ -175,7 +175,7 @@ def main():
                 k = k + 1
             '''
 
-            # Circles should be also classified into three categories: Full Circle, HalfCircles and BSpline.
+            # Circles should be also classified into three categories: Full Circle, OpenCircle(note: it is Circle_list after this.)
             FullCircles = []
             Circle_list_num = len(Circle_list)
             k = 0
@@ -187,8 +187,9 @@ def main():
                     Circle_list_num = Circle_list_num - 1
                 k = k + 1
             
+            '''
             # Divide them into two categories: Half Circle or BSpline.
-            HalfCircle_list = []
+            OpenCircle_list = []
             k = 0
             Circle_list_num = len(Circle_list)
             while k < Circle_list_num:
@@ -199,7 +200,7 @@ def main():
                     point2 = vertices[point2_idx, :]
                     middle = (point1 + point2)/2.0
                     distances = np.sqrt(((middle - vertices[Circle_list[k][2], :])**2).sum(axis = 1))
-                    small_std = np.std(distances, dtype = np.float64) < 0.025
+                    small_std = np.std(distances, dtype = np.float64) < 0.05
 
                     if len(Circle_list[k][2]) > 3 and small_std:
                         Circle_list[k][0] == 'HalfCircle'
@@ -215,15 +216,19 @@ def main():
                         k = k - 1                    
                 k = k + 1
             '''
+            '''
             while PathLength(Circle_list, nodes) > 1:
                 HalfCircle_list, Circle_list = Check_Connect_Circles(nodes, vertices, HalfCircle_list, Circle_list, BSpline_list)
             '''
 
-            
+            OpenCircle_list = Circle_list
             Circle_list = FullCircles
+            #
             # Find BSplines with degree = 1 and classify them accordingly:
-            # BSpline with degree = 1 and both start/end points touch circles, remove it from the list
+            #
+            # BSpline with degree = 1 and both start/end points touch (two full)circles, remove it from the list
             # BSpline with degree = 1 and no touches -> keep them as line.
+            #
             # first take all the BSplines of degree 1
             BSpline_degree_one_list = []
             BSpline_list_num = len(BSpline_list)
@@ -235,16 +240,17 @@ def main():
                     k = k - 1
                     BSpline_list_num = BSpline_list_num - 1
                 k = k + 1
+            
             # Delete them or add them to Lines.
-            # touching two Circles(or BSplines) should be eliminated.
+            # touching (two full)circles (or BSplines) should be eliminated.
             BSpline_degree_one_list_num = len(BSpline_degree_one_list)
             k = 0
             while k < BSpline_degree_one_list_num:
-                if BSpline_degree_one_list[k][1] == 1 and touch_in_circles_or_BSplines(BSpline_degree_one_list[k][2], Circle_list):
+                if touch_in_circles_or_BSplines(BSpline_degree_one_list[k][2], Circle_list):
                     del BSpline_degree_one_list[k]
                     k = k - 1
                     BSpline_degree_one_list_num = BSpline_degree_one_list_num - 1
-                elif BSpline_degree_one_list[k][1] == 1 and not touch_in_circles_or_BSplines(BSpline_degree_one_list[k][2], Circle_list):
+                elif not touch_in_circles_or_BSplines(BSpline_degree_one_list[k][2], Circle_list):
                     BSpline_degree_one_list[k][0] = 'Line'
                     Line_list.append(BSpline_degree_one_list[k])
                     del BSpline_degree_one_list[k]
@@ -252,7 +258,7 @@ def main():
                     BSpline_degree_one_list_num = BSpline_degree_one_list_num - 1
                 k = k + 1
 
-            # same for BSplines with its degree > 1, touching two circles. 
+            # BSplines with its degree > 1, touching two circles -> remove it
             BSpline_list_num = len(BSpline_list)
             k = 0
             while k < BSpline_list_num:
@@ -272,7 +278,7 @@ def main():
                     Line_list_num = Line_list_num - 1
                 k = k + 1
 
-            # Lines, too. if they touch one circle, it sounds too complicated. skip them.
+            # Lines and BSplines: if one touch one full circle, it sounds too complicated. just skip them.
             list_num = len(Line_list) + len(BSpline_list)
             temp_list = Line_list + BSpline_list
             k = 0
@@ -706,3 +712,4 @@ def main():
 
 if __name__ == "__main__": 
     main()
+
