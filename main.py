@@ -24,7 +24,7 @@ from utils import Check_Connect_Circles
 #from utils import degrees_same
 from cycle_detection import Cycle_Detector_in_BSplines
 from grafkom1Framework import ObjLoader
-from utils import PathLength
+#from utils import PathLength
 from LongestPath import Graph
 #from visualizer import view_point_1
 #from visualizer import view_point
