@@ -5,7 +5,7 @@ from LongestPath import Graph
 from tqdm import tqdm
 #import open3d
 
-
+'''
 def PathLength(Circle_list, nodes):
     max_digit = 0
     for circle in Circle_list:
@@ -19,6 +19,7 @@ def PathLength(Circle_list, nodes):
     nodes[0] = node
     nodes[1] = node_2
     return LongDis
+'''
 
 def Check_Connect_Circles(nodes, vertices, HalfCircle_list, Circle_list, BSpline_list):
     # connect the circles and determine whether it is half circle or BSpline.
