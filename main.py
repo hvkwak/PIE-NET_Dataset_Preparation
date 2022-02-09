@@ -28,6 +28,8 @@ from utils import PathLength
 from LongestPath import Graph
 #from visualizer import view_point_1
 #from visualizer import view_point
+import open3d
+from functools import partial
 
 
 def main():
@@ -319,6 +321,85 @@ def main():
                 log_string("Type 7", log_fout)
                 log_string("there are at least one detected cycle, skip this.", log_fout)
                 continue
+
+
+
+            # check the visualizations.
+            # create updates
+            def close_visualization(vis):
+                vis.close()
+
+            s = 1 # 
+            def update_visualization(vis, vertices, BSpline_list, Line_list, OpenCircle_list):
+                global s
+                # k just stands for k-th element in listB and listG
+                #assert len(listB) == len(listG)
+                #colorG = [0.5, 0.5, 0.5]   # gray
+                color1 = [0.99, 0.0, 0.0] # red Bspline
+                color2 = [0.0, 0.99, 0.99] # blue Line
+                color3 = [0.0, 0.99, 0.0] # green Circle
+
+                # arrayR and take first
+                #arrayR = down_sample_point
+                if s == 0:
+                    color = color1
+                elif s == 1:
+                    curves = Line_list
+                    color = color2
+                elif s == 2:
+                    curves = OpenCircle_list
+                    color = color3
+                
+                curves_idx = []
+                for i in range(len(curves)):
+                    curves_idx = curves_idx + curves[i][2]
+                color_array = np.zeros_like(vertices)
+                color_array[curves_idx, :] = color
+                if s < 2:
+                    s += 1
+                point_cloud.points = open3d.utility.Vector3dVector(vertices)
+                point_cloud.colors = open3d.utility.Vector3dVector(color_array)
+                vis.update_geometry(point_cloud)
+                vis.poll_events()
+                vis.update_renderer()
+                #vis.run()
+
+
+            curves_idx = []
+            lines_idx = []
+            for i in range(len(BSpline_list)):
+                if k == 1 and BSpline_list[i][1] == 1:
+                    lines_idx = lines_idx + BSpline_list[i][2]
+                curves_idx = curves_idx + BSpline_list[i][2]
+            color_array = np.zeros_like(vertices)
+            color_array[curves_idx, :] = [0.99, 0.0, 0.0] # BSplines red
+            if len(lines_idx) > 0:
+                color_array[lines_idx, :] = [0.0, 0.99, 0.99] # exceptions
+            # create point clouds and visualizers
+            point_cloud = open3d.geometry.PointCloud()
+            point_cloud.points = open3d.utility.Vector3dVector(vertices)
+            point_cloud.colors = open3d.utility.Vector3dVector(color_array)
+
+            vis = open3d.visualization.VisualizerWithKeyCallback()
+            vis.create_window()
+            vis.register_key_callback(87, partial(update_visualization, vertices = vertices, BSpline_list = BSpline_list, Line_list = Line_list, OpenCircle_list = OpenCircle_list)) # W    
+            '''
+            vis.register_key_callback(69, partial(update_visualization32, \
+                                                down_sample_point = down_sample_point, \
+                                                open_gt_pair_idx = open_gt_pair_idx, \
+                                                open_gt_valid_mask = open_gt_valid_mask, \
+                                                open_gt_256_64_idx = open_gt_256_64_idx, \
+                                                open_gt_type = open_gt_type, \
+                                                open_gt_res = open_gt_res, \
+                                                open_gt_sample_points = open_gt_sample_points, \
+                                                open_gt_mask = open_gt_mask)) # E
+            '''
+            vis.register_key_callback(81, close_visualization) # Q
+            vis.add_geometry(point_cloud)
+            vis.run()
+
+
+
             #
             # Classifications into open/closed curve AND edge/corner points
             #
@@ -358,9 +439,9 @@ def main():
             del Line_Circle_List
 
             k = 0
-            BSpline_HalfCircle_List = BSpline_list + HalfCircle_list
-            while k < len(BSpline_HalfCircle_List):
-                curve = BSpline_HalfCircle_List[k]
+            BSpline_OpenCircle_List = BSpline_list + OpenCircle_list
+            while k < len(BSpline_OpenCircle_List):
+                curve = BSpline_OpenCircle_List[k]
                 if curve[0] == 'BSpline':
                     if 3 <= len(curve[2]) <= 6 :
                         corner_points_ori.append(curve[2][len(curve[2])//2])
@@ -369,7 +450,7 @@ def main():
                     open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
                 k = k + 1
             del BSpline_list
-            del HalfCircle_list
+            del OpenCircle_list
 
             # if there are more than 256 curves in each section: don't use this model.
             if (len(open_curves) > 256) or (len(closed_curves) > 256): 
