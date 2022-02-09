@@ -84,23 +84,26 @@ if __name__ == "__main__":
             vis.update_geometry(point_cloud)
             vis.poll_events()
             vis.update_renderer()
-            vis.run()
+            #vis.run()
             
-
         k_open_curve = 0
         def update_visualization32(vis, \
-                                    down_sample_point, \
-                                    open_gt_pair_idx, \
-                                    open_gt_valid_mask, \
-                                    open_gt_256_64_idx, \
-                                    open_gt_type, \
-                                    open_gt_res, \
-                                    open_gt_sample_points, \
-                                    open_gt_mask):
+                                down_sample_point, \
+                                open_gt_pair_idx, \
+                                open_gt_valid_mask, \
+                                open_gt_256_64_idx, \
+                                open_gt_type, \
+                                open_gt_res, \
+                                open_gt_sample_points, \
+                                open_gt_mask):
             global k_open_curve
+
             # check
             open_gt_mask_sum = open_gt_mask[:, 0].sum()
             open_gt_valid_mask_sum = open_gt_valid_mask.sum()
+            #print("num_open_curves: ", open_gt_valid_mask_sum)qqq
+            #print("open_gt_mask_sum: ", open_gt_mask_sum)
+            #print("current curve: ", k_open_curve)
             assert open_gt_mask_sum == open_gt_valid_mask_sum
 
             # color
@@ -112,14 +115,14 @@ if __name__ == "__main__":
                 #print(k_open_curve)
                 #print("open_gt_256_64_idx[k_open_curve[0]]: ", open_gt_256_64_idx[k_open_curve])
                 idx_equal = open_gt_pair_idx[k_open_curve] == np.array([open_gt_256_64_idx[k_open_curve][0], open_gt_256_64_idx[k_open_curve][-1]])
-                points_allclose = np.allclose(down_sample_point[open_gt_256_64_idx[k_open_curve], ], open_gt_sample_points[k_open_curve, ])
-                assert points_allclose
+                points_close_all = np.allclose(down_sample_point[open_gt_256_64_idx[k_open_curve], ], open_gt_sample_points[k_open_curve, ])
+                assert points_close_all
                 assert idx_equal.all()
                 
                 color_array = np.zeros_like(down_sample_point)
                 color_array[:, :] = color1
-                color_array[open_gt_256_64_idx[k_open_curve], :] = color2
-                color_array[open_gt_pair_idx[k_open_curve], :] = color3
+                color_array[open_gt_256_64_idx[k_open_curve, ], :] = color2
+                color_array[open_gt_pair_idx[k_open_curve, ], :] = color3
                 if k_open_curve < open_gt_mask_sum - 1:
                     k_open_curve = k_open_curve + 1
                 point_cloud.points = open3d.utility.Vector3dVector(down_sample_point)
@@ -127,8 +130,7 @@ if __name__ == "__main__":
                 vis.update_geometry(point_cloud)
                 vis.poll_events()
                 vis.update_renderer()
-                vis.run()
-                
+                #vis.run()                
 
         # create point clouds and visualizers
         point_cloud = open3d.geometry.PointCloud()
@@ -150,6 +152,5 @@ if __name__ == "__main__":
         vis.register_key_callback(81, close_visualization) # Q
         vis.add_geometry(point_cloud)
         vis.run()
-        
 
     vis.destroy_window()
