@@ -1,7 +1,7 @@
 import ast
 import numpy as np
 import itertools
-from LongestPath import Graph
+#from LongestPath import Graph
 from tqdm import tqdm
 #import open3d
 
@@ -416,7 +416,7 @@ def update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori):
     edge_points_ori = edge_points_ori+curve[2][:]
     return open_curves, corner_points_ori, edge_points_ori
 
-def rest_curve_finder(Circle_or_BSpline_list, vertices):
+def half_curves_finder(Circle_or_BSpline_list, vertices):
     k = 0
     Circle_or_BSpline_num = len(Circle_or_BSpline_list)
     while k < Circle_or_BSpline_num:
@@ -506,7 +506,7 @@ def mostly_sharp_edges(list_ftr_line, threshold):
     else:
         return False
 
-def curves_with_vertex_indices(list_ftr_line):
+def curves_with_vertex_indices(list_ftr_line, take_sharp_false):
     """ returns sharp curves with vertex indices. 
 
     Args:
@@ -522,6 +522,60 @@ def curves_with_vertex_indices(list_ftr_line):
     for idx, line in enumerate(lines):
         if line[:7] == "curves:": 
             in_curve_section = True
+        elif (line[:-1] == "  sharp: false") and in_curve_section and take_sharp_false:
+            #print("sharp: true")
+            curve = []
+            if lines[idx+1][8:-1] in ["Circle", "BSpline", "Line"]:
+                degree = None
+                if lines[idx+1][8:-1] == "BSpline":
+                    degree_idx_search = idx+1
+                    while lines[degree_idx_search][2:8] != "degree":
+                        degree_idx_search = degree_idx_search -1
+                    degree = int(lines[degree_idx_search][10:-1])
+
+                # append name of curve type
+                curve.append(lines[idx+1][8:-1])
+
+                # append the degree of curve
+                curve.append(degree)
+
+                # get ready to append the vert_indices
+                string = ''
+                vert_indices_line_idx = idx+2
+                open_bracket_idx = lines[vert_indices_line_idx].find("[")
+
+                # Check if it is a line or multiple lines
+                if "]" in lines[vert_indices_line_idx]: # closed bracket in the same line
+                    closed_bracket_idx = lines[vert_indices_line_idx].find("]")
+                    string = string + lines[vert_indices_line_idx][open_bracket_idx:closed_bracket_idx+1]
+                    
+                    curve.append(ast.literal_eval(string))
+                    curves.append(curve)
+                else: # multiple lines
+
+                    # take the first line.
+                    first_line = lines[vert_indices_line_idx][open_bracket_idx:][:]
+                    first_line = delete_newline(first_line)
+                    string = string + first_line
+                    vert_indices_line_idx = vert_indices_line_idx + 1
+
+                    # loop until there's a closed bracket.
+                    while "]" not in lines[vert_indices_line_idx]:
+                        nextline = lines[vert_indices_line_idx]
+                        nextline = delete_newline(nextline)
+                        nextline = delete_spaces(nextline)
+                        string = string + nextline
+                        vert_indices_line_idx = vert_indices_line_idx + 1
+
+                    # add the last line of vert_indices
+                    closed_bracket_idx = lines[vert_indices_line_idx].find("]")
+                    lastline = lines[vert_indices_line_idx]
+                    lastline = delete_spaces(lastline)
+                    string = string + lastline[:closed_bracket_idx-3]
+                    curve.append(ast.literal_eval(string))
+                    curves.append(curve)
+            else:
+                raise ValueError("curve not Curve, Line or BSpline.")
         #elif (line[:-1] == "  sharp: false") and in_curve_section:
         #    print("sharp: false")
         elif (line[:-1] == "  sharp: true") and in_curve_section:
