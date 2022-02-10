@@ -5,6 +5,40 @@ import itertools
 from tqdm import tqdm
 #import open3d
 
+def connection_possible(listA, listB):
+    return listA[0] == listB[0] or listA[0] == listB[-1] or listA[-1] == listB[0] or listA[-1] == listB[0]
+
+def connection_available(OpenCircle_list):
+    OpenCircle_list_num = len(OpenCircle_list)
+    for k in range(OpenCircle_list_num):
+        for i in range(k, OpenCircle_list_num):
+            if connection_possible(OpenCircle_list[k][2], OpenCircle_list[i][2]):
+                return True
+    return False
+
+
+def part_of(line_vertices, Curve_List):
+    # checks if line_vertices belong to one of the curve from Curve_List
+    for i in range(len(Curve_List)):
+        if np.in1d(np.array(line_vertices), np.array(Curve_List[i][2])).all():
+            return True
+    return False
+
+def check_OpenCircle(OpenCircle_list, vertices):
+    list_num = len(OpenCircle_list)
+    for i in range(list_num):
+        array = vertices[np.array(OpenCircle_list[i][2]), ...] # sequence doesn't change here
+        center = (array[0, ...] + array[-1, ...])/2.0
+        d = np.sqrt(np.sum((array[0, ...] - center)**2)) + 0.001
+        ds = np.sqrt(np.sum((center - array)**2, axis = 1))
+        if np.mean((ds < d).astype(np.float64)) < 0.90:
+            # "reachable" rate less than 90%
+            return True
+    return False
+
+
+
+
 '''
 def PathLength(Circle_list, nodes):
     max_digit = 0

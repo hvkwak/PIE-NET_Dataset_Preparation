@@ -21,6 +21,9 @@ from utils import touch_in_circles_or_BSplines
 from utils import touch_in_circle
 from utils import mostly_sharp_edges
 from utils import Check_Connect_Circles
+from utils import part_of
+from utils import check_OpenCircle
+from utils import connection_available
 #from utils import degrees_same
 from cycle_detection import Cycle_Detector_in_BSplines
 from grafkom1Framework import ObjLoader
@@ -66,7 +69,7 @@ if __name__ == "__main__":
     batch_count = 0
     file_count = 0
     data = {'batch_count': batch_count, 'Training_data': np.zeros((64, 1), dtype = object)}
-    for i in range(model_total_num):
+    for i in range(1065, model_total_num):
         
         model_name_obj = "_".join(list_obj_lines[i].split('/')[-1].split('_')[0:2])
         model_name_ftr = "_".join(list_ftr_lines[i].split('/')[-1].split('_')[0:2])
@@ -124,14 +127,30 @@ if __name__ == "__main__":
             BSpline_list = []
             Line_list = []
             Circle_list = []
+
             # Group all the curves.
             k = 0
+            very_few = False
             while k < curve_num:
                 curve = all_curves[k]
-                if curve[0] == 'BSpline': BSpline_list.append(curve)
-                elif curve[0] == 'Line': Line_list.append(curve)
-                elif curve[0] == 'Circle': Circle_list.append(curve)
+                if curve[0] == 'BSpline': 
+                    BSpline_list.append(curve)
+                    if len(curve[2]) < 3: very_few = True
+                elif curve[0] == 'Line': 
+                    Line_list.append(curve)
+                    if len(curve[2]) < 4: very_few = True
+                elif curve[0] == 'Circle': 
+                    Circle_list.append(curve)
+                    if len(curve[2]) < 6: very_few = True
                 k = k + 1
+
+            # skip if there is a curve which consists of very few vertices.
+            if very_few:
+                print("there is a curve which consists of very few vertices. skip this.")
+                log_string("Type 24", log_fout)
+                log_string("there is a curve which consists of very few vertices. skip this.", log_fout)
+                continue
+            
             
             # skip if there are one type of curves too much.
             if len(BSpline_list) > 300 or len(Circle_list) > 300 or len(Line_list) > 300:
@@ -228,6 +247,42 @@ if __name__ == "__main__":
             '''
 
             OpenCircle_list = Circle_list
+            ####
+            # if Circles in OpenCircle are connectable, just skip this
+            '''
+            if connection_available(OpenCircle_list):
+                print("connection_available in Opencircle_list.")
+                log_string("Type 23", log_fout)
+                log_string("connection_available in Opencircle_list.", log_fout)
+                continue
+            '''
+
+
+            # Check if OpenCircle_list contains something "more" than a HalfCircle (theta > pi)
+            if check_OpenCircle(OpenCircle_list, vertices):
+                print("OpenCircle_list contains something more than a HalfCircle (theta > pi)")
+                log_string("Type 22", log_fout)
+                log_string("OpenCircle_list contains something more than a HalfCircle (theta > pi)", log_fout)
+                continue
+
+            ####
+            Circle_list_num = OpenCircle_list
+            k = 0
+            while k < Circle_list_num:
+                if Circle_list[k][2][0] == Circle_list[k][2][-1]:
+                    FullCircles.append(Circle_list[k])
+                    del Circle_list[k]
+                    k = k - 1
+                    Circle_list_num = Circle_list_num - 1
+                k = k + 1
+
+            ####
+            if Possible_Circle_in_Open_Circle(OpenCircle_list, vertices):
+
+
+
+
+
             Circle_list = FullCircles
             #
             # Find BSplines with degree = 1 and classify them accordingly:
@@ -325,6 +380,26 @@ if __name__ == "__main__":
                 log_string("Type 7", log_fout)
                 log_string("there are at least one detected cycle, skip this.", log_fout)
                 continue
+
+            #
+            # More filtering rules for BSpline_list, Line_list, OpenCircle_list, Circle_list.
+            #
+
+            # connectable OpenCircle exists -> skip this
+
+            # 1. Vertices of lines are completely part of BSplines or Circles -> remove them
+            Line_list_num = len(Line_list)
+            k = 0
+            while k < len(Line_list):
+                if part_of(Line_list[k][2], BSpline_list + OpenCircle_list + Circle_list):
+                    del Line_list[k]
+                    k = k - 1
+                    Line_list_num = Line_list_num - 1
+                k = k + 1
+
+            # 2. Curves with just 1 or 2 verticies: remove them
+            
+
 
 
 
