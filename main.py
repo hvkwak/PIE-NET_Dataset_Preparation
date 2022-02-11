@@ -24,6 +24,9 @@ from utils import Check_Connect_Circles
 from utils import part_of
 from utils import check_OpenCircle
 from utils import connection_available
+from utils import vertex_num_finder
+#from utils import Possible_Circle_in_Open_Circle
+from itertools import combinations
 #from utils import degrees_same
 from cycle_detection import Cycle_Detector_in_BSplines
 from grafkom1Framework import ObjLoader
@@ -69,7 +72,7 @@ if __name__ == "__main__":
     batch_count = 0
     file_count = 0
     data = {'batch_count': batch_count, 'Training_data': np.zeros((64, 1), dtype = object)}
-    for i in range(1065, model_total_num):
+    for i in range(1428, model_total_num):
         
         model_name_obj = "_".join(list_obj_lines[i].split('/')[-1].split('_')[0:2])
         model_name_ftr = "_".join(list_ftr_lines[i].split('/')[-1].split('_')[0:2])
@@ -128,7 +131,8 @@ if __name__ == "__main__":
             Line_list = []
             Circle_list = []
 
-            # Group all the curves.
+
+            # Group all the curves. Object with curves with very few vertices: skip them!
             k = 0
             very_few = False
             while k < curve_num:
@@ -174,8 +178,15 @@ if __name__ == "__main__":
                 k = k + 1
             '''
 
-            # Check if there are half Circles/BSplines pair, merge them if there's one.
-            BSpline_Circle_list = rest_curve_finder(BSpline_list + Circle_list, vertices)
+            # Check if there are half Circles/BSplines pair, merge them if there's one. BSplines 
+            try:
+                BSpline_Circle_list = rest_curve_finder(BSpline_list + Circle_list, vertices)
+            except:
+                print("there's something wrong in rest_curve_finder. possibly two BSplines having same start/end points, but not buliding a circle. skip this.")
+                log_string("Type 25", log_fout)
+                log_string("there's something wrong in rest_curve_finder. possibly two BSplines having same start/end points, but not buliding a circle. skip this.", log_fout)
+                continue
+
             #print("len(BSpline_Circle_list): ", len(BSpline_Circle_list))
             BSpline_list = []
             Circle_list = []
@@ -258,6 +269,34 @@ if __name__ == "__main__":
             '''
 
 
+            # this is different to first finding out full circles. first and last vertices are not equal,
+            # but there's still possibility to build circles.
+            # 1. take all the open circles
+            # 2. see if combinations of 1, 2, 3, .... len(OpenCircle_list) builds a circle
+            '''
+            OpenCircle_list_num = len(OpenCircle_list)
+            sample_list = list(range(OpenCircle_list_num))
+            list_combinations = list()
+            for k in range(len(sample_list) + 1):
+                list_combinations += list(combinations(sample_list, k))
+                
+            all_combinations = list_combinations[1:]
+            for k in all_combinations:
+                vertex_idx = []
+                for i in k:
+                    vertex_idx = vertex_idx + OpenCircle_list[i][2]
+                
+                vertex_idx = np.array([vertex_idx])
+                r = np.sqrt(np.sum((np.mean(vertices[vertex_idx, ...], axis = 0) - vertices[vertex_idx, ...])**2, axis = 1))
+                if np.std(r) < 0.001:
+                    # this is a possible circle.
+                    vertex_idx = list(vertex_idx)
+                    FullCircles.append([['Circle'], None, vertex_idx])
+                    indices_to_delete = k
+                    sorted_indecies_to_delete = sorted(indices_to_delete, reverse=True)
+                    for index in indices_to_delete:
+                        del OpenCircle_list[index]
+            '''
             # Check if OpenCircle_list contains something "more" than a HalfCircle (theta > pi)
             if check_OpenCircle(OpenCircle_list, vertices):
                 print("OpenCircle_list contains something more than a HalfCircle (theta > pi)")
@@ -266,21 +305,9 @@ if __name__ == "__main__":
                 continue
 
             ####
-            Circle_list_num = OpenCircle_list
-            k = 0
-            while k < Circle_list_num:
-                if Circle_list[k][2][0] == Circle_list[k][2][-1]:
-                    FullCircles.append(Circle_list[k])
-                    del Circle_list[k]
-                    k = k - 1
-                    Circle_list_num = Circle_list_num - 1
-                k = k + 1
 
-            ####
-            if Possible_Circle_in_Open_Circle(OpenCircle_list, vertices):
-
-
-
+            
+            
 
 
             Circle_list = FullCircles
@@ -370,16 +397,49 @@ if __name__ == "__main__":
                 log_string("there exist at least one vertex that is visited more than twice. skip this.", log_fout)
                 continue
             
-            # if there are at least one detected cycle, skip it.
+            # if there are at least one detected cycle in BSplines, skip it.
             print("Detecting a cycle... this can take a while....", end = " ")
             Cycle_Detector = Cycle_Detector_in_BSplines(BSpline_list)
             detected_cycles_in_BSplines = Cycle_Detector.run_cycle_detection_in_BSplines()
+            result_list = Cycle_Detector.result_list
             print("Finished!")
             if detected_cycles_in_BSplines:
                 print("There are at least one detected cycle, skip this.")
                 log_string("Type 7", log_fout)
                 log_string("there are at least one detected cycle, skip this.", log_fout)
                 continue
+
+
+
+
+            '''
+            # run this once more to detect cycle in OpenCircle, where we try to find this specific triangular looking "opencircle" cycle.
+            terminate = False
+            Cycle_Detector = Cycle_Detector_in_BSplines(OpenCircle_list)
+            detected_cycles_in_OpenCircles = Cycle_Detector.run_cycle_detection_in_BSplines()
+            result_list = Cycle_Detector.result_list
+            while detected_cycles_in_OpenCircles:
+                
+                if len(result_list[0]) == 3:
+                    idx_to_delete = []
+                    for vertex_num_to_find in result_list[0]:
+                        idx_to_delete.append(vertex_num_finder(OpenCircle_list, vertex_num_to_find))
+                    #idx_to_delete = result_list[0]
+                    sorted_idx_to_delete = sorted(idx_to_delete, reverse=True)
+                    for index in sorted_idx_to_delete:
+                        del OpenCircle_list[index]                
+                    Cycle_Detector = Cycle_Detector_in_BSplines(OpenCircle_list)
+                    detected_cycles_in_OpenCircles = Cycle_Detector.run_cycle_detection_in_BSplines()
+                
+                if len(result_list[0]) > 3:
+                    terminate = True
+            
+            if terminate:
+                print("There were a cycle length > 3 in OpenCircle. skip this.")
+                log_string("Type 26", log_fout)
+                log_string("There were a cycle length > 3 in OpenCircle. skip this.", log_fout)
+                continue
+            '''
 
             #
             # More filtering rules for BSpline_list, Line_list, OpenCircle_list, Circle_list.

@@ -5,6 +5,12 @@ import itertools
 from tqdm import tqdm
 #import open3d
 
+def vertex_num_finder(OpenCircle_list, vertex_num_to_find):
+    OpenCircle_list_num = len(OpenCircle_list)
+    for k in range(OpenCircle_list_num):
+        if OpenCircle_list[k][0] == vertex_num_to_find:
+            return k
+
 def connection_possible(listA, listB):
     return listA[0] == listB[0] or listA[0] == listB[-1] or listA[-1] == listB[0] or listA[-1] == listB[0]
 
@@ -465,6 +471,8 @@ def rest_curve_finder(Circle_or_BSpline_list, vertices):
                 Circle_or_BSpline_list[k] = new_curve
                 del Circle_or_BSpline_list[idx]
                 Circle_or_BSpline_num = Circle_or_BSpline_num - 1
+            else:
+                raise ValueError
         k = k + 1
     return Circle_or_BSpline_list
 
