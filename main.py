@@ -74,10 +74,10 @@ if __name__ == "__main__":
     data = {'batch_count': batch_count, 'Training_data': np.zeros((64, 1), dtype = object)}
     
     # control visualization points
-    check_point1 = False
-    check_point2 = False
-    check_point3 = True
-    for i in range(2000, model_total_num):
+    check_point1 = args[4] == '1'
+    check_point2 = args[4] == '2'
+    check_point3 = args[4] == '3'
+    for i in range(2115, model_total_num):
         
         model_name_obj = "_".join(list_obj_lines[i].split('/')[-1].split('_')[0:2])
         model_name_ftr = "_".join(list_ftr_lines[i].split('/')[-1].split('_')[0:2])
@@ -102,14 +102,24 @@ if __name__ == "__main__":
             
             # Type1
             # make sure we have < 30K vertices to keep it simple.
-            if vertices.shape[0] > 45000: 
-                print("vertices:", vertices.shape[0], " > 45000. skip this.")
+            if vertices.shape[0] > 40000: 
+                print("vertices:", vertices.shape[0], " > 40000. skip this.")
                 log_string("Type 1", log_fout)
-                log_string("vertices " +str(vertices.shape[0])+" > 45000. skip this.", log_fout)
+                log_string("vertices " +str(vertices.shape[0])+" > 40000. skip this.", log_fout)
                 del vertices
                 del faces
                 del vertex_normals
                 continue
+            elif vertices.shape[0] < 10000:
+                print("vertices:", vertices.shape[0], " < 10000. skip this.")
+                log_string("Type 27", log_fout)
+                log_string("vertices " +str(vertices.shape[0])+" < 10000. skip this.", log_fout)
+                del vertices
+                del faces
+                del vertex_normals
+                continue
+
+
             
             #Type2
             # Curves with vertex indices: (sharp and not sharp)edges of BSpline, Line, Cycle only.
@@ -538,8 +548,6 @@ if __name__ == "__main__":
                 vis.add_geometry(point_cloud)
                 vis.run()
             
-
-
             #
             # Classifications into open/closed curve AND edge/corner points
             #
@@ -574,8 +582,20 @@ if __name__ == "__main__":
             k = 0
             Line_Circle_List = Line_list + Circle_list
             while k < len(Line_Circle_List):
-                # classifications
                 curve = Line_Circle_List[k]
+
+                # down size the curve. We are downsizing to FPS_num. curves need to be downsized accordingly. 
+                # note: 8096/40000 ~ 0.20. We take first and last point, reduce rest of them according to rate dynamically..
+                if 3 <= len(curve[2]) <= 4:
+                    curve[2] = [curve[2][0]] + random.sample(curve[2][1:-1], 1) + [curve[2][-1]]
+                elif 4 < len(curve[2]) < 10:
+                    curve[2] = [curve[2][0]] + random.sample(curve[2][1:-1], 2) + [curve[2][-1]]
+                else:
+                    rate = float(FPS_num)/vertices.shape[0]
+                    sample_num = round(len(curve[2][1:-1])*rate)
+                    curve[2] = [curve[2][0]] + random.sample(curve[2][1:-1], sample_num) + [curve[2][-1]]
+
+                # update lists
                 if curve[0] == 'Line':
                     open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
                 elif curve[0] == 'Circle':
@@ -598,12 +618,14 @@ if __name__ == "__main__":
             while k < len(BSpline_OpenCircle_List):
                 curve = BSpline_OpenCircle_List[k]
 
-                #if curve[0] == 'BSpline':
-                #    if 3 <= len(curve[2]) <= 6 :
-                #        corner_points_ori.append(curve[2][len(curve[2])//2])
-                #    open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
-                #elif curve[0] == 'HalfCircle':
-                #    open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
+                if 3 <= len(curve[2]) <= 4:
+                    curve[2] = [curve[2][0]] + random.sample(curve[2][1:-1], 1) + [curve[2][-1]]
+                elif 4 < len(curve[2]) < 10:
+                    curve[2] = [curve[2][0]] + random.sample(curve[2][1:-1], 2) + [curve[2][-1]]
+                else:
+                    rate = float(FPS_num)/vertices.shape[0]
+                    sample_num = round(len(curve[2][1:-1])*rate)
+                    curve[2] = [curve[2][0]] + random.sample(curve[2][1:-1], sample_num) + [curve[2][-1]]
 
                 open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
                 k = k + 1
@@ -739,10 +761,11 @@ if __name__ == "__main__":
                 nearest_neighbor_idx_edge_1 = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=1)
                 nearest_neighbor_idx_corner_1 = nearest_neighbor_finder(vertices[corner_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=1)
                 distance_max_1 = np.max(np.sqrt(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_1, :])**2).sum(axis = 1)))
-                if distance_max_1 > 10.0:
-                    print("distance_max_1: ", distance_max_1, " > 10.0. skip this.")
+                threshold = 1.5
+                if distance_max_1 > 1.5:
+                    print("distance_max_1: ", distance_max_1, " >", threshold, ". skip this.")
                     log_string("Type 12", log_fout)
-                    log_string("distance_max_1: "+str(distance_max_1)+ " > 10.0 skip this.", log_fout)
+                    log_string("distance_max_1: "+str(distance_max_1)+ " >", threshold, ". skip this.", log_fout)
                     continue
                 nearest_neighbor_idx_edge = nearest_neighbor_idx_edge_1
                 nearest_neighbor_idx_corner = nearest_neighbor_idx_corner_1
@@ -798,26 +821,35 @@ if __name__ == "__main__":
                 continue
                 
             # normalize them to keep all in [-0.5, 0.5]
+            max_x_in_vertices = np.max([np.max(vertices[:, 0]), np.abs(np.min(vertices[:, 0]))])
+            max_y_in_vertices = np.max([np.max(vertices[:, 1]), np.abs(np.min(vertices[:, 1]))])
+            max_z_in_vertices = np.max([np.max(vertices[:, 2]), np.abs(np.min(vertices[:, 2]))])
+            max_in_vertices = np.max([max_x_in_vertices, max_y_in_vertices, max_z_in_vertices])
+
             max_x_in_this_model = np.max([np.max(down_sample_point[:, 0]), np.abs(np.min(down_sample_point[:, 0]))])
             max_y_in_this_model = np.max([np.max(down_sample_point[:, 1]), np.abs(np.min(down_sample_point[:, 1]))])
             max_z_in_this_model = np.max([np.max(down_sample_point[:, 2]), np.abs(np.min(down_sample_point[:, 2]))])
             max_in_this_model = np.max([max_x_in_this_model, max_y_in_this_model, max_z_in_this_model])
+            max_from_two = np.max([max_in_this_model, max_in_vertices])
 
-            if max_in_this_model > 0.5:
-                down_sample_point[:,0] = (down_sample_point[:, 0] / (max_in_this_model*2.0))
-                down_sample_point[:,1] = (down_sample_point[:, 1] / (max_in_this_model*2.0))
-                down_sample_point[:,2] = (down_sample_point[:, 2] / (max_in_this_model*2.0))
-                edge_points_residual_vector[:,0] = (edge_points_residual_vector[:, 0] / (max_in_this_model*2.0))
-                edge_points_residual_vector[:,1] = (edge_points_residual_vector[:, 1] / (max_in_this_model*2.0))
-                edge_points_residual_vector[:,2] = (edge_points_residual_vector[:, 2] / (max_in_this_model*2.0))
-                corner_points_residual_vector[:,0] = (corner_points_residual_vector[:, 0] / (max_in_this_model*2.0))
-                corner_points_residual_vector[:,1] = (corner_points_residual_vector[:, 1] / (max_in_this_model*2.0))
-                corner_points_residual_vector[:,2] = (corner_points_residual_vector[:, 2] / (max_in_this_model*2.0))
+            if max_from_two > 0.5:
+                down_sample_point[:,0] = (down_sample_point[:, 0] / (max_from_two*2.0))
+                down_sample_point[:,1] = (down_sample_point[:, 1] / (max_from_two*2.0))
+                down_sample_point[:,2] = (down_sample_point[:, 2] / (max_from_two*2.0))
+                vertices[:,0] = (vertices[:, 0] / (max_from_two*2.0))
+                vertices[:,1] = (vertices[:, 1] / (max_from_two*2.0))
+                vertices[:,2] = (vertices[:, 2] / (max_from_two*2.0))
+                edge_points_residual_vector[:,0] = (edge_points_residual_vector[:, 0] / (max_from_two*2.0))
+                edge_points_residual_vector[:,1] = (edge_points_residual_vector[:, 1] / (max_from_two*2.0))
+                edge_points_residual_vector[:,2] = (edge_points_residual_vector[:, 2] / (max_from_two*2.0))
+                corner_points_residual_vector[:,0] = (corner_points_residual_vector[:, 0] / (max_from_two*2.0))
+                corner_points_residual_vector[:,1] = (corner_points_residual_vector[:, 1] / (max_from_two*2.0))
+                corner_points_residual_vector[:,2] = (corner_points_residual_vector[:, 2] / (max_from_two*2.0))
 
             m = 0
             closed_curve_NN_search_failed = False
-            down_sample_point_copy = down_sample_point.copy()
             for curve in closed_curves:
+                down_sample_point_copy = down_sample_point.copy()
                 # first element
                 try:
                     closed_gt_pair_idx[m,0] = nearest_neighbor_finder(vertices[np.array([curve[2][0]]),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
@@ -878,6 +910,7 @@ if __name__ == "__main__":
             open_curve_NN_search_failed = False
             for curve in open_curves:
                 down_sample_point_copy = down_sample_point.copy()
+
                 # first and last element
                 try:
                     open_gt_pair_idx[n,] = nearest_neighbor_finder(vertices[np.array([curve[2][0], curve[2][-1]]),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
@@ -890,7 +923,7 @@ if __name__ == "__main__":
                     log_string("Type 19", log_fout)
                     log_string("NN for open_gt_pair_idx was not successful. skip this.", log_fout)
                     open_curve_NN_search_failed = True
-                    continue
+                    break
                 
                 # open_gt_256_64_idx
                 if len(curve[2]) > 64:
@@ -966,7 +999,8 @@ if __name__ == "__main__":
                 def close_visualization(vis):
                     vis.close()
 
-                s = 0 # 
+                s = 0
+                # W
                 def update_visualization_open_curve_forward(vis, vertices, down_sample_point, open_gt_256_64_idx, open_gt_sample_points, open_curves):
                     global s
 
@@ -980,13 +1014,13 @@ if __name__ == "__main__":
                     if open_gt_valid_mask[s, 0] == 0: 
                         assert open_gt_valid_mask[s, 0] == open_gt_mask[s, :].sum() == open_gt_pair_idx[s, :].sum() == open_gt_256_64_idx[s, :].sum()
 
-                    # open_gt_sample_points should be the same.
-                    assert np.sum((down_sample_point[open_gt_256_64_idx[s, np.where(open_gt_mask == 1)], :] - open_gt_sample_points[s, :])**2) < 0.001
+                    # open_gt_sample_points should be almost same.
+                    assert np.mean(np.sqrt(np.sum((down_sample_point[open_gt_256_64_idx[s, np.where(open_gt_mask[s, :] == 1)[0]], ...]- open_gt_sample_points[s, :][np.where(open_gt_mask[s, :] == 1)[0], ...])**2, axis = 1))) < 0.001
 
                     color_array = np.zeros_like(np.concatenate([down_sample_point, vertices]))
-                    color_array[open_gt_pair_idx[s, :], :] = [0.0, 0.0, 0.99] # red
-                    color_array[open_gt_256_64_idx[s, :], :] = [0.99, 0.0, 0.0] # blue
-                    color_array[FPS_num + open_curves[s][2], :] = [0.0, 0.99, 0.0] # green
+                    color_array[open_gt_256_64_idx[s, :], :] = [0.0, 0.0, 0.99] # blue
+                    color_array[open_gt_pair_idx[s, :], :] = [0.99, 0.0, 0.0] # red
+                    color_array[FPS_num + np.array(open_curves[s][2]), :] = [0.0, 0.99, 0.0] # green
 
                     if open_gt_valid_mask[s+1, 0] == 1:
                         s += 1
@@ -997,34 +1031,59 @@ if __name__ == "__main__":
                     vis.update_renderer()
                     #vis.run()
 
+                # E
+                def update_visualization_open_curve_backward(vis, vertices, down_sample_point, open_gt_256_64_idx, open_gt_sample_points, open_curves):
+                    global s
+                    # asserts..
+                    # open_gt_pair_idx = open_gt_256_64_idx
+                    assert s > 0
+                    assert open_gt_pair_idx[s, 0] == open_gt_256_64_idx[s, 0]
+                    assert open_gt_pair_idx[s, 1] == open_gt_256_64_idx[s, -1]
+
+                    # open_gt_valid_mask = open_gt_mask
+                    
+                    if open_gt_valid_mask[s, 0] == 0: 
+                        assert open_gt_valid_mask[s, 0] == open_gt_mask[s, :].sum() == open_gt_pair_idx[s, :].sum() == open_gt_256_64_idx[s, :].sum()
+
+                    # open_gt_sample_points should be almost same.
+                    assert np.mean(np.sqrt(np.sum((down_sample_point[open_gt_256_64_idx[s, np.where(open_gt_mask[s, :] == 1)[0]], ...]- open_gt_sample_points[s, :][np.where(open_gt_mask[s, :] == 1)[0], ...])**2, axis = 1))) < 0.001
+
+                    color_array = np.zeros_like(np.concatenate([down_sample_point, vertices]))
+                    color_array[open_gt_256_64_idx[s, :], :] = [0.0, 0.0, 0.99] # blue
+                    color_array[open_gt_pair_idx[s, :], :] = [0.99, 0.0, 0.0] # red
+                    color_array[FPS_num + np.array(open_curves[s][2]), :] = [0.0, 0.99, 0.0] # green
+
+                    if open_gt_valid_mask[s-1, 0] == 1:
+                        s -= 1
+                    point_cloud.points = open3d.utility.Vector3dVector(np.concatenate([down_sample_point, vertices]))
+                    point_cloud.colors = open3d.utility.Vector3dVector(color_array)
+                    vis.update_geometry(point_cloud)
+                    vis.poll_events()
+                    vis.update_renderer()
+                    #vis.run()
+
+
                 # first visualization: down_sample_point, edge and corner points level and their residual vectors
                 color_array = np.zeros_like(np.concatenate([down_sample_point, down_sample_point]))
-                color_array[np.where(edge_points_label == 1)[0], :] = [0.99, 0.0, 0.0] # blue
-                color_array[np.where(corner_points_label == 1)[0], :] = [0.0, 0.0, 0.99] # red
-                color_array[FPS_num + np.where(edge_points_label == 1)[0], :] = [0.0, 0.75, 0.0]
-                color_array[FPS_num + np.where(corner_points_label == 1)[0], :] = [0.0, 0.0, 0.75]
+                color_array[np.where(edge_points_label == 1)[0], :] = [0.0, 0.0, 0.99] # blue
+                color_array[np.where(corner_points_label == 1)[0], :] = [0.99, 0.0, 0.0] # red
+                color_array[FPS_num + np.where(edge_points_label == 1)[0], :] = [0.0, 0.99, 0.0]
+                color_array[FPS_num + np.where(corner_points_label == 1)[0], :] = [0.0, 0.99, 0.0]
 
                 #color_array[open_curves[s][2][1:-1], :] = [0.0, 0.99, 0.0]
                 correct_edges = down_sample_point+edge_points_residual_vector
                 correct_corners = down_sample_point+corner_points_residual_vector
                 delta_edges = correct_edges - correct_corners
+
+                point_cloud = open3d.geometry.PointCloud()
                 point_cloud.points = open3d.utility.Vector3dVector(np.concatenate([down_sample_point, correct_corners + delta_edges]))
                 point_cloud.colors = open3d.utility.Vector3dVector(color_array)
 
                 vis = open3d.visualization.VisualizerWithKeyCallback()
                 vis.create_window()
                 vis.register_key_callback(87, partial(update_visualization_open_curve_forward, vertices = vertices, down_sample_point = down_sample_point, open_gt_256_64_idx = open_gt_256_64_idx, open_gt_sample_points = open_gt_sample_points, open_curves = open_curves)) # W    
-                #vis.register_key_callback(69, partial(update_visualization_closed_curve, vertices = vertices, closed_curves = closed_curves, edge_points_ori = edge_points_ori)) # E
-                #vis.register_key_callback(69, partial(update_visualization32, \
-                #                                    down_sample_point = down_sample_point, \
-                #                                    open_gt_pair_idx = open_gt_pair_idx, \
-                #                                    open_gt_valid_mask = open_gt_valid_mask, \
-                #                                    open_gt_256_64_idx = open_gt_256_64_idx, \
-                #                                    open_gt_type = open_gt_type, \
-                #                                    open_gt_res = open_gt_res, \
-                #                                    open_gt_sample_points = open_gt_sample_points, \
-                #                                    open_gt_mask = open_gt_mask)) # E
-                
+                vis.register_key_callback(69, partial(update_visualization_open_curve_backward, vertices = vertices, down_sample_point = down_sample_point, open_gt_256_64_idx = open_gt_256_64_idx, open_gt_sample_points = open_gt_sample_points, open_curves = open_curves)) # W    
+
                 vis.register_key_callback(81, close_visualization) # Q
                 vis.add_geometry(point_cloud)
                 vis.run()
