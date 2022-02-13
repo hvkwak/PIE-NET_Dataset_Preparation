@@ -72,7 +72,12 @@ if __name__ == "__main__":
     batch_count = 0
     file_count = 0
     data = {'batch_count': batch_count, 'Training_data': np.zeros((64, 1), dtype = object)}
-    for i in range(1428, model_total_num):
+    
+    # control visualization points
+    check_point1 = False
+    check_point2 = False
+    check_point3 = True
+    for i in range(2000, model_total_num):
         
         model_name_obj = "_".join(list_obj_lines[i].split('/')[-1].split('_')[0:2])
         model_name_ftr = "_".join(list_ftr_lines[i].split('/')[-1].split('_')[0:2])
@@ -98,9 +103,9 @@ if __name__ == "__main__":
             # Type1
             # make sure we have < 30K vertices to keep it simple.
             if vertices.shape[0] > 45000: 
-                print("vertices:", vertices.shape[0], " > 40000. skip this.")
+                print("vertices:", vertices.shape[0], " > 45000. skip this.")
                 log_string("Type 1", log_fout)
-                log_string("vertices " +str(vertices.shape[0])+" > 40000. skip this.", log_fout)
+                log_string("vertices " +str(vertices.shape[0])+" > 45000. skip this.", log_fout)
                 del vertices
                 del faces
                 del vertex_normals
@@ -108,11 +113,13 @@ if __name__ == "__main__":
             
             #Type2
             # Curves with vertex indices: (sharp and not sharp)edges of BSpline, Line, Cycle only.
+            '''
             if not mostly_sharp_edges(list_ftr_line, threshold=0.30):
                 print("sharp_true_count/(sharp_true_count+sharp_false_count) < 0.30. skip this.")
                 log_string("Type 2", log_fout)
                 log_string("sharp_true_count/(sharp_true_count+sharp_false_count) < 0.30. skip this.", log_fout)
                 continue
+            '''
             
             # Type3
             # This has curves other than Circle, BSpline or Line, skip this.
@@ -445,8 +452,6 @@ if __name__ == "__main__":
             # More filtering rules for BSpline_list, Line_list, OpenCircle_list, Circle_list.
             #
 
-            # connectable OpenCircle exists -> skip this
-
             # 1. Vertices of lines are completely part of BSplines or Circles -> remove them
             Line_list_num = len(Line_list)
             k = 0
@@ -457,89 +462,84 @@ if __name__ == "__main__":
                     Line_list_num = Line_list_num - 1
                 k = k + 1
 
-            # 2. Curves with just 1 or 2 verticies: remove them
+            
+            if check_point1:
+                # create updates
+                def close_visualization(vis):
+                    vis.close()
+
+                s = 1 # 
+                def update_visualization(vis, vertices, BSpline_list, Line_list, OpenCircle_list, Circle_list):
+                    global s
+                    print("s: ", s)
+                    # k just stands for k-th element in listB and listG
+                    #assert len(listB) == len(listG)
+                    #colorG = [0.5, 0.5, 0.5]   # gray
+                    color1 = [0.99, 0.0, 0.0] # red Bspline
+                    color2 = [0.0, 0.99, 0.99] # blue Line
+                    color3 = [0.0, 0.99, 0.0] # green Circle
+
+                    # arrayR and take first
+                    #arrayR = down_sample_point
+                    if s == 1:
+                        curves = Line_list
+                        color = color1 # red
+                    elif s == 2:
+                        curves = Circle_list
+                        color = color2 # lightblue
+                    elif s == 3:
+                        curves = OpenCircle_list
+                        color = color3 # green
+                    
+                    curves_idx = []
+                    for i in range(len(curves)):
+                        curves_idx = curves_idx + curves[i][2]
+                    color_array = np.zeros_like(vertices)
+                    color_array[curves_idx, :] = color
+                    if s < 3:
+                        s += 1
+                    point_cloud.points = open3d.utility.Vector3dVector(vertices)
+                    point_cloud.colors = open3d.utility.Vector3dVector(color_array)
+                    vis.update_geometry(point_cloud)
+                    vis.poll_events()
+                    vis.update_renderer()
+                    #vis.run()
+
+                curves_idx = []
+                lines_idx = []
+                for i in range(len(BSpline_list)):
+                    if k == 1 and BSpline_list[i][1] == 1:
+                        lines_idx = lines_idx + BSpline_list[i][2]
+                    curves_idx = curves_idx + BSpline_list[i][2]
+                color_array = np.zeros_like(vertices)
+                color_array[curves_idx, :] = [0.0, 0.0, 0.99] # BSplines red
+                if len(lines_idx) > 0:
+                    color_array[lines_idx, :] = [0.0, 0.99, 0.99] # exceptions
+                # create point clouds and visualizers
+                point_cloud = open3d.geometry.PointCloud()
+                point_cloud.points = open3d.utility.Vector3dVector(vertices)
+                point_cloud.colors = open3d.utility.Vector3dVector(color_array)
+
+                vis = open3d.visualization.VisualizerWithKeyCallback()
+                vis.create_window()
+                vis.register_key_callback(87, partial(update_visualization, vertices = vertices, BSpline_list = BSpline_list, Line_list = Line_list, OpenCircle_list = OpenCircle_list, Circle_list = Circle_list)) # W    
+                
+                #vis.register_key_callback(69, partial(update_visualization32, \
+                #                                    down_sample_point = down_sample_point, \
+                #                                    open_gt_pair_idx = open_gt_pair_idx, \
+                #                                    open_gt_valid_mask = open_gt_valid_mask, \
+                #                                    open_gt_256_64_idx = open_gt_256_64_idx, \
+                #                                    open_gt_type = open_gt_type, \
+                #                                    open_gt_res = open_gt_res, \
+                #                                    open_gt_sample_points = open_gt_sample_points, \
+                #                                    open_gt_mask = open_gt_mask)) # E
+                
+                vis.register_key_callback(81, close_visualization) # Q
+                vis.add_geometry(point_cloud)
+                vis.run()
             
 
 
-
-
-            # check the visualizations.
-            # create updates
-            def close_visualization(vis):
-                vis.close()
-
-            s = 1 # 
-            def update_visualization(vis, vertices, BSpline_list, Line_list, OpenCircle_list, Circle_list):
-                global s
-                print("s: ", s)
-                # k just stands for k-th element in listB and listG
-                #assert len(listB) == len(listG)
-                #colorG = [0.5, 0.5, 0.5]   # gray
-                color1 = [0.99, 0.0, 0.0] # red Bspline
-                color2 = [0.0, 0.99, 0.99] # blue Line
-                color3 = [0.0, 0.99, 0.0] # green Circle
-
-                # arrayR and take first
-                #arrayR = down_sample_point
-                if s == 1:
-                    curves = Line_list
-                    color = color1 # red
-                elif s == 2:
-                    curves = Circle_list
-                    color = color2 # lightblue
-                elif s == 3:
-                    curves = OpenCircle_list
-                    color = color3 # green
-                
-                curves_idx = []
-                for i in range(len(curves)):
-                    curves_idx = curves_idx + curves[i][2]
-                color_array = np.zeros_like(vertices)
-                color_array[curves_idx, :] = color
-                if s < 3:
-                    s += 1
-                point_cloud.points = open3d.utility.Vector3dVector(vertices)
-                point_cloud.colors = open3d.utility.Vector3dVector(color_array)
-                vis.update_geometry(point_cloud)
-                vis.poll_events()
-                vis.update_renderer()
-                #vis.run()
-
-            curves_idx = []
-            lines_idx = []
-            for i in range(len(BSpline_list)):
-                if k == 1 and BSpline_list[i][1] == 1:
-                    lines_idx = lines_idx + BSpline_list[i][2]
-                curves_idx = curves_idx + BSpline_list[i][2]
-            color_array = np.zeros_like(vertices)
-            color_array[curves_idx, :] = [0.0, 0.0, 0.99] # BSplines red
-            if len(lines_idx) > 0:
-                color_array[lines_idx, :] = [0.0, 0.99, 0.99] # exceptions
-            # create point clouds and visualizers
-            point_cloud = open3d.geometry.PointCloud()
-            point_cloud.points = open3d.utility.Vector3dVector(vertices)
-            point_cloud.colors = open3d.utility.Vector3dVector(color_array)
-
-            vis = open3d.visualization.VisualizerWithKeyCallback()
-            vis.create_window()
-            vis.register_key_callback(87, partial(update_visualization, vertices = vertices, BSpline_list = BSpline_list, Line_list = Line_list, OpenCircle_list = OpenCircle_list, Circle_list = Circle_list)) # W    
-            '''
-            vis.register_key_callback(69, partial(update_visualization32, \
-                                                down_sample_point = down_sample_point, \
-                                                open_gt_pair_idx = open_gt_pair_idx, \
-                                                open_gt_valid_mask = open_gt_valid_mask, \
-                                                open_gt_256_64_idx = open_gt_256_64_idx, \
-                                                open_gt_type = open_gt_type, \
-                                                open_gt_res = open_gt_res, \
-                                                open_gt_sample_points = open_gt_sample_points, \
-                                                open_gt_mask = open_gt_mask)) # E
-            '''
-            vis.register_key_callback(81, close_visualization) # Q
-            vis.add_geometry(point_cloud)
-            vis.run()
-
-
-    '''
             #
             # Classifications into open/closed curve AND edge/corner points
             #
@@ -550,6 +550,8 @@ if __name__ == "__main__":
             all_curves = Line_list + Circle_list + BSpline_list
             curve_num = len(all_curves)
 
+
+            # it's not likley, but let's do this: cross points check
             k = 0
             while k < curve_num:
                 curve = all_curves[k]
@@ -566,6 +568,9 @@ if __name__ == "__main__":
                 k = k + 1
             del all_curves
 
+
+
+            # Classify lines and (full)circles
             k = 0
             Line_Circle_List = Line_list + Circle_list
             while k < len(Line_Circle_List):
@@ -578,16 +583,29 @@ if __name__ == "__main__":
                 k = k + 1
             del Line_Circle_List
 
+
+            # Merge Bsplines and OpenCircles. don't forget to change the name of curve first!
+            k = 0
+            while k < len(OpenCircle_list):
+                # classifications
+                curve = OpenCircle_list[k]
+                if curve[0] == 'Circle':
+                    curve[0] = 'BSpline'
+                k = k + 1
+
             k = 0
             BSpline_OpenCircle_List = BSpline_list + OpenCircle_list
             while k < len(BSpline_OpenCircle_List):
                 curve = BSpline_OpenCircle_List[k]
-                if curve[0] == 'BSpline':
-                    if 3 <= len(curve[2]) <= 6 :
-                        corner_points_ori.append(curve[2][len(curve[2])//2])
-                    open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
-                elif curve[0] == 'HalfCircle':
-                    open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
+
+                #if curve[0] == 'BSpline':
+                #    if 3 <= len(curve[2]) <= 6 :
+                #        corner_points_ori.append(curve[2][len(curve[2])//2])
+                #    open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
+                #elif curve[0] == 'HalfCircle':
+                #    open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
+
+                open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
                 k = k + 1
             del BSpline_list
             del OpenCircle_list
@@ -600,7 +618,7 @@ if __name__ == "__main__":
                 continue
 
             # if (len(open_curves) == 0) or (len(closed_curves) == 0): 
-            # just reject the object if there are no open_curves
+            # just reject the object if there are no open_curves: this will exclude objects with circles only.
             if (len(open_curves) == 0): 
                 print("open_curves = 0. skip this.")
                 log_string("Type 10", log_fout)
@@ -618,9 +636,88 @@ if __name__ == "__main__":
                 log_string("Type 11", log_fout)
                 log_string("problems in (edge/corner)_points_ori(.shape[0] = 0). Skip this.", log_fout)
                 continue
+            
+            if check_point2:
+                # create updates
+                def close_visualization(vis):
+                    vis.close()
 
+                s = 1 # 
+                def update_visualization_open_curve_ori(vis, vertices, open_curves, edge_points_ori, corner_points_ori):
+                    global s
+                    print("visualization:", s, "/", len(open_curves))
+
+                    color_array = np.zeros_like(vertices)
+                    color_array[edge_points_ori, :] = [0.0, 0.0, 0.99] # red
+                    color_array[corner_points_ori, :] = [0.99, 0.0, 0.0] # blue
+                    color_array[open_curves[s][2][1:-1], :] = [0.0, 0.99, 0.0]
+
+                    if s < len(open_curves)-1:
+                        s += 1
+                    point_cloud.points = open3d.utility.Vector3dVector(vertices)
+                    point_cloud.colors = open3d.utility.Vector3dVector(color_array)
+                    vis.update_geometry(point_cloud)
+                    vis.poll_events()
+                    vis.update_renderer()
+                    #vis.run()
+
+                a = 0 # 
+                def update_visualization_closed_curve_ori(vis, vertices, closed_curves, edge_points_ori):
+                    global a
+                    print(a, "th visualization of ", len(closed_curves))
+
+                    color_array = np.zeros_like(vertices)
+                    color_array[edge_points_ori, :] = [0.0, 0.0, 0.99] # red
+                    color_array[closed_curves[a][2], :] = [0.0, 0.99, 0.0]
+                    #color_array[corner_points_ori, :] = [0.99, 0.0, 0.0] # blue
+
+                    if a < len(closed_curves)-1:
+                        a += 1
+                    point_cloud.points = open3d.utility.Vector3dVector(vertices)
+                    point_cloud.colors = open3d.utility.Vector3dVector(color_array)
+                    vis.update_geometry(point_cloud)
+                    vis.poll_events()
+                    vis.update_renderer()
+                    #vis.run()                
+
+                color_array = np.zeros_like(vertices)                
+                color_array[edge_points_ori, :] = [0.0, 0.0, 0.99] # red
+                color_array[corner_points_ori, :] = [0.99, 0.0, 0.0] # blue
+                color_array[open_curves[0][2][1:-1], :] = [0.0, 0.99, 0.0]
+                
+                # create point clouds and visualizers
+                point_cloud = open3d.geometry.PointCloud()
+                point_cloud.points = open3d.utility.Vector3dVector(vertices)
+                point_cloud.colors = open3d.utility.Vector3dVector(color_array)
+
+                vis = open3d.visualization.VisualizerWithKeyCallback()
+                vis.create_window()
+                vis.register_key_callback(87, partial(update_visualization_open_curve_ori, vertices = vertices, open_curves = open_curves, edge_points_ori = edge_points_ori, corner_points_ori = corner_points_ori)) # W    
+                vis.register_key_callback(69, partial(update_visualization_closed_curve_ori, vertices = vertices, closed_curves = closed_curves, edge_points_ori = edge_points_ori)) # E
+                #vis.register_key_callback(69, partial(update_visualization32, \
+                #                                    down_sample_point = down_sample_point, \
+                #                                    open_gt_pair_idx = open_gt_pair_idx, \
+                #                                    open_gt_valid_mask = open_gt_valid_mask, \
+                #                                    open_gt_256_64_idx = open_gt_256_64_idx, \
+                #                                    open_gt_type = open_gt_type, \
+                #                                    open_gt_res = open_gt_res, \
+                #                                    open_gt_sample_points = open_gt_sample_points, \
+                #                                    open_gt_mask = open_gt_mask)) # E
+                
+                vis.register_key_callback(81, close_visualization) # Q
+                vis.add_geometry(point_cloud)
+                vis.run()
+                        
+            # checking the number of corner points will save us a lot of time.
+            if corner_points_ori.shape[0] > 23:
+                print("corner points > 23. skip this.")
+                log_string("Type 14", log_fout)
+                log_string("corner points > 23. skip this.", log_fout)
+                continue            
+
+            
             # Downsampling
-            # create mesh
+            # create mesh - this takes a lot of time.
             mesh = trimesh.Trimesh(vertices = vertices, faces = faces, vertex_normals = vertex_normals)
 
             # (uniform) random sample 100K surface points: Points in space on the surface of mesh
@@ -641,11 +738,11 @@ if __name__ == "__main__":
             try:
                 nearest_neighbor_idx_edge_1 = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=1)
                 nearest_neighbor_idx_corner_1 = nearest_neighbor_finder(vertices[corner_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=1)
-                distance_max_1 = np.max(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_1, :])**2).sum(axis = 1))
-                if distance_max_1 > 1.5:
-                    print("distance_max_1: ", distance_max_1, " > 1.5. skip this.")
+                distance_max_1 = np.max(np.sqrt(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_1, :])**2).sum(axis = 1)))
+                if distance_max_1 > 10.0:
+                    print("distance_max_1: ", distance_max_1, " > 10.0. skip this.")
                     log_string("Type 12", log_fout)
-                    log_string("distance_max_1: "+str(distance_max_1)+ " > 1.5 skip this.", log_fout)
+                    log_string("distance_max_1: "+str(distance_max_1)+ " > 10.0 skip this.", log_fout)
                     continue
                 nearest_neighbor_idx_edge = nearest_neighbor_idx_edge_1
                 nearest_neighbor_idx_corner = nearest_neighbor_idx_corner_1
@@ -655,21 +752,8 @@ if __name__ == "__main__":
                 log_string("NN was not successful. skip this.", log_fout)
                 continue
             
-            if nearest_neighbor_idx_corner.shape[0] > 23:
-                print("corner points > 23. skip this.")
-                log_string("Type 14", log_fout)
-                log_string("corner points > 23. skip this.", log_fout)
-                continue
 
 
-
-            # option 3: greedy. Just random shuffle the indicies and take distance matrix and take minimums.
-            #nearest_neighbor_idx_edge_3 = greedy_nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point)
-            #nearest_neighbor_idx_corner_3 = greedy_nearest_neighbor_finder(vertices[corner_points_ori,:], down_sample_point)                
-            #distance_mean_3 = np.mean(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_3, :])**2).sum(axis = 1))
-            #distance_max_3 = np.max(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_3, :])**2).sum(axis = 1))
-            #log_string('Curves in the circle do not match. Skip this curve: '+str(curve), log_fout)
-            #mat = scipy.io.loadmat('1.mat')
 
             # initialize memory arrays
             edge_points_label = np.zeros((FPS_num), dtype = np.uint8)
@@ -679,7 +763,7 @@ if __name__ == "__main__":
             open_gt_pair_idx = np.zeros((256, 2), dtype=np.uint16)
             open_gt_valid_mask = np.zeros((256, 1), dtype=np.uint8)
             open_gt_256_64_idx = np.zeros((256, 64), dtype=np.uint16)
-            open_gt_type = np.zeros((256, 1), dtype=np.uint8) # Note: BSpline, Lines, HalfCircle so three label types: 1, 2, 3, zero for NullClass
+            open_gt_type = np.zeros((256, 3), dtype=np.uint8) # Note: BSpline, Lines and Null
             open_type_onehot = np.zeros((256, 4), dtype=np.uint8)
             open_gt_res = np.zeros((256, 6), dtype=np.float32)
             open_gt_sample_points = np.zeros((256, 64, 3), dtype=np.float32)
@@ -738,13 +822,13 @@ if __name__ == "__main__":
                 try:
                     closed_gt_pair_idx[m,0] = nearest_neighbor_finder(vertices[np.array([curve[2][0]]),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
                     closed_gt_256_64_idx[m, 0] = closed_gt_pair_idx[m,0]
-                    # make the point unavailable.
                     down_sample_point_copy[closed_gt_pair_idx[m,0], :] = np.Inf
                 except:
                     print("NN for closed_gt_pair_idx was not successful. skip this.")
                     log_string("Type 16", log_fout)
                     log_string("NN for closed_gt_pair_idx was not successful. skip this.", log_fout)
                     closed_curve_NN_search_failed = True
+                    break
                 closed_gt_valid_mask[m, 0] = 1
                 
                 if curve[2][0] == curve[2][-1]: curve[2] = curve[2][:-1] # update if these two indicies are same.
@@ -754,14 +838,13 @@ if __name__ == "__main__":
                     # take start/end points + sample 62 points = 64 points
                     try:
                         closed_gt_256_64_idx[m, 1:64] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:], len(curve[2][1:]))[:63]),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
-                        # make the point unavailable.
                         down_sample_point_copy[closed_gt_256_64_idx[m, 1:64], :] = np.Inf
                     except:
                         print("NN for closed_gt_256_64_idx was not successful. skip this.")
                         log_string("Type 17", log_fout)
                         log_string("NN for closed_gt_256_64_idx was not successful. skip this.", log_fout)
                         closed_curve_NN_search_failed = True
-                        continue
+                        break
                     #closed_gt_256_64_idx[i, 63] = curve[2][-1]
                     closed_gt_mask[m, 0:64] = 1
                 else:
@@ -774,7 +857,7 @@ if __name__ == "__main__":
                         log_string("Type 18", log_fout)
                         log_string("NN for closed_gt_256_64_idx len() < 64 was not successful. skip this.", log_fout)
                         closed_curve_NN_search_failed = True
-                        continue
+                        break
                     closed_gt_256_64_idx[m, len(curve[2][1:])+1:] = closed_gt_256_64_idx[m, len(curve[2][1:])]
                     closed_gt_mask[m, :len(curve[2])] = 1
                 
@@ -793,8 +876,8 @@ if __name__ == "__main__":
 
             n = 0
             open_curve_NN_search_failed = False
-            down_sample_point_copy = down_sample_point.copy()
             for curve in open_curves:
+                down_sample_point_copy = down_sample_point.copy()
                 # first and last element
                 try:
                     open_gt_pair_idx[n,] = nearest_neighbor_finder(vertices[np.array([curve[2][0], curve[2][-1]]),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
@@ -820,7 +903,7 @@ if __name__ == "__main__":
                         log_string("Type 20", log_fout)
                         log_string("NN for open_gt_256_64_idx was not successful. skip this.", log_fout)
                         open_curve_NN_search_failed = True
-                        continue
+                        break
                     open_gt_256_64_idx[n, 63] = open_gt_pair_idx[n,1]
                     open_gt_mask[n, 0:64] = 1
                 else:
@@ -834,14 +917,14 @@ if __name__ == "__main__":
                         log_string("Type 21", log_fout)
                         log_string("NN for open_gt_256_64_idx[n, 1:(middle_idx_num+1)] was not successful. skip this.", log_fout)
                         open_curve_NN_search_failed = True
-                        continue
+                        break
                     open_gt_256_64_idx[n, (middle_idx_num+1):64] = open_gt_pair_idx[n, 1]
                     open_gt_mask[n, 0:(middle_idx_num+2)] = 1
 
                 # open_gt_type, open_type_onehot BSpline, Lines, HalfCircle
                 if curve[0] == 'BSpline': open_gt_type[n,0], open_type_onehot[n, ] = 1, np.array([0, 1, 0, 0])
                 elif curve[0] == 'Line' : open_gt_type[n,0], open_type_onehot[n, ] = 2, np.array([0, 0, 1, 0]) # "Line"
-                elif curve[0] == 'HalfCircle' : open_gt_type[n,0], open_type_onehot[n, ] = 3, np.array([0, 0, 0, 1]) # "HalfCircle"
+                #1234elif curve[0] == 'HalfCircle' : open_gt_type[n,0], open_type_onehot[n, ] = 3, np.array([0, 0, 0, 1]) # "HalfCircle"
                 
                 # open_gt_res
                 res1 = vertices[curve[2][0], ]-down_sample_point[open_gt_pair_idx[n, ][0], ]
@@ -852,7 +935,104 @@ if __name__ == "__main__":
                 open_gt_sample_points[n, ...] = down_sample_point[open_gt_256_64_idx[n], ]
                 n = n + 1
             if open_curve_NN_search_failed: continue
-            
+
+
+            # before saving this object
+            # check..
+            # 0. if the generated mesh looks fine
+            # 1. if 256_64 open curves are correct
+            # 1. if residual vectors are fine
+            # 1. if pair index ok
+            # 2. assert the labels
+            '''
+            down_sample_point
+            edge_points_label = np.zeros((FPS_num), dtype = np.uint8)
+            corner_points_label = np.zeros((FPS_num), dtype = np.uint8)
+            edge_points_residual_vector = np.zeros_like(down_sample_point)
+            corner_points_residual_vector = np.zeros_like(down_sample_point)
+
+            open_gt_pair_idx = np.zeros((256, 2), dtype=np.uint16)
+            open_gt_valid_mask = np.zeros((256, 1), dtype=np.uint8)
+            open_gt_256_64_idx = np.zeros((256, 64), dtype=np.uint16)
+            open_gt_type = np.zeros((256, 3), dtype=np.uint8) # Note: BSpline, Lines and Null
+            open_type_onehot = np.zeros((256, 4), dtype=np.uint8)
+            open_gt_res = np.zeros((256, 6), dtype=np.float32)
+            open_gt_sample_points = np.zeros((256, 64, 3), dtype=np.float32)
+            open_gt_mask = np.zeros((256, 64), dtype=np.uint8)
+            '''
+
+            if check_point3:
+                # create updates
+                def close_visualization(vis):
+                    vis.close()
+
+                s = 0 # 
+                def update_visualization_open_curve_forward(vis, vertices, down_sample_point, open_gt_256_64_idx, open_gt_sample_points, open_curves):
+                    global s
+
+                    # asserts..
+                    # open_gt_pair_idx = open_gt_256_64_idx
+                    assert open_gt_pair_idx[s, 0] == open_gt_256_64_idx[s, 0]
+                    assert open_gt_pair_idx[s, 1] == open_gt_256_64_idx[s, -1]
+
+                    # open_gt_valid_mask = open_gt_mask
+                    
+                    if open_gt_valid_mask[s, 0] == 0: 
+                        assert open_gt_valid_mask[s, 0] == open_gt_mask[s, :].sum() == open_gt_pair_idx[s, :].sum() == open_gt_256_64_idx[s, :].sum()
+
+                    # open_gt_sample_points should be the same.
+                    assert np.sum((down_sample_point[open_gt_256_64_idx[s, np.where(open_gt_mask == 1)], :] - open_gt_sample_points[s, :])**2) < 0.001
+
+                    color_array = np.zeros_like(np.concatenate([down_sample_point, vertices]))
+                    color_array[open_gt_pair_idx[s, :], :] = [0.0, 0.0, 0.99] # red
+                    color_array[open_gt_256_64_idx[s, :], :] = [0.99, 0.0, 0.0] # blue
+                    color_array[FPS_num + open_curves[s][2], :] = [0.0, 0.99, 0.0] # green
+
+                    if open_gt_valid_mask[s+1, 0] == 1:
+                        s += 1
+                    point_cloud.points = open3d.utility.Vector3dVector(np.concatenate([down_sample_point, vertices]))
+                    point_cloud.colors = open3d.utility.Vector3dVector(color_array)
+                    vis.update_geometry(point_cloud)
+                    vis.poll_events()
+                    vis.update_renderer()
+                    #vis.run()
+
+                # first visualization: down_sample_point, edge and corner points level and their residual vectors
+                color_array = np.zeros_like(np.concatenate([down_sample_point, down_sample_point]))
+                color_array[np.where(edge_points_label == 1)[0], :] = [0.99, 0.0, 0.0] # blue
+                color_array[np.where(corner_points_label == 1)[0], :] = [0.0, 0.0, 0.99] # red
+                color_array[FPS_num + np.where(edge_points_label == 1)[0], :] = [0.0, 0.75, 0.0]
+                color_array[FPS_num + np.where(corner_points_label == 1)[0], :] = [0.0, 0.0, 0.75]
+
+                #color_array[open_curves[s][2][1:-1], :] = [0.0, 0.99, 0.0]
+                correct_edges = down_sample_point+edge_points_residual_vector
+                correct_corners = down_sample_point+corner_points_residual_vector
+                delta_edges = correct_edges - correct_corners
+                point_cloud.points = open3d.utility.Vector3dVector(np.concatenate([down_sample_point, correct_corners + delta_edges]))
+                point_cloud.colors = open3d.utility.Vector3dVector(color_array)
+
+                vis = open3d.visualization.VisualizerWithKeyCallback()
+                vis.create_window()
+                vis.register_key_callback(87, partial(update_visualization_open_curve_forward, vertices = vertices, down_sample_point = down_sample_point, open_gt_256_64_idx = open_gt_256_64_idx, open_gt_sample_points = open_gt_sample_points, open_curves = open_curves)) # W    
+                #vis.register_key_callback(69, partial(update_visualization_closed_curve, vertices = vertices, closed_curves = closed_curves, edge_points_ori = edge_points_ori)) # E
+                #vis.register_key_callback(69, partial(update_visualization32, \
+                #                                    down_sample_point = down_sample_point, \
+                #                                    open_gt_pair_idx = open_gt_pair_idx, \
+                #                                    open_gt_valid_mask = open_gt_valid_mask, \
+                #                                    open_gt_256_64_idx = open_gt_256_64_idx, \
+                #                                    open_gt_type = open_gt_type, \
+                #                                    open_gt_res = open_gt_res, \
+                #                                    open_gt_sample_points = open_gt_sample_points, \
+                #                                    open_gt_mask = open_gt_mask)) # E
+                
+                vis.register_key_callback(81, close_visualization) # Q
+                vis.add_geometry(point_cloud)
+                vis.run()
+
+
+
+
+        '''
             print("Ok. save data.")
             log_string("Ok. save data.", log_fout)
             #view_point_1(down_sample_point, np.where(edge_points_label == 1)[0], np.where(corner_points_label == 1)[0])

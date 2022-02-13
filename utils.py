@@ -284,12 +284,12 @@ def nearest_neighbor_finder(edge_or_corner_points, down_sample_point, use_cluste
                 current_edge_points = current_edge_points + list(np.where(argmin_per_row == k)[0])
         else: 
             current_edge_points = np.where(argmin_per_row == idx)[0]
-        current_edge_points_num = len(current_edge_points)            
+        current_edge_points_num = len(current_edge_points)
         # generate permutations of available_neighbors.
         available_neighbors = available_neighbor_search(idx, down_sample_pts_used, down_sample_point, unique, counts, clustered = use_clustering)
         assert len(available_neighbors) == current_edge_points_num
-        if current_edge_points_num > 7: 
-            print("WARNING: too much Permutations. skip this.")
+        if current_edge_points_num > 9: 
+            print("WARNING: too much Permutations, points_num: ", current_edge_points_num, "skip this.")
             raise ValueError("WARNING: too much Permutations. skip this.")
         perm = np.array(list(itertools.permutations(available_neighbors, current_edge_points_num)))
         """
