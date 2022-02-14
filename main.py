@@ -77,7 +77,7 @@ if __name__ == "__main__":
     check_point1 = args[4] == '1'
     check_point2 = args[4] == '2'
     check_point3 = args[4] == '3'
-    for i in range(2115, model_total_num):
+    for i in range(model_total_num):
         
         model_name_obj = "_".join(list_obj_lines[i].split('/')[-1].split('_')[0:2])
         model_name_ftr = "_".join(list_ftr_lines[i].split('/')[-1].split('_')[0:2])
@@ -102,7 +102,7 @@ if __name__ == "__main__":
             
             # Type1
             # make sure we have < 30K vertices to keep it simple.
-            if vertices.shape[0] > 40000: 
+            if vertices.shape[0] > 45000: 
                 print("vertices:", vertices.shape[0], " > 40000. skip this.")
                 log_string("Type 1", log_fout)
                 log_string("vertices " +str(vertices.shape[0])+" > 40000. skip this.", log_fout)
@@ -558,6 +558,16 @@ if __name__ == "__main__":
             all_curves = Line_list + Circle_list + BSpline_list
             curve_num = len(all_curves)
 
+            # if this object consists of only lines, this can be dropped out.
+            skip_this_model = False
+            if len(Circle_list) == 0 and len(BSpline_list) == 0 and len(OpenCircle_list) == 0:
+                skip_this_model = 2 == random.sample([0, 1, 2], 1)
+
+            if skip_this_model: 
+                print("This object is dropped out. Skip this.")
+                log_string("Type 28", log_fout)
+                log_string("This object is dropped out. Skip this.", log_fout)
+                continue
 
             # it's not likley, but let's do this: cross points check
             k = 0
@@ -592,7 +602,7 @@ if __name__ == "__main__":
                     curve[2] = [curve[2][0]] + random.sample(curve[2][1:-1], 2) + [curve[2][-1]]
                 else:
                     rate = float(FPS_num)/vertices.shape[0]
-                    sample_num = round(len(curve[2][1:-1])*rate)
+                    sample_num = round(len(curve[2][1:-1])*rate) - 1
                     curve[2] = [curve[2][0]] + random.sample(curve[2][1:-1], sample_num) + [curve[2][-1]]
 
                 # update lists
@@ -624,7 +634,7 @@ if __name__ == "__main__":
                     curve[2] = [curve[2][0]] + random.sample(curve[2][1:-1], 2) + [curve[2][-1]]
                 else:
                     rate = float(FPS_num)/vertices.shape[0]
-                    sample_num = round(len(curve[2][1:-1])*rate)
+                    sample_num = round(len(curve[2][1:-1])*rate) - 1
                     curve[2] = [curve[2][0]] + random.sample(curve[2][1:-1], sample_num) + [curve[2][-1]]
 
                 open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
@@ -735,7 +745,7 @@ if __name__ == "__main__":
                 print("corner points > 23. skip this.")
                 log_string("Type 14", log_fout)
                 log_string("corner points > 23. skip this.", log_fout)
-                continue            
+                continue
 
             
             # Downsampling
