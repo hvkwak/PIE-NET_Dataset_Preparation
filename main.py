@@ -558,10 +558,11 @@ if __name__ == "__main__":
             all_curves = Line_list + Circle_list + BSpline_list
             curve_num = len(all_curves)
 
-            # if this object consists of only lines, this can be dropped out.
+            # if this object consists of only lines, this can be dropped out, take only 20%
             skip_this_model = False
             if len(Circle_list) == 0 and len(BSpline_list) == 0 and len(OpenCircle_list) == 0:
-                skip_this_model = 1 == random.sample([0, 1], 1)
+                dropout_num = random.sample([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 1)
+                skip_this_model = dropout_num > 1
 
             if skip_this_model: 
                 print("This object is dropped out. Skip this.")
