@@ -561,7 +561,7 @@ if __name__ == "__main__":
             # if this object consists of only lines, this can be dropped out.
             skip_this_model = False
             if len(Circle_list) == 0 and len(BSpline_list) == 0 and len(OpenCircle_list) == 0:
-                skip_this_model = 2 == random.sample([0, 1, 2], 1)
+                skip_this_model = 1 == random.sample([0, 1], 1)
 
             if skip_this_model: 
                 print("This object is dropped out. Skip this.")
