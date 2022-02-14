@@ -34,8 +34,8 @@ from grafkom1Framework import ObjLoader
 #from LongestPath import Graph
 #from visualizer import view_point_1
 #from visualizer import view_point
-import open3d
-from functools import partial
+#import open3d
+#from functools import partial
 
 
 if __name__ == "__main__": 
@@ -77,8 +77,7 @@ if __name__ == "__main__":
     check_point1 = args[4] == '1'
     check_point2 = args[4] == '2'
     check_point3 = args[4] == '3'
-    for i in range(20, model_total_num):
-        
+    for i in range(model_total_num):       
         model_name_obj = "_".join(list_obj_lines[i].split('/')[-1].split('_')[0:2])
         model_name_ftr = "_".join(list_ftr_lines[i].split('/')[-1].split('_')[0:2])
         model_name_obj = delete_newline(model_name_obj)
@@ -472,7 +471,7 @@ if __name__ == "__main__":
                     Line_list_num = Line_list_num - 1
                 k = k + 1
 
-            
+            '''
             if check_point1:
                 # create updates
                 def close_visualization(vis):
@@ -547,7 +546,7 @@ if __name__ == "__main__":
                 vis.register_key_callback(81, close_visualization) # Q
                 vis.add_geometry(point_cloud)
                 vis.run()
-            
+            '''
             #
             # Classifications into open/closed curve AND edge/corner points
             #
@@ -562,7 +561,7 @@ if __name__ == "__main__":
             skip_this_model = False
             if len(Circle_list) == 0 and len(BSpline_list) == 0 and len(OpenCircle_list) == 0:
                 dropout_num = random.sample([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 1)
-                skip_this_model = dropout_num[0] > 1
+                skip_this_model = dropout_num[0] > 0
 
             if skip_this_model: 
                 print("This object is dropped out. Skip this.")
@@ -669,7 +668,7 @@ if __name__ == "__main__":
                 log_string("Type 11", log_fout)
                 log_string("problems in (edge/corner)_points_ori(.shape[0] = 0). Skip this.", log_fout)
                 continue
-            
+            ''' 
             if check_point2:
                 # create updates
                 def close_visualization(vis):
@@ -740,7 +739,7 @@ if __name__ == "__main__":
                 vis.register_key_callback(81, close_visualization) # Q
                 vis.add_geometry(point_cloud)
                 vis.run()
-                        
+            '''            
             # checking the number of corner points will save us a lot of time.
             if corner_points_ori.shape[0] > 23:
                 print("corner points > 23. skip this.")
@@ -1004,7 +1003,7 @@ if __name__ == "__main__":
             open_gt_sample_points = np.zeros((256, 64, 3), dtype=np.float32)
             open_gt_mask = np.zeros((256, 64), dtype=np.uint8)
             '''
-
+            '''
             if check_point3:
 
                 # create updates
@@ -1100,7 +1099,7 @@ if __name__ == "__main__":
                 vis.run()
 
 
-        
+            '''
             print("Ok. save data.")
             log_string("Ok. save data.", log_fout)
             #view_point_1(down_sample_point, np.where(edge_points_label == 1)[0], np.where(corner_points_label == 1)[0])
