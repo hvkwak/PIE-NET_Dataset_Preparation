@@ -1005,6 +1005,7 @@ if __name__ == "__main__":
             '''
 
             if check_point3:
+
                 # create updates
                 def close_visualization(vis):
                     vis.close()
@@ -1092,16 +1093,13 @@ if __name__ == "__main__":
                 vis = open3d.visualization.VisualizerWithKeyCallback()
                 vis.create_window()
                 vis.register_key_callback(87, partial(update_visualization_open_curve_forward, vertices = vertices, down_sample_point = down_sample_point, open_gt_256_64_idx = open_gt_256_64_idx, open_gt_sample_points = open_gt_sample_points, open_curves = open_curves)) # W    
-                vis.register_key_callback(69, partial(update_visualization_open_curve_backward, vertices = vertices, down_sample_point = down_sample_point, open_gt_256_64_idx = open_gt_256_64_idx, open_gt_sample_points = open_gt_sample_points, open_curves = open_curves)) # W    
-
+                vis.register_key_callback(69, partial(update_visualization_open_curve_backward, vertices = vertices, down_sample_point = down_sample_point, open_gt_256_64_idx = open_gt_256_64_idx, open_gt_sample_points = open_gt_sample_points, open_curves = open_curves)) # E
                 vis.register_key_callback(81, close_visualization) # Q
                 vis.add_geometry(point_cloud)
                 vis.run()
 
 
-
-
-        '''
+        
             print("Ok. save data.")
             log_string("Ok. save data.", log_fout)
             #view_point_1(down_sample_point, np.where(edge_points_label == 1)[0], np.where(corner_points_label == 1)[0])
@@ -1149,7 +1147,7 @@ if __name__ == "__main__":
         file_ = save_prefix+"_"+str(file_count)+"_end"+".mat"
         data['batch_count'] = batch_count
         scipy.io.savemat(file_, data)
-    '''
+    
 
     list_obj_file.close()
     list_ftr_file.close()
