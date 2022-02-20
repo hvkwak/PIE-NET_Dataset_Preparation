@@ -1141,8 +1141,8 @@ if __name__ == "__main__":
         else:
             batch_count = batch_count + 1
 
-        list_obj_line = list_obj_file.readline()
-        list_ftr_line = list_ftr_file.readline()
+        #list_obj_line = list_obj_file.readline()
+        #list_ftr_line = list_ftr_file.readline()
 
     if batch_count > 0:
         file_ = save_prefix+"_"+str(file_count)+"_end"+".mat"
