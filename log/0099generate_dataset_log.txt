@@ -1,0 +1,499 @@
+Processing: 00990000_6216c8dabde0a997e09b0f42..1/6159
+Type 3
+there are curves not in [Circle, BSpline, Line]. skip this.
+Processing: 00990001_5b7fde431d1882b75dd7c099..2/6159
+Type 10
+open_curves = 0. skip this.
+Processing: 00990002_5b7fde431d1882b75dd7c099..3/6159
+Type 10
+open_curves = 0. skip this.
+Processing: 00990003_9d220712041b52b0844b6cbd..4/6159
+Processing: 00990007_375f884cad809851b31fb84d..5/6159
+Type 1
+vertices 103629 > 40000. skip this.
+Processing: 00990008_b2f9f2b7278f19db170085e7..6/6159
+Type 27
+vertices 5221 < 10000. skip this.
+Processing: 00990009_b2f9f2b7278f19db170085e7..7/6159
+Type 27
+vertices 5297 < 10000. skip this.
+Processing: 00990010_b2f9f2b7278f19db170085e7..8/6159
+Type 27
+vertices 8759 < 10000. skip this.
+Processing: 00990011_b2f9f2b7278f19db170085e7..9/6159
+Type 27
+vertices 3648 < 10000. skip this.
+Processing: 00990012_8020ae38d2203876d4a41815..10/6159
+Type 27
+vertices 7800 < 10000. skip this.
+Processing: 00990013_0de425ad1581ff0ba425f5c0..11/6159
+Type 25
+there's something wrong in rest_curve_finder. possibly two BSplines having same start/end points, but not buliding a circle. skip this.
+Processing: 00990015_d770b3b036e65283d9195870..12/6159
+Type 1
+vertices 159235 > 40000. skip this.
+Processing: 00990017_d770b3b036e65283d9195870..13/6159
+Type 1
+vertices 85231 > 40000. skip this.
+Processing: 00990018_d770b3b036e65283d9195870..14/6159
+Type 1
+vertices 108236 > 40000. skip this.
+Processing: 00990020_d770b3b036e65283d9195870..15/6159
+Type 1
+vertices 70773 > 40000. skip this.
+Processing: 00990021_d770b3b036e65283d9195870..16/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990023_d770b3b036e65283d9195870..17/6159
+Type 27
+vertices 8582 < 10000. skip this.
+Processing: 00990024_d770b3b036e65283d9195870..18/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990025_a487e39cae492f74ef98771c..19/6159
+Type 27
+vertices 8565 < 10000. skip this.
+Processing: 00990026_ba91d5873808d3b385a2b00b..20/6159
+Type 12
+Type 13
+NN was not successful. skip this.
+Processing: 00990027_523151fa223eff350f891bee..21/6159
+Type 1
+vertices 45553 > 40000. skip this.
+Processing: 00990028_d5f57cd2feda38dbc39bb598..22/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990029_ec3dde762baaa5adf9c798f5..23/6159
+Processing: 00990030_561bc7978eb1838d6f6575b6..24/6159
+Type 27
+vertices 4887 < 10000. skip this.
+Processing: 00990031_1588f4f68eeae3af912f3f7f..25/6159
+Type 27
+vertices 3455 < 10000. skip this.
+Processing: 00990032_1588f4f68eeae3af912f3f7f..26/6159
+Type 27
+vertices 3556 < 10000. skip this.
+Processing: 00990035_153b681c922d91d962fcac5d..27/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990036_dcbfeaeabddf1e2dfc19814f..28/6159
+Type 3
+there are curves not in [Circle, BSpline, Line]. skip this.
+Processing: 00990037_9c5d8e7fd6834e0cca5d7213..29/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990038_ca5080d29f7bd0765c9f1b60..30/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990039_b87ec5777fe34471d4f3d0e9..31/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990040_b8c94a30f0457f989f22513d..32/6159
+Type 27
+vertices 8078 < 10000. skip this.
+Processing: 00990041_2c007002921066667b4bdd40..33/6159
+Type 27
+vertices 9748 < 10000. skip this.
+Processing: 00990042_74bbbb725533d44510570c24..34/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990043_44ff2f0a4e7e92d94d816fe9..35/6159
+Type 3
+there are curves not in [Circle, BSpline, Line]. skip this.
+Processing: 00990044_44ff2f0a4e7e92d94d816fe9..36/6159
+Type 22
+OpenCircle_list contains something more than a HalfCircle (theta > pi)
+Processing: 00990045_d35e5bb572fb363bcb37bfb4..37/6159
+Type 27
+vertices 7274 < 10000. skip this.
+Processing: 00990049_4596c4675b08efbfecc200fb..38/6159
+Type 14
+corner points > 23. skip this.
+Processing: 00990052_4596c4675b08efbfecc200fb..39/6159
+Type 12
+Type 13
+NN was not successful. skip this.
+Processing: 00990053_4596c4675b08efbfecc200fb..40/6159
+Type 14
+corner points > 23. skip this.
+Processing: 00990054_515989be6ff18255c98aff43..41/6159
+Type 12
+Type 13
+NN was not successful. skip this.
+Processing: 00990055_aed11c7b6665439f637a498a..42/6159
+Processing: 00990056_2c853bf84dbf221dba6a23f7..43/6159
+Type 10
+open_curves = 0. skip this.
+Processing: 00990057_ddf4709cf5a88493f460183d..44/6159
+Type 3
+there are curves not in [Circle, BSpline, Line]. skip this.
+Processing: 00990058_ddf4709cf5a88493f460183d..45/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990059_9cea0046ee5a2e99f00af17f..46/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990060_e9e006fe25215a38ead0c80e..47/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990061_cba09030bc6c412c700635d3..48/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990062_144d80e1821879fbf484f915..49/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990063_2158470ae9c91f0c6c4ad04c..50/6159
+Type 1
+vertices 51400 > 40000. skip this.
+Processing: 00990065_04fdfd82196bc2aa59f8703d..51/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990066_5a1a69e1964a917761430183..52/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990067_372d54ddd64defa53e8e1fe5..53/6159
+Type 27
+vertices 8339 < 10000. skip this.
+Processing: 00990070_9c086bd8dafc6b90be7be2fa..54/6159
+Type 27
+vertices 7870 < 10000. skip this.
+Processing: 00990072_9c086bd8dafc6b90be7be2fa..55/6159
+Type 10
+open_curves = 0. skip this.
+Processing: 00990073_238489b62c30dfcacfda7515..56/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990074_32afded1e461b1211bbd322d..57/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990076_851e5b392193b206b55d0def..58/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990077_851e5b392193b206b55d0def..59/6159
+Type 12
+Type 13
+NN was not successful. skip this.
+Processing: 00990079_f6e2b8adeeca3d7741484d4d..60/6159
+Type 5
+there is at least one line touching a circle. skip this.
+Processing: 00990082_f6e2b8adeeca3d7741484d4d..61/6159
+Type 10
+open_curves = 0. skip this.
+Processing: 00990084_f6e2b8adeeca3d7741484d4d..62/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990085_f6e2b8adeeca3d7741484d4d..63/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990086_f6e2b8adeeca3d7741484d4d..64/6159
+Type 27
+vertices 3326 < 10000. skip this.
+Processing: 00990087_d83d82c4ad7aa9dd2199b307..65/6159
+Type 3
+there are curves not in [Circle, BSpline, Line]. skip this.
+Processing: 00990088_20bba73b1619dd3e29a456e0..66/6159
+Type 3
+there are curves not in [Circle, BSpline, Line]. skip this.
+Processing: 00990089_20bba73b1619dd3e29a456e0..67/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990090_20bba73b1619dd3e29a456e0..68/6159
+Type 27
+vertices 8501 < 10000. skip this.
+Processing: 00990092_17226dfd1942c89f5615bf93..69/6159
+Type 4
+at least one curve type has > 300 curves. skip this.
+Processing: 00990094_258f2f62365331318aff60f4..70/6159
+Type 10
+open_curves = 0. skip this.
+Processing: 00990095_a319370fe1c862f3b1507be0..71/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990096_e1c570c79e6075d100858c9b..72/6159
+Processing: 00990097_ceefaff3f01039f574a219f9..73/6159
+Type 3
+there are curves not in [Circle, BSpline, Line]. skip this.
+Processing: 00990098_ceefaff3f01039f574a219f9..74/6159
+Type 3
+there are curves not in [Circle, BSpline, Line]. skip this.
+Processing: 00990099_2472bd2844f4dbddf30176bd..75/6159
+Type 25
+there's something wrong in rest_curve_finder. possibly two BSplines having same start/end points, but not buliding a circle. skip this.
+Processing: 00990100_96174037a5d5604072e7d48d..76/6159
+Type 3
+there are curves not in [Circle, BSpline, Line]. skip this.
+Processing: 00990102_96174037a5d5604072e7d48d..77/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990104_96174037a5d5604072e7d48d..78/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990107_96174037a5d5604072e7d48d..79/6159
+Type 27
+vertices 3836 < 10000. skip this.
+Processing: 00990108_96174037a5d5604072e7d48d..80/6159
+Type 3
+there are curves not in [Circle, BSpline, Line]. skip this.
+Processing: 00990111_96174037a5d5604072e7d48d..81/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990112_96174037a5d5604072e7d48d..82/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990113_96174037a5d5604072e7d48d..83/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990114_96174037a5d5604072e7d48d..84/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990115_96174037a5d5604072e7d48d..85/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990116_96174037a5d5604072e7d48d..86/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990118_96174037a5d5604072e7d48d..87/6159
+Type 3
+there are curves not in [Circle, BSpline, Line]. skip this.
+Processing: 00990119_96174037a5d5604072e7d48d..88/6159
+Type 3
+there are curves not in [Circle, BSpline, Line]. skip this.
+Processing: 00990120_96174037a5d5604072e7d48d..89/6159
+Type 3
+there are curves not in [Circle, BSpline, Line]. skip this.
+Processing: 00990121_96174037a5d5604072e7d48d..90/6159
+Type 27
+vertices 6468 < 10000. skip this.
+Processing: 00990122_96174037a5d5604072e7d48d..91/6159
+Type 27
+vertices 6853 < 10000. skip this.
+Processing: 00990123_96174037a5d5604072e7d48d..92/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990124_96174037a5d5604072e7d48d..93/6159
+Type 10
+open_curves = 0. skip this.
+Processing: 00990125_96174037a5d5604072e7d48d..94/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990126_51c45e71f601dd96b46dc273..95/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990133_d81421d4dea78544e4c02c13..96/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990134_15e091b3486c5aa27534f05e..97/6159
+Type 10
+open_curves = 0. skip this.
+Processing: 00990136_772ef3bc17507c43e60f66a2..98/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990137_d5171772994634375828d9d5..99/6159
+Type 1
+vertices 213706 > 40000. skip this.
+Processing: 00990138_9a62203772dc156009738a3a..100/6159
+Type 27
+vertices 5539 < 10000. skip this.
+Processing: 00990139_393a77411b536024ef3bf9ce..101/6159
+Type 25
+there's something wrong in rest_curve_finder. possibly two BSplines having same start/end points, but not buliding a circle. skip this.
+Processing: 00990140_0b399d81108e53eae75d1c83..102/6159
+Type 3
+there are curves not in [Circle, BSpline, Line]. skip this.
+Processing: 00990142_309e0717682886b214ad270c..103/6159
+Type 25
+there's something wrong in rest_curve_finder. possibly two BSplines having same start/end points, but not buliding a circle. skip this.
+Processing: 00990143_9d4d22ec0a9bc6ab092d89ac..104/6159
+Processing: 00990144_0d6be69cc1cdf32b71c53597..105/6159
+Type 14
+corner points > 23. skip this.
+Processing: 00990145_4b1a6d618b5a5ce252fbb745..106/6159
+Type 27
+vertices 3040 < 10000. skip this.
+Processing: 00990146_4b1a6d618b5a5ce252fbb745..107/6159
+Type 27
+vertices 3025 < 10000. skip this.
+Processing: 00990147_7908c0f0e781564a7f7fdc84..108/6159
+Type 27
+vertices 9532 < 10000. skip this.
+Processing: 00990148_543069abb8df0c4820ebd9d8..109/6159
+Type 1
+vertices 414358 > 40000. skip this.
+Processing: 00990149_69085fee29f89e409cf1ff3b..110/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990152_4efd7f93e369f5d018437a20..111/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990153_4543cc9879a9963bbb53f011..112/6159
+Type 1
+vertices 76088 > 40000. skip this.
+Processing: 00990154_ce7323eb3149345fb78a2b51..113/6159
+Type 25
+there's something wrong in rest_curve_finder. possibly two BSplines having same start/end points, but not buliding a circle. skip this.
+Processing: 00990155_ce7323eb3149345fb78a2b51..114/6159
+Type 10
+open_curves = 0. skip this.
+Processing: 00990160_c1f19583e2f854b23431b00a..115/6159
+Type 27
+vertices 2793 < 10000. skip this.
+Processing: 00990161_c1f19583e2f854b23431b00a..116/6159
+Type 27
+vertices 1856 < 10000. skip this.
+Processing: 00990162_c1f19583e2f854b23431b00a..117/6159
+Type 27
+vertices 1839 < 10000. skip this.
+Processing: 00990163_c1f19583e2f854b23431b00a..118/6159
+Type 27
+vertices 3748 < 10000. skip this.
+Processing: 00990164_c1f19583e2f854b23431b00a..119/6159
+Type 27
+vertices 5376 < 10000. skip this.
+Processing: 00990165_c1f19583e2f854b23431b00a..120/6159
+Type 27
+vertices 3462 < 10000. skip this.
+Processing: 00990166_c1f19583e2f854b23431b00a..121/6159
+Type 27
+vertices 1190 < 10000. skip this.
+Processing: 00990167_c1f19583e2f854b23431b00a..122/6159
+Type 27
+vertices 1224 < 10000. skip this.
+Processing: 00990168_c1f19583e2f854b23431b00a..123/6159
+Type 27
+vertices 1209 < 10000. skip this.
+Processing: 00990169_c1f19583e2f854b23431b00a..124/6159
+Type 27
+vertices 2627 < 10000. skip this.
+Processing: 00990170_c1f19583e2f854b23431b00a..125/6159
+Type 12
+Type 13
+NN was not successful. skip this.
+Processing: 00990173_c1f19583e2f854b23431b00a..126/6159
+Type 27
+vertices 6033 < 10000. skip this.
+Processing: 00990174_c1f19583e2f854b23431b00a..127/6159
+Type 27
+vertices 1415 < 10000. skip this.
+Processing: 00990175_c1f19583e2f854b23431b00a..128/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990176_c1f19583e2f854b23431b00a..129/6159
+Type 12
+Type 13
+NN was not successful. skip this.
+Processing: 00990177_c1f19583e2f854b23431b00a..130/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990178_c1f19583e2f854b23431b00a..131/6159
+Type 27
+vertices 8212 < 10000. skip this.
+Processing: 00990179_c1f19583e2f854b23431b00a..132/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990181_c1f19583e2f854b23431b00a..133/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990182_c1f19583e2f854b23431b00a..134/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990183_c1f19583e2f854b23431b00a..135/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990185_c05740cb9e874fc16e9b372c..136/6159
+Type 27
+vertices 9071 < 10000. skip this.
+Processing: 00990186_671e4cb228dc0aff2df4e82c..137/6159
+Type 1
+vertices 71386 > 40000. skip this.
+Processing: 00990188_0177fbe58dd13ea4c28ec600..138/6159
+Type 27
+vertices 7114 < 10000. skip this.
+Processing: 00990189_ae342eef821afd407acc4ce8..139/6159
+Type 27
+vertices 7114 < 10000. skip this.
+Processing: 00990192_5eca3cbbd67ba0442f1527a4..140/6159
+Type 3
+there are curves not in [Circle, BSpline, Line]. skip this.
+Processing: 00990193_5eca3cbbd67ba0442f1527a4..141/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990195_61ff109908a82c8e4e7e577f..142/6159
+Type 27
+vertices 8602 < 10000. skip this.
+Processing: 00990196_61ff109908a82c8e4e7e577f..143/6159
+Type 10
+open_curves = 0. skip this.
+Processing: 00990197_61ff109908a82c8e4e7e577f..144/6159
+Type 10
+open_curves = 0. skip this.
+Processing: 00990201_9cf38659b221a2a975b9d340..145/6159
+Type 1
+vertices 52751 > 40000. skip this.
+Processing: 00990202_9cf38659b221a2a975b9d340..146/6159
+Type 1
+vertices 88153 > 40000. skip this.
+Processing: 00990203_9cf38659b221a2a975b9d340..147/6159
+Processing: 00990204_9cf38659b221a2a975b9d340..148/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990205_9cf38659b221a2a975b9d340..149/6159
+Type 14
+corner points > 23. skip this.
+Processing: 00990206_82d42d3e40a0d09c45d47360..150/6159
+Type 27
+vertices 8703 < 10000. skip this.
+Processing: 00990207_82d42d3e40a0d09c45d47360..151/6159
+Type 10
+open_curves = 0. skip this.
+Processing: 00990208_82d42d3e40a0d09c45d47360..152/6159
+Type 10
+open_curves = 0. skip this.
+Processing: 00990209_2016f4ef6dd61ef8c40ba712..153/6159
+Type 27
+vertices 8125 < 10000. skip this.
+Processing: 00990210_2016f4ef6dd61ef8c40ba712..154/6159
+Type 10
+open_curves = 0. skip this.
+Processing: 00990211_2016f4ef6dd61ef8c40ba712..155/6159
+Type 10
+open_curves = 0. skip this.
+Processing: 00990212_4971f9b420731f8954a75f37..156/6159
+Type 27
+vertices 8703 < 10000. skip this.
+Processing: 00990213_4971f9b420731f8954a75f37..157/6159
+Type 10
+open_curves = 0. skip this.
+Processing: 00990214_4971f9b420731f8954a75f37..158/6159
+Type 10
+open_curves = 0. skip this.
+Processing: 00990215_86fd243dea506bb6266c835e..159/6159
+Type 27
+vertices 9601 < 10000. skip this.
+Processing: 00990217_86fd243dea506bb6266c835e..160/6159
+Type 27
+vertices 9764 < 10000. skip this.
+Processing: 00990218_86fd243dea506bb6266c835e..161/6159
+Type 27
+vertices 7428 < 10000. skip this.
+Processing: 00990219_86fd243dea506bb6266c835e..162/6159
+Type 27
+vertices 7695 < 10000. skip this.
+Processing: 00990220_93a811e6b5b1727844e91283..163/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990221_31df6f4e4311d705ef2958e6..164/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990222_0a432329337b3c47c93edb24..165/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990224_af7bbcd6620bad330758d5af..166/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990225_af7bbcd6620bad330758d5af..167/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990226_af7bbcd6620bad330758d5af..168/6159
+Type 24
+there is a curve which consists of very few vertices. skip this.
+Processing: 00990227_6c7f47e0f63e8bda9b7f1740..169/6159

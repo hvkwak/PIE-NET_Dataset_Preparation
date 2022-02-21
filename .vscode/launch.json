@@ -1,0 +1,16 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            //"args":  ["/home/pro2future/Documents/all/obj/0099_list_obj.txt", "/home/pro2future/Documents/all/obj/0099_list_features.txt", "0099", "/home/pro2future/Documents/PIE-NET_Dataset_Preparation/log/"]
+        }
+    ]
+}

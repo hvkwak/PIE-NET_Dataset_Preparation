@@ -7,7 +7,8 @@ if __name__ == "__main__":
 
     
     # run this to visualize training dataset
-    for j in range(0, 2):
+    for j in range(1):
+        
         my_mat = sio.loadmat('/home/pro2future/Documents/PIE-NET_Dataset_Preparation/visualizations/'+str(j)+'.mat')
         color1 = [0.5, 0.5, 0.5]   # gray
         color2 = [0.0, 0.0, 0.99] # blue
@@ -17,6 +18,7 @@ if __name__ == "__main__":
 
         for i in range(0, mat_num):
             # sec 3.1.
+            print(i)
             down_sample_point = my_mat['Training_data'][i, 0]['down_sample_point'][0, 0]
             edge_points_label = my_mat['Training_data'][i, 0]['edge_points_label'][0, 0]
             edge_points_residual_vector = my_mat['Training_data'][i, 0]['edge_points_residual_vector'][0, 0]
@@ -87,6 +89,7 @@ if __name__ == "__main__":
             def update_visualization31(vis, down_sample_point, corner_points_label, corner_points_residual_vector):
                 # visualizes corner points and their corrections
                 global k
+                
                 # k just stands for k-th element in listB and listG
                 color2 = [0.99, 0.0, 0.00] # blue
                 color3 = [0.0, 0.99, 0.0] # green
