@@ -77,7 +77,7 @@ if __name__ == "__main__":
     check_point1 = args[4] == '1'
     check_point2 = args[4] == '2'
     check_point3 = args[4] == '3'
-    for i in range(model_total_num):       
+    for i in range(330, model_total_num):       
         model_name_obj = "_".join(list_obj_lines[i].split('/')[-1].split('_')[0:2])
         model_name_ftr = "_".join(list_ftr_lines[i].split('/')[-1].split('_')[0:2])
         model_name_obj = delete_newline(model_name_obj)
@@ -920,10 +920,12 @@ if __name__ == "__main__":
             open_curve_NN_search_failed = False
             for curve in open_curves:
                 down_sample_point_copy = down_sample_point.copy()
-
                 # first and last element
                 try:
-                    open_gt_pair_idx[n,] = nearest_neighbor_finder(vertices[np.array([curve[2][0], curve[2][-1]]),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
+                    pair_idx = nearest_neighbor_finder(vertices[np.array([curve[2][0], curve[2][-1]]),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
+                    if (open_gt_pair_idx[0:n, :] == pair_idx).all(axis = 1).any() or (open_gt_pair_idx[0:n, :] == pair_idx[::-1]).all(axis = 1).any():
+                        raise ValueError
+                    open_gt_pair_idx[n,:] = pair_idx
                     open_gt_256_64_idx[n, 0] = open_gt_pair_idx[n,0]
                     open_gt_valid_mask[n, 0] = 1
                     down_sample_point_copy[open_gt_pair_idx[n,0], :] = np.Inf
