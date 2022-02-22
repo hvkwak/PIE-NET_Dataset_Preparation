@@ -77,7 +77,7 @@ if __name__ == "__main__":
     check_point1 = args[4] == '1'
     check_point2 = args[4] == '2'
     check_point3 = args[4] == '3'
-    for i in range(330, model_total_num):       
+    for i in range(model_total_num):       
         model_name_obj = "_".join(list_obj_lines[i].split('/')[-1].split('_')[0:2])
         model_name_ftr = "_".join(list_ftr_lines[i].split('/')[-1].split('_')[0:2])
         model_name_obj = delete_newline(model_name_obj)
