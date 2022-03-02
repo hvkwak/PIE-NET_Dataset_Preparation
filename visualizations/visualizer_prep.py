@@ -137,12 +137,3 @@ if __name__ == "__main__":
             vis.register_key_callback(81, close_visualization) # Q
             vis.add_geometry(point_cloud)
             vis.run()
-        
-
-
-
-
-            
-    '''
-    vis.destroy_window()
-    '''
