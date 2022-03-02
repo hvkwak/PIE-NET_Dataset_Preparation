@@ -77,6 +77,7 @@ if __name__ == "__main__":
     check_point1 = args[4] == '1'
     check_point2 = args[4] == '2'
     check_point3 = args[4] == '3'
+    #plus_rate = float(args[5])*5.0*0.01
     for i in range(model_total_num):       
         model_name_obj = "_".join(list_obj_lines[i].split('/')[-1].split('_')[0:2])
         model_name_ftr = "_".join(list_ftr_lines[i].split('/')[-1].split('_')[0:2])
@@ -601,8 +602,9 @@ if __name__ == "__main__":
                 elif 4 < len(curve[2]) < 10:
                     curve[2] = [curve[2][0]] + random.sample(curve[2][1:-1], 2) + [curve[2][-1]]
                 else:
-                    rate = float(FPS_num)/vertices.shape[0]
-                    sample_num = round(len(curve[2][1:-1])*rate) - 1
+                    #rate = min(float(FPS_num)/vertices.shape[0] + plus_rate, 0.9)
+                    #sample_num = round(len(curve[2][1:-1])*rate) - 1
+                    sample_num = len(curve[2][1:-1])
                     curve[2] = [curve[2][0]] + random.sample(curve[2][1:-1], sample_num) + [curve[2][-1]]
 
                 # update lists
@@ -633,8 +635,9 @@ if __name__ == "__main__":
                 elif 4 < len(curve[2]) < 10:
                     curve[2] = [curve[2][0]] + random.sample(curve[2][1:-1], 2) + [curve[2][-1]]
                 else:
-                    rate = float(FPS_num)/vertices.shape[0]
-                    sample_num = round(len(curve[2][1:-1])*rate) - 1
+                    #rate = min(float(FPS_num)/vertices.shape[0] + plus_rate, 0.9)
+                    #sample_num = round(len(curve[2][1:-1])*rate) - 1
+                    sample_num = len(curve[2][1:-1])
                     curve[2] = [curve[2][0]] + random.sample(curve[2][1:-1], sample_num) + [curve[2][-1]]
 
                 open_curves, corner_points_ori, edge_points_ori = update_lists_open(curve, open_curves, corner_points_ori, edge_points_ori)
