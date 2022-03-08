@@ -10,18 +10,18 @@ def main():
     """
     # run e.g. python3 main2.py 0
     args = sys.argv[1:]
-    train_or_test = int(args[0]) # 0: train, 1: test
+    train_or_test = int(args[0]) # 0: test, 1: train
     train = bool(train_or_test)
-    test = bool(train_or_test)
+    #test = bool(train_or_test)
     if train:
         train_matrices_names_list = fnmatch.filter(os.listdir('/raid/home/hyovin.kwak/PIE-NET_Dataset_Preparation/mat_after_main1/'), '*.mat')
         tunnel_slice_mat_list = ["tunnel/train/slices_0_end.mat"]
         train_matrices_names_list = tunnel_slice_mat_list + train_matrices_names_list
         train_matrices_names_list_num = len(train_matrices_names_list)
         prefix = ""
-    elif test:
-        tunnel_slice_mat_list = ["tunnel/test/slices_1_end.mat"]
-        train_matrices_names_list = tunnel_slice_mat_list*64
+    else:
+        tunnel_slice_mat_list = ["tunnel/train/slices_0_end.mat", "tunnel/test/slices_1_end.mat"]
+        train_matrices_names_list = tunnel_slice_mat_list*32
         train_matrices_names_list_num = 64
         prefix = "test_"
 

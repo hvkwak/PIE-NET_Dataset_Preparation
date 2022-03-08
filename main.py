@@ -59,7 +59,7 @@ if __name__ == "__main__":
     list_ftr_file = open(args[1], "r") # "/raid/home/hyovin.kwak/all/obj/${1}_list_yml.txt"
     save_prefix = args[2] # $foldernum
     FPS_num = 8096
-    log_dir = args[3]     # "/raid/home/hyovin.kwak/PIE-NET_Dataset_Preparation/log/"
+    log_dir = args[3]     # "/raid/home/hyovin.kwak/PIE-NET_Dataset_Preparation/log/"    
     log_file_name = save_prefix+'generate_dataset_log.txt'
     log_fout = open(os.path.join(log_dir, log_file_name), 'w+')
 
@@ -73,10 +73,11 @@ if __name__ == "__main__":
     file_count = 0
     data = {'batch_count': batch_count, 'Training_data': np.zeros((64, 1), dtype = object)}
     
-    # control visualization points
+    # control visualization points: Enter '4' if you wish no visualizations
     check_point1 = args[4] == '1'
     check_point2 = args[4] == '2'
     check_point3 = args[4] == '3'
+    sn = int(args[5]) # subsampling number. let us try 64 and 128.
     #plus_rate = float(args[5])*5.0*0.01
     for i in range(model_total_num):       
         model_name_obj = "_".join(list_obj_lines[i].split('/')[-1].split('_')[0:2])
@@ -102,10 +103,10 @@ if __name__ == "__main__":
             
             # Type1
             # make sure we have < 30K vertices to keep it simple.
-            if vertices.shape[0] > 45000: 
-                print("vertices:", vertices.shape[0], " > 40000. skip this.")
+            if vertices.shape[0] > 30000: 
+                print("vertices:", vertices.shape[0], " > 30000. skip this.")
                 log_string("Type 1", log_fout)
-                log_string("vertices " +str(vertices.shape[0])+" > 40000. skip this.", log_fout)
+                log_string("vertices " +str(vertices.shape[0])+" > 30000. skip this.", log_fout)
                 del vertices
                 del faces
                 del vertex_normals
@@ -538,7 +539,7 @@ if __name__ == "__main__":
                 #                                    down_sample_point = down_sample_point, \
                 #                                    open_gt_pair_idx = open_gt_pair_idx, \
                 #                                    open_gt_valid_mask = open_gt_valid_mask, \
-                #                                    open_gt_256_64_idx = open_gt_256_64_idx, \
+                #                                    open_gt_256_sn_idx = open_gt_256_sn_idx, \
                 #                                    open_gt_type = open_gt_type, \
                 #                                    open_gt_res = open_gt_res, \
                 #                                    open_gt_sample_points = open_gt_sample_points, \
@@ -733,7 +734,7 @@ if __name__ == "__main__":
                 #                                    down_sample_point = down_sample_point, \
                 #                                    open_gt_pair_idx = open_gt_pair_idx, \
                 #                                    open_gt_valid_mask = open_gt_valid_mask, \
-                #                                    open_gt_256_64_idx = open_gt_256_64_idx, \
+                #                                    open_gt_256_sn_idx = open_gt_256_sn_idx, \
                 #                                    open_gt_type = open_gt_type, \
                 #                                    open_gt_res = open_gt_res, \
                 #                                    open_gt_sample_points = open_gt_sample_points, \
@@ -798,17 +799,17 @@ if __name__ == "__main__":
             corner_points_residual_vector = np.zeros_like(down_sample_point)
             open_gt_pair_idx = np.zeros((256, 2), dtype=np.uint16)
             open_gt_valid_mask = np.zeros((256, 1), dtype=np.uint8)
-            open_gt_256_64_idx = np.zeros((256, 64), dtype=np.uint16)
+            open_gt_256_sn_idx = np.zeros((256, sn), dtype=np.uint16)
             open_gt_type = np.zeros((256, 3), dtype=np.uint8) # Note: BSpline, Lines and Null
             open_type_onehot = np.zeros((256, 4), dtype=np.uint8)
             open_gt_res = np.zeros((256, 6), dtype=np.float32)
-            open_gt_sample_points = np.zeros((256, 64, 3), dtype=np.float32)
-            open_gt_mask = np.zeros((256, 64), dtype=np.uint8)
-            closed_gt_256_64_idx = np.zeros((256, 64), dtype=np.uint16)
-            closed_gt_mask = np.zeros((256, 64), dtype=np.uint8)
+            open_gt_sample_points = np.zeros((256, sn, 3), dtype=np.float32)
+            open_gt_mask = np.zeros((256, sn), dtype=np.uint8)
+            closed_gt_256_sn_idx = np.zeros((256, sn), dtype=np.uint16)
+            closed_gt_mask = np.zeros((256, sn), dtype=np.uint8)
             closed_gt_type = np.zeros((256, 1), dtype=np.uint8)
             closed_gt_res = np.zeros((256, 3), dtype=np.float32)
-            closed_gt_sample_points = np.zeros((256, 64, 3), dtype=np.float32)
+            closed_gt_sample_points = np.zeros((256, sn, 3), dtype=np.float32)
             closed_gt_valid_mask = np.zeros((256, 1), dtype=np.uint8)
             closed_gt_pair_idx = np.zeros((256, 1), dtype=np.uint16)
             
@@ -866,7 +867,7 @@ if __name__ == "__main__":
                 # first element
                 try:
                     closed_gt_pair_idx[m,0] = nearest_neighbor_finder(vertices[np.array([curve[2][0]]),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
-                    closed_gt_256_64_idx[m, 0] = closed_gt_pair_idx[m,0]
+                    closed_gt_256_sn_idx[m, 0] = closed_gt_pair_idx[m,0]
                     down_sample_point_copy[closed_gt_pair_idx[m,0], :] = np.Inf
                 except:
                     print("NN for closed_gt_pair_idx was not successful. skip this.")
@@ -879,31 +880,31 @@ if __name__ == "__main__":
                 if curve[2][0] == curve[2][-1]: curve[2] = curve[2][:-1] # update if these two indicies are same.
 
                 # the rest of them!
-                if len(curve[2]) > 64:
-                    # take start/end points + sample 62 points = 64 points
+                if len(curve[2]) > sn:
+                    # take start/end points + sample (sn-2) points = sn points
                     try:
-                        closed_gt_256_64_idx[m, 1:64] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:], len(curve[2][1:]))[:63]),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
-                        down_sample_point_copy[closed_gt_256_64_idx[m, 1:64], :] = np.Inf
+                        closed_gt_256_sn_idx[m, 1:sn] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:], len(curve[2][1:]))[:63]),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
+                        down_sample_point_copy[closed_gt_256_sn_idx[m, 1:sn], :] = np.Inf
                     except:
-                        print("NN for closed_gt_256_64_idx was not successful. skip this.")
+                        print("NN for closed_gt_256_sn_idx was not successful. skip this.")
                         log_string("Type 17", log_fout)
-                        log_string("NN for closed_gt_256_64_idx was not successful. skip this.", log_fout)
+                        log_string("NN for closed_gt_256_sn_idx was not successful. skip this.", log_fout)
                         closed_curve_NN_search_failed = True
                         break
-                    #closed_gt_256_64_idx[i, 63] = curve[2][-1]
-                    closed_gt_mask[m, 0:64] = 1
+                    #closed_gt_256_sn_idx[i, 63] = curve[2][-1]
+                    closed_gt_mask[m, 0:sn] = 1
                 else:
                     try:
-                        closed_gt_256_64_idx[m, 1:len(curve[2][1:])+1] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:], len(curve[2][1:]))[:len(curve[2][1:])]),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
+                        closed_gt_256_sn_idx[m, 1:len(curve[2][1:])+1] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:], len(curve[2][1:]))[:len(curve[2][1:])]),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
                         # make the point unavailable.
-                        down_sample_point_copy[closed_gt_256_64_idx[m, 1:len(curve[2][1:])+1], :] = np.Inf
+                        down_sample_point_copy[closed_gt_256_sn_idx[m, 1:len(curve[2][1:])+1], :] = np.Inf
                     except:
-                        print("NN for closed_gt_256_64_idx len() < 64 was not successful. skip this.")
+                        print("NN for closed_gt_256_sn_idx len() < sn was not successful. skip this.")
                         log_string("Type 18", log_fout)
-                        log_string("NN for closed_gt_256_64_idx len() < 64 was not successful. skip this.", log_fout)
+                        log_string("NN for closed_gt_256_sn_idx len() < sn was not successful. skip this.", log_fout)
                         closed_curve_NN_search_failed = True
                         break
-                    closed_gt_256_64_idx[m, len(curve[2][1:])+1:] = closed_gt_256_64_idx[m, len(curve[2][1:])]
+                    closed_gt_256_sn_idx[m, len(curve[2][1:])+1:] = closed_gt_256_sn_idx[m, len(curve[2][1:])]
                     closed_gt_mask[m, :len(curve[2])] = 1
                 
                 
@@ -915,7 +916,7 @@ if __name__ == "__main__":
                 closed_gt_res[m, ] = np.array([res1])
 
                 # open_gt_sample_points
-                closed_gt_sample_points[m, ...] = down_sample_point[closed_gt_256_64_idx[m], ]
+                closed_gt_sample_points[m, ...] = down_sample_point[closed_gt_256_sn_idx[m], ]
                 m = m + 1
             if closed_curve_NN_search_failed: continue
 
@@ -929,7 +930,7 @@ if __name__ == "__main__":
                     if (open_gt_pair_idx[0:n, :] == pair_idx).all(axis = 1).any() or (open_gt_pair_idx[0:n, :] == pair_idx[::-1]).all(axis = 1).any():
                         raise ValueError
                     open_gt_pair_idx[n,:] = pair_idx
-                    open_gt_256_64_idx[n, 0] = open_gt_pair_idx[n,0]
+                    open_gt_256_sn_idx[n, 0] = open_gt_pair_idx[n,0]
                     open_gt_valid_mask[n, 0] = 1
                     down_sample_point_copy[open_gt_pair_idx[n,0], :] = np.Inf
                     down_sample_point_copy[open_gt_pair_idx[n,1], :] = np.Inf
@@ -940,33 +941,33 @@ if __name__ == "__main__":
                     open_curve_NN_search_failed = True
                     break
                 
-                # open_gt_256_64_idx
-                if len(curve[2]) > 64:
-                    # sample start/end points + sample 62 points = 64 points
+                # open_gt_256_sn_idx
+                if len(curve[2]) > sn:
+                    # sample start/end points + sample (sn-2) points = sn points
                     try:
-                        open_gt_256_64_idx[n, 1:63] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:-1], len(curve[2][1:-1]))[:62]),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
-                        down_sample_point_copy[open_gt_256_64_idx[n, 1:63],:] = np.Inf
+                        open_gt_256_sn_idx[n, 1:(sn-1)] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:-1], len(curve[2][1:-1]))[:62]),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
+                        down_sample_point_copy[open_gt_256_sn_idx[n, 1:(sn-1)],:] = np.Inf
                     except:
-                        print("NN for open_gt_256_64_idx was not successful. skip this.")
+                        print("NN for open_gt_256_sn_idx was not successful. skip this.")
                         log_string("Type 20", log_fout)
-                        log_string("NN for open_gt_256_64_idx was not successful. skip this.", log_fout)
+                        log_string("NN for open_gt_256_sn_idx was not successful. skip this.", log_fout)
                         open_curve_NN_search_failed = True
                         break
-                    open_gt_256_64_idx[n, 63] = open_gt_pair_idx[n,1]
-                    open_gt_mask[n, 0:64] = 1
+                    open_gt_256_sn_idx[n, (sn-1)] = open_gt_pair_idx[n,1]
+                    open_gt_mask[n, 0:sn] = 1
                 else:
                     middle_idx_num = len(curve[2]) - 2
-                    #open_gt_256_64_idx[n, :] = curve[2] + [curve[2][-1]]*(64 - indicies_num)
+                    #open_gt_256_sn_idx[n, :] = curve[2] + [curve[2][-1]]*(sn - indicies_num)
                     try:
-                        open_gt_256_64_idx[n, 1:(middle_idx_num+1)] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:-1], len(curve[2][1:-1]))),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
-                        down_sample_point_copy[open_gt_256_64_idx[n, 1:(middle_idx_num+1)],:] = np.Inf
+                        open_gt_256_sn_idx[n, 1:(middle_idx_num+1)] = nearest_neighbor_finder(vertices[np.array(random.sample(curve[2][1:-1], len(curve[2][1:-1]))),:], down_sample_point_copy, use_clustering=False, neighbor_distance=1)
+                        down_sample_point_copy[open_gt_256_sn_idx[n, 1:(middle_idx_num+1)],:] = np.Inf
                     except:
-                        print("NN for open_gt_256_64_idx[n, 1:(middle_idx_num+1)] was not successful. skip this.")
+                        print("NN for open_gt_256_sn_idx[n, 1:(middle_idx_num+1)] was not successful. skip this.")
                         log_string("Type 21", log_fout)
-                        log_string("NN for open_gt_256_64_idx[n, 1:(middle_idx_num+1)] was not successful. skip this.", log_fout)
+                        log_string("NN for open_gt_256_sn_idx[n, 1:(middle_idx_num+1)] was not successful. skip this.", log_fout)
                         open_curve_NN_search_failed = True
                         break
-                    open_gt_256_64_idx[n, (middle_idx_num+1):64] = open_gt_pair_idx[n, 1]
+                    open_gt_256_sn_idx[n, (middle_idx_num+1):sn] = open_gt_pair_idx[n, 1]
                     open_gt_mask[n, 0:(middle_idx_num+2)] = 1
 
                 # open_gt_type, open_type_onehot BSpline, Lines, HalfCircle
@@ -980,7 +981,7 @@ if __name__ == "__main__":
                 open_gt_res[n, ] = np.array([res1, res2]).flatten()
 
                 # open_gt_sample_points
-                open_gt_sample_points[n, ...] = down_sample_point[open_gt_256_64_idx[n], ]
+                open_gt_sample_points[n, ...] = down_sample_point[open_gt_256_sn_idx[n], ]
                 n = n + 1
             if open_curve_NN_search_failed: continue
 
@@ -988,7 +989,7 @@ if __name__ == "__main__":
             # before saving this object
             # check..
             # 0. if the generated mesh looks fine
-            # 1. if 256_64 open curves are correct
+            # 1. if 256_sn open curves are correct
             # 1. if residual vectors are fine
             # 1. if pair index ok
             # 2. assert the labels
@@ -1001,12 +1002,12 @@ if __name__ == "__main__":
 
             open_gt_pair_idx = np.zeros((256, 2), dtype=np.uint16)
             open_gt_valid_mask = np.zeros((256, 1), dtype=np.uint8)
-            open_gt_256_64_idx = np.zeros((256, 64), dtype=np.uint16)
+            open_gt_256_sn_idx = np.zeros((256, sn), dtype=np.uint16)
             open_gt_type = np.zeros((256, 3), dtype=np.uint8) # Note: BSpline, Lines and Null
             open_type_onehot = np.zeros((256, 4), dtype=np.uint8)
             open_gt_res = np.zeros((256, 6), dtype=np.float32)
-            open_gt_sample_points = np.zeros((256, 64, 3), dtype=np.float32)
-            open_gt_mask = np.zeros((256, 64), dtype=np.uint8)
+            open_gt_sample_points = np.zeros((256, sn, 3), dtype=np.float32)
+            open_gt_mask = np.zeros((256, sn), dtype=np.uint8)
             '''
             '''
             if check_point3:
@@ -1017,24 +1018,24 @@ if __name__ == "__main__":
 
                 s = 0
                 # W
-                def update_visualization_open_curve_forward(vis, vertices, down_sample_point, open_gt_256_64_idx, open_gt_sample_points, open_curves):
+                def update_visualization_open_curve_forward(vis, vertices, down_sample_point, open_gt_256_sn_idx, open_gt_sample_points, open_curves):
                     global s
 
                     # asserts..
-                    # open_gt_pair_idx = open_gt_256_64_idx
-                    assert open_gt_pair_idx[s, 0] == open_gt_256_64_idx[s, 0]
-                    assert open_gt_pair_idx[s, 1] == open_gt_256_64_idx[s, -1]
+                    # open_gt_pair_idx = open_gt_256_sn_idx
+                    assert open_gt_pair_idx[s, 0] == open_gt_256_sn_idx[s, 0]
+                    assert open_gt_pair_idx[s, 1] == open_gt_256_sn_idx[s, -1]
 
                     # open_gt_valid_mask = open_gt_mask
                     
                     if open_gt_valid_mask[s, 0] == 0: 
-                        assert open_gt_valid_mask[s, 0] == open_gt_mask[s, :].sum() == open_gt_pair_idx[s, :].sum() == open_gt_256_64_idx[s, :].sum()
+                        assert open_gt_valid_mask[s, 0] == open_gt_mask[s, :].sum() == open_gt_pair_idx[s, :].sum() == open_gt_256_sn_idx[s, :].sum()
 
                     # open_gt_sample_points should be almost same.
-                    assert np.mean(np.sqrt(np.sum((down_sample_point[open_gt_256_64_idx[s, np.where(open_gt_mask[s, :] == 1)[0]], ...]- open_gt_sample_points[s, :][np.where(open_gt_mask[s, :] == 1)[0], ...])**2, axis = 1))) < 0.001
+                    assert np.mean(np.sqrt(np.sum((down_sample_point[open_gt_256_sn_idx[s, np.where(open_gt_mask[s, :] == 1)[0]], ...]- open_gt_sample_points[s, :][np.where(open_gt_mask[s, :] == 1)[0], ...])**2, axis = 1))) < 0.001
 
                     color_array = np.zeros_like(np.concatenate([down_sample_point, vertices]))
-                    color_array[open_gt_256_64_idx[s, :], :] = [0.0, 0.0, 0.99] # blue
+                    color_array[open_gt_256_sn_idx[s, :], :] = [0.0, 0.0, 0.99] # blue
                     color_array[open_gt_pair_idx[s, :], :] = [0.99, 0.0, 0.0] # red
                     color_array[FPS_num + np.array(open_curves[s][2]), :] = [0.0, 0.99, 0.0] # green
 
@@ -1048,24 +1049,24 @@ if __name__ == "__main__":
                     #vis.run()
 
                 # E
-                def update_visualization_open_curve_backward(vis, vertices, down_sample_point, open_gt_256_64_idx, open_gt_sample_points, open_curves):
+                def update_visualization_open_curve_backward(vis, vertices, down_sample_point, open_gt_256_sn_idx, open_gt_sample_points, open_curves):
                     global s
                     # asserts..
-                    # open_gt_pair_idx = open_gt_256_64_idx
+                    # open_gt_pair_idx = open_gt_256_sn_idx
                     assert s > 0
-                    assert open_gt_pair_idx[s, 0] == open_gt_256_64_idx[s, 0]
-                    assert open_gt_pair_idx[s, 1] == open_gt_256_64_idx[s, -1]
+                    assert open_gt_pair_idx[s, 0] == open_gt_256_sn_idx[s, 0]
+                    assert open_gt_pair_idx[s, 1] == open_gt_256_sn_idx[s, -1]
 
                     # open_gt_valid_mask = open_gt_mask
                     
                     if open_gt_valid_mask[s, 0] == 0: 
-                        assert open_gt_valid_mask[s, 0] == open_gt_mask[s, :].sum() == open_gt_pair_idx[s, :].sum() == open_gt_256_64_idx[s, :].sum()
+                        assert open_gt_valid_mask[s, 0] == open_gt_mask[s, :].sum() == open_gt_pair_idx[s, :].sum() == open_gt_256_sn_idx[s, :].sum()
 
                     # open_gt_sample_points should be almost same.
-                    assert np.mean(np.sqrt(np.sum((down_sample_point[open_gt_256_64_idx[s, np.where(open_gt_mask[s, :] == 1)[0]], ...]- open_gt_sample_points[s, :][np.where(open_gt_mask[s, :] == 1)[0], ...])**2, axis = 1))) < 0.001
+                    assert np.mean(np.sqrt(np.sum((down_sample_point[open_gt_256_sn_idx[s, np.where(open_gt_mask[s, :] == 1)[0]], ...]- open_gt_sample_points[s, :][np.where(open_gt_mask[s, :] == 1)[0], ...])**2, axis = 1))) < 0.001
 
                     color_array = np.zeros_like(np.concatenate([down_sample_point, vertices]))
-                    color_array[open_gt_256_64_idx[s, :], :] = [0.0, 0.0, 0.99] # blue
+                    color_array[open_gt_256_sn_idx[s, :], :] = [0.0, 0.0, 0.99] # blue
                     color_array[open_gt_pair_idx[s, :], :] = [0.99, 0.0, 0.0] # red
                     color_array[FPS_num + np.array(open_curves[s][2]), :] = [0.0, 0.99, 0.0] # green
 
@@ -1097,8 +1098,8 @@ if __name__ == "__main__":
 
                 vis = open3d.visualization.VisualizerWithKeyCallback()
                 vis.create_window()
-                vis.register_key_callback(87, partial(update_visualization_open_curve_forward, vertices = vertices, down_sample_point = down_sample_point, open_gt_256_64_idx = open_gt_256_64_idx, open_gt_sample_points = open_gt_sample_points, open_curves = open_curves)) # W    
-                vis.register_key_callback(69, partial(update_visualization_open_curve_backward, vertices = vertices, down_sample_point = down_sample_point, open_gt_256_64_idx = open_gt_256_64_idx, open_gt_sample_points = open_gt_sample_points, open_curves = open_curves)) # E
+                vis.register_key_callback(87, partial(update_visualization_open_curve_forward, vertices = vertices, down_sample_point = down_sample_point, open_gt_256_sn_idx = open_gt_256_sn_idx, open_gt_sample_points = open_gt_sample_points, open_curves = open_curves)) # W    
+                vis.register_key_callback(69, partial(update_visualization_open_curve_backward, vertices = vertices, down_sample_point = down_sample_point, open_gt_256_sn_idx = open_gt_256_sn_idx, open_gt_sample_points = open_gt_sample_points, open_curves = open_curves)) # E
                 vis.register_key_callback(81, close_visualization) # Q
                 vis.add_geometry(point_cloud)
                 vis.run()
@@ -1118,8 +1119,8 @@ if __name__ == "__main__":
                 ('closed_gt_pair_idx', 'O'),
                   ('open_gt_valid_mask', 'O'),
                 ('closed_gt_valid_mask', 'O'),
-                  ('open_gt_256_64_idx', 'O'),
-                ('closed_gt_256_64_idx', 'O'),
+                  ('open_gt_256_sn_idx', 'O'),
+                ('closed_gt_256_sn_idx', 'O'),
                   ('open_gt_type','O'),
                 ('closed_gt_type','O'),
                 ('open_type_onehot','O'),

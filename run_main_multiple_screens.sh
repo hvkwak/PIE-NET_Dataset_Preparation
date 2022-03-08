@@ -5,6 +5,9 @@ echo "start prefix: $start"
 echo "Enter end prefix > start prefix, end should be 100 to completely finish this."
 read end
 echo "end prefix: $end"
+echo "Enter subsampling points number: 64 or 128"
+read sn
+echo "subsampling number: $sn"
 while [ $end -gt $start ];
 do
 	#if [ ${start} == 0 ]
@@ -14,11 +17,11 @@ do
 	if [ ${#start} == 1 ]
 	then
 	   echo "1 digit"
-           screen -dmS $start "./run_main.sh" "000$start" "4"
+           screen -dmS $start "./run_main.sh" "000$start" "4" "$sn"
         elif [ ${#start} == 2 ]
 	then
 	   echo "2 digits"
-	   screen -dmS $start "./run_main.sh" "00$start" "4"
+	   screen -dmS $start "./run_main.sh" "00$start" "4" "$sn"
 	else
 	   echo "digit numbers are wrong. try again."
         fi
