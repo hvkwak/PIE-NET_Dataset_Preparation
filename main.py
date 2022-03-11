@@ -751,6 +751,22 @@ if __name__ == "__main__":
                 log_string("corner points > 23. skip this.", log_fout)
                 continue
 
+
+            # normalize vertices to keep all in [-0.5, 0.5] 
+            x_min, x_max = vertices[:, 0].min(), vertices[:, 0].max()
+            y_min, y_max = vertices[:, 1].min(), vertices[:, 1].max()
+            z_min, z_max = vertices[:, 2].min(), vertices[:, 2].max()
+            m_x = (x_min+x_max)/2.0
+            m_y = (y_min+y_max)/2.0
+            m_z = (z_min+z_max)/2.0
+            vertices[:, 0] = vertices[:, 0] - m_x
+            vertices[:, 1] = vertices[:, 1] - m_y
+            vertices[:, 2] = vertices[:, 2] - m_z
+            xyz_max = np.max([x_max-x_min, y_max-y_min, z_max-z_min])
+            vertices[:, 0] = vertices[:, 0]/xyz_max
+            vertices[:, 1] = vertices[:, 1]/xyz_max
+            vertices[:, 2] = vertices[:, 2]/xyz_max
+            
             
             # Downsampling
             # create mesh - this takes a lot of time.
@@ -775,8 +791,9 @@ if __name__ == "__main__":
                 nearest_neighbor_idx_edge_1 = nearest_neighbor_finder(vertices[edge_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=1)
                 nearest_neighbor_idx_corner_1 = nearest_neighbor_finder(vertices[corner_points_ori,:], down_sample_point, use_clustering=False, neighbor_distance=1)
                 distance_max_1 = np.max(np.sqrt(((vertices[edge_points_ori,:] - down_sample_point[nearest_neighbor_idx_edge_1, :])**2).sum(axis = 1)))
-                threshold = 1.5
-                if distance_max_1 > 1.5:
+                log_string(str(distance_max_1), log_fout)
+                threshold = 0.035
+                if distance_max_1 > threshold:
                     print("distance_max_1: ", distance_max_1, " >", threshold, ". skip this.")
                     log_string("Type 12", log_fout)
                     log_string("distance_max_1: "+str(distance_max_1)+ " >", threshold, ". skip this.", log_fout)
@@ -825,16 +842,17 @@ if __name__ == "__main__":
             too_many_corner_points_nearby = False
             for k in range(distance_between_corner_points.shape[0]):
                 # check if 10% of the all corner points gathered in a neighborhood within the distance of 5.
-                if (distance_between_corner_points[k,:] < 5.0).sum() / distance_between_corner_points.shape[0] > 0.1:
+                if (distance_between_corner_points[k,:] < 0.02).sum() / distance_between_corner_points.shape[0] > 0.1:
                     too_many_corner_points_nearby = True
                     break
             if too_many_corner_points_nearby:
                 print("too_many_corner_points_nearby. skip this.")
                 log_string("Type 15", log_fout)
-                log_string("too_many_corner_points_nearby. skip this.", log_fout)
+                log_string("too_many_corner_points_nearby."+str(distance_between_corner_points[k,:])+"skip this.", log_fout)
                 continue
                 
             # normalize them to keep all in [-0.5, 0.5]
+            '''
             max_x_in_vertices = np.max([np.max(vertices[:, 0]), np.abs(np.min(vertices[:, 0]))])
             max_y_in_vertices = np.max([np.max(vertices[:, 1]), np.abs(np.min(vertices[:, 1]))])
             max_z_in_vertices = np.max([np.max(vertices[:, 2]), np.abs(np.min(vertices[:, 2]))])
@@ -845,7 +863,7 @@ if __name__ == "__main__":
             max_z_in_this_model = np.max([np.max(down_sample_point[:, 2]), np.abs(np.min(down_sample_point[:, 2]))])
             max_in_this_model = np.max([max_x_in_this_model, max_y_in_this_model, max_z_in_this_model])
             max_from_two = np.max([max_in_this_model, max_in_vertices])
-
+            
             if max_from_two > 0.5:
                 down_sample_point[:,0] = (down_sample_point[:, 0] / (max_from_two*2.0))
                 down_sample_point[:,1] = (down_sample_point[:, 1] / (max_from_two*2.0))
@@ -859,6 +877,7 @@ if __name__ == "__main__":
                 corner_points_residual_vector[:,0] = (corner_points_residual_vector[:, 0] / (max_from_two*2.0))
                 corner_points_residual_vector[:,1] = (corner_points_residual_vector[:, 1] / (max_from_two*2.0))
                 corner_points_residual_vector[:,2] = (corner_points_residual_vector[:, 2] / (max_from_two*2.0))
+            '''
 
             m = 0
             closed_curve_NN_search_failed = False
