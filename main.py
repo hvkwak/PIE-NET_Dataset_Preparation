@@ -817,7 +817,7 @@ if __name__ == "__main__":
             open_gt_pair_idx = np.zeros((256, 2), dtype=np.uint16)
             open_gt_valid_mask = np.zeros((256, 1), dtype=np.uint8)
             open_gt_256_sn_idx = np.zeros((256, sn), dtype=np.uint16)
-            open_gt_type = np.zeros((256, 3), dtype=np.uint8) # Note: BSpline, Lines and Null
+            open_gt_type = np.zeros((256, 1), dtype=np.uint8) # Note: BSpline, Lines and Null
             open_type_onehot = np.zeros((256, 4), dtype=np.uint8)
             open_gt_res = np.zeros((256, 6), dtype=np.float32)
             open_gt_sample_points = np.zeros((256, sn, 3), dtype=np.float32)

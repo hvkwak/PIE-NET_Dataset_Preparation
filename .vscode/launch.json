@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            //"args":  ["/home/pro2future/Documents/all/obj/0099_list_obj.txt", "/home/pro2future/Documents/all/obj/0099_list_features.txt", "0099", "/home/pro2future/Documents/PIE-NET_Dataset_Preparation/log/"]
+            "args": ["/raid/home/hyovin.kwak/all/obj/0000_list_obj.txt", "/raid/home/hyovin.kwak/all/obj/0000_list_features.txt", "0000", "/raid/home/hyovin.kwak/PIE-NET_Dataset_Preparation/log/", "4", "128"]
         }
     ]
 }
