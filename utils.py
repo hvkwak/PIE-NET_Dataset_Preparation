@@ -69,6 +69,10 @@ def comb_BSpline_OpenCircle_List(bol, idx_A, idx_B):
 
 def scalar_product(tup_BSplineOpenCircle, tup_Line, idx_A, idx_B, k, Line_list, BSpline_OpenCircle_List, vertices):
 
+    # theta thresholds
+    theta_threshold_1 = 2.60
+    theta_threshold_2 = 3.15
+
     # note that idxA_*, idxB_* are idx in List
     # check idx_A
     if tup_BSplineOpenCircle[5] == 0:
@@ -105,13 +109,17 @@ def scalar_product(tup_BSplineOpenCircle, tup_Line, idx_A, idx_B, k, Line_list, 
 
     theta1 = np.arccos(np.sum(vectorA1*vectorA2)/(np.sqrt(np.sum(vectorA1**2))*np.sqrt(np.sum(vectorA2**2))).astype(np.float64))
     theta2 = np.arccos(np.sum(vectorB1*vectorB2)/(np.sqrt(np.sum(vectorB1**2))*np.sqrt(np.sum(vectorB2**2))).astype(np.float64))
-    #if 2.80 < theta1 < 3.14 and 2.80 < theta2 < 3.14:
-    #    print("hallo")
-    return 2.30 < theta1 < 3.14 and 2.50 < theta2 < 3.14 and vector1_same and vector2_same
+    if theta_threshold_1 < theta1 < theta_threshold_2 and theta_threshold_1 < theta2 < theta_threshold_2:
+        print("theta1", theta1)
+        print("theta2", theta2)
+    else:
+        print("theta1", theta1)
+        print("theta2", theta2)
+    return theta_threshold_1 < theta1 < theta_threshold_2 and theta_threshold_1 < theta2 < theta_threshold_2 and vector1_same and vector2_same
     
         
 
-def touching_four(BSpline_OpenCircle_List, Line_list, k, vertices):
+def touching_four_BO_Line(BSpline_OpenCircle_List, Line_list, k, vertices):
     # returns true if Line_list[k] touching for other curves like this:
     #
     # )_)
@@ -130,6 +138,54 @@ def touching_four(BSpline_OpenCircle_List, Line_list, k, vertices):
                 if scalar_product(candidate_tuples_BO[i], candidate_tuples_Line[j], idx_A, idx_B, k, Line_list, BSpline_OpenCircle_List, vertices):
                     return True
         return False
+
+# function to get unique values
+def unique(list1):
+ 
+    # initialize a null list
+    unique_list = []
+     
+    # traverse for all elements
+    for x in list1:
+        # check if exists in unique_list or not
+        if x not in unique_list:
+            unique_list.append(x)
+    return unique_list
+
+def touching_four_BO_BO(BSpline_OpenCircle_List, Line_list, k, vertices):
+    idx_A = Line_list[k][2][0]
+    idx_B = Line_list[k][2][-1]
+    assert idx_A != idx_B
+    candidate_tuples_BO1 = comb_BSpline_OpenCircle_List(BSpline_OpenCircle_List, idx_A, idx_B)
+    candidate_tuples_BO2 = candidate_tuples_BO1[:]
+    n = len(candidate_tuples_BO1)
+    if n == 0:
+        return False
+    else:
+        print(n)
+        for i in range(n):
+            for j in range(n):
+                idx = []
+                if i == j: continue
+                else:
+                    idx.append(candidate_tuples_BO1[i][1])
+                    idx.append(candidate_tuples_BO1[i][2])
+                    idx.append(candidate_tuples_BO2[j][1])
+                    idx.append(candidate_tuples_BO2[j][2])
+                    idx = unique(idx)
+                    if len(idx) == 4 and scalar_product(candidate_tuples_BO1[i], candidate_tuples_BO2[j], idx_A, idx_B, k, BSpline_OpenCircle_List, BSpline_OpenCircle_List, vertices):
+                        print("YES")
+                        return True
+                    else:
+                        continue
+        return False
+
+
+
+
+
+
+    
 
 
 

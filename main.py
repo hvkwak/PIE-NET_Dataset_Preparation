@@ -6,7 +6,7 @@ import trimesh
 import scipy.io
 import random
 from tqdm import tqdm
-from utils import delete_newline
+from utils import delete_newline, touching_four_BO_Line, touching_four_BO_BO
 from utils import curves_with_vertex_indices
 from utils import cross_points_finder
 from utils import update_lists_open
@@ -25,8 +25,7 @@ from utils import touch_in_circle
 #from utils import Check_Connect_Circles
 from utils import part_of
 from utils import check_OpenCircle
-from utils import touching_four
-import open3d
+#import open3d
 
 #from utils import connection_available
 #from utils import vertex_num_finder
@@ -85,7 +84,7 @@ if __name__ == "__main__":
     check_point3 = args[4] == '3'
     sn = int(args[5]) # subsampling number. let us try 64 and 128.
     #plus_rate = float(args[5])*5.0*0.01
-    for i in range(380, model_total_num):       
+    for i in range(822, model_total_num):       
         model_name_obj = "_".join(list_obj_lines[i].split('/')[-1].split('_')[0:2])
         model_name_ftr = "_".join(list_ftr_lines[i].split('/')[-1].split('_')[0:2])
         model_name_obj = delete_newline(model_name_obj)
@@ -524,21 +523,25 @@ if __name__ == "__main__":
             # | |
             # 
             BSpline_OpenCircle_List = BSpline_list + OpenCircle_list
-            before_num = len(Line_list)
-            Line_list_copy = Line_list
-            k_collector = []
+            #before_num = len(Line_list)
+            #Line_list_copy = Line_list[:]
+            delete_idx_collector = []
             print("BEFORE len(Line_list): ", len(Line_list))
             k = 0
             original_idx = 0
             while k < len(Line_list):
-                if touching_four(BSpline_OpenCircle_List, Line_list, k, vertices):
-                    del Line_list[k]
-                    k = k - 1
-                    k_collector.append(original_idx)
+                if touching_four_BO_Line(BSpline_OpenCircle_List, Line_list, k, vertices) or touching_four_BO_BO(BSpline_OpenCircle_List, Line_list, k, vertices):
+                    delete_idx_collector.append(k)
+                    #original_collector.append(original_idx)
                 k = k + 1
-                original_idx = original_idx + 1
+                #original_idx = original_idx + 1
+            for index in sorted(delete_idx_collector, reverse = True):
+                del Line_list[index]
             print("AFTER len(Line_list): ", len(Line_list))
-            if len(Line_list) - before_num < 0:
+
+            
+            #if len(Line_list) - before_num < 0:
+            if False:
                 # create updates
                 def close_visualization(vis):
                     vis.close()
@@ -588,7 +591,7 @@ if __name__ == "__main__":
                 
                 k = 0
                 while k < len(Line_list_copy):
-                    if k in k_collector:
+                    if k in delete_idx_collector:
                         color_array[Line_list_copy[k][2], ...] = [0.0, 0.99, 0.0]
                     else:
                         color_array[Line_list_copy[k][2], ...] = [0.0, 0.0, 0.99]
@@ -899,7 +902,7 @@ if __name__ == "__main__":
             open_gt_valid_mask = np.zeros((256, 1), dtype=np.uint8)
             open_gt_256_sn_idx = np.zeros((256, sn), dtype=np.uint16)
             open_gt_type = np.zeros((256, 1), dtype=np.uint8) # Note: BSpline, Lines and Null
-            open_type_onehot = np.zeros((256, 4), dtype=np.uint8)
+            open_type_onehot = np.zeros((256, 3), dtype=np.uint8)
             open_gt_res = np.zeros((256, 6), dtype=np.float32)
             open_gt_sample_points = np.zeros((256, sn, 3), dtype=np.float32)
             open_gt_mask = np.zeros((256, sn), dtype=np.uint8)
@@ -1093,8 +1096,8 @@ if __name__ == "__main__":
                 '''
 
                 # open_gt_type, open_type_onehot BSpline, Lines, HalfCircle
-                if curve[0] == 'BSpline': open_gt_type[n,0], open_type_onehot[n, ] = 1, np.array([0, 1, 0, 0])
-                elif curve[0] == 'Line' : open_gt_type[n,0], open_type_onehot[n, ] = 2, np.array([0, 0, 1, 0]) # "Line"
+                if curve[0] == 'BSpline': open_gt_type[n,0], open_type_onehot[n, ] = 1, np.array([0, 1, 0])
+                elif curve[0] == 'Line' : open_gt_type[n,0], open_type_onehot[n, ] = 2, np.array([0, 0, 1]) # "Line"
                 #1234elif curve[0] == 'HalfCircle' : open_gt_type[n,0], open_type_onehot[n, ] = 3, np.array([0, 0, 0, 1]) # "HalfCircle"
                 
                 # open_gt_res
