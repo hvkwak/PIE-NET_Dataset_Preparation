@@ -84,7 +84,7 @@ if __name__ == "__main__":
     check_point3 = args[4] == '3'
     sn = int(args[5]) # subsampling number. let us try 64 and 128.
     #plus_rate = float(args[5])*5.0*0.01
-    for i in range(822, model_total_num):       
+    for i in range(model_total_num):       
         model_name_obj = "_".join(list_obj_lines[i].split('/')[-1].split('_')[0:2])
         model_name_ftr = "_".join(list_ftr_lines[i].split('/')[-1].split('_')[0:2])
         model_name_obj = delete_newline(model_name_obj)
@@ -530,11 +530,17 @@ if __name__ == "__main__":
             k = 0
             original_idx = 0
             while k < len(Line_list):
-                if touching_four_BO_Line(BSpline_OpenCircle_List, Line_list, k, vertices) or touching_four_BO_BO(BSpline_OpenCircle_List, Line_list, k, vertices):
-                    delete_idx_collector.append(k)
-                    #original_collector.append(original_idx)
-                k = k + 1
-                #original_idx = original_idx + 1
+                try:
+                    if touching_four_BO_Line(BSpline_OpenCircle_List, Line_list, k, vertices) or touching_four_BO_BO(BSpline_OpenCircle_List, Line_list, k, vertices):
+                        delete_idx_collector.append(k)
+                        #original_collector.append(original_idx)
+                    k = k + 1
+                    #original_idx = original_idx + 1
+                except:            
+                    print("there's something wrong in touching_four_BO_Line() or touching_four_BO_BO(). skip this.")
+                    log_string("Type 35", log_fout)
+                    log_string("there's something wrong in touching_four_BO_Line() or touching_four_BO_BO(). skip this.", log_fout)
+                    continue                    
             for index in sorted(delete_idx_collector, reverse = True):
                 del Line_list[index]
             print("AFTER len(Line_list): ", len(Line_list))
