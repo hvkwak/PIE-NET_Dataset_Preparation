@@ -70,7 +70,7 @@ def comb_BSpline_OpenCircle_List(bol, idx_A, idx_B):
 def scalar_product(tup_BSplineOpenCircle, tup_Line, idx_A, idx_B, k, Line_list, BSpline_OpenCircle_List, vertices):
 
     # theta thresholds
-    theta_threshold_1 = 2.60
+    theta_threshold_1 = 2.53
     theta_threshold_2 = 3.15
 
     # note that idxA_*, idxB_* are idx in List
@@ -104,17 +104,18 @@ def scalar_product(tup_BSplineOpenCircle, tup_Line, idx_A, idx_B, k, Line_list, 
     vectorB1 = vertices[idx_B, ...] - vertices[BSpline_OpenCircle_List[idxB_BO][2][idxB_BO_vertex_idx], ...]
     vectorB2 = vertices[idx_B, ...] - vertices[Line_list[idxB_Line][2][idxB_Line_vertex_idx], ...]
 
-    vector1_same = np.sqrt(np.sum((vectorA1 - vectorB1)**2)) < 0.00001
-    vector2_same = np.sqrt(np.sum((vectorA2 - vectorB2)**2)) < 0.00001
+    vector1_same = np.sqrt(np.sum((vectorA1 - vectorB1)**2)) < 0.0001
+    vector2_same = np.sqrt(np.sum((vectorA2 - vectorB2)**2)) < 0.0001
 
     theta1 = np.arccos(np.sum(vectorA1*vectorA2)/(np.sqrt(np.sum(vectorA1**2))*np.sqrt(np.sum(vectorA2**2))).astype(np.float64))
     theta2 = np.arccos(np.sum(vectorB1*vectorB2)/(np.sqrt(np.sum(vectorB1**2))*np.sqrt(np.sum(vectorB2**2))).astype(np.float64))
-    if theta_threshold_1 < theta1 < theta_threshold_2 and theta_threshold_1 < theta2 < theta_threshold_2:
-        print("theta1", theta1)
-        print("theta2", theta2)
-    else:
-        print("theta1", theta1)
-        print("theta2", theta2)
+    
+    #if theta_threshold_1 < theta1 < theta_threshold_2 and theta_threshold_1 < theta2 < theta_threshold_2:
+    #    print("theta1", theta1)
+    #    print("theta2", theta2)
+    #else:
+    #    print("theta1", theta1)
+    #    print("theta2", theta2)
     return theta_threshold_1 < theta1 < theta_threshold_2 and theta_threshold_1 < theta2 < theta_threshold_2 and vector1_same and vector2_same
     
         

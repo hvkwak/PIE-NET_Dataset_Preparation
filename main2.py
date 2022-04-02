@@ -14,7 +14,7 @@ def main():
     train = bool(train_or_test)
     #test = bool(train_or_test)
     if train:
-        train_matrices_names_list = fnmatch.filter(os.listdir('/raid/home/hyovin.kwak/PIE-NET_Dataset_Preparation/mat_after_main1_128pts_0319_15p/'), '*.mat')
+        train_matrices_names_list = fnmatch.filter(os.listdir('/raid/home/hyovin.kwak/PIE-NET_Dataset_Preparation/mat_after_main1_128pts_0401_15p/'), '*.mat')
         tunnel_slice_mat_list = ["tunnel/train/slice_m148_r45.mat", "tunnel/train/slice_m939_r70.mat"]
         train_matrices_names_list = tunnel_slice_mat_list + train_matrices_names_list
         train_matrices_names_list_num = len(train_matrices_names_list)
@@ -29,7 +29,7 @@ def main():
     file_count = 0
     data = {'Training_data': np.zeros((64, 1), dtype = object)}
     for k in tqdm(range(train_matrices_names_list_num)):
-        loadpath = "/raid/home/hyovin.kwak/PIE-NET_Dataset_Preparation/mat_after_main1_128pts_0319_15p/" + train_matrices_names_list[k]
+        loadpath = "/raid/home/hyovin.kwak/PIE-NET_Dataset_Preparation/mat_after_main1_128pts_0401_15p/" + train_matrices_names_list[k]
         ref_mat = sio.loadmat(loadpath)['Training_data']
         end_count = sio.loadmat(loadpath)['batch_count'][0, 0]
         #if train_matrices_names_list[k][-7:] == "end.mat": 

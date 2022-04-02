@@ -30,7 +30,7 @@ from utils import check_OpenCircle
 #from utils import connection_available
 #from utils import vertex_num_finder
 #from utils import Possible_Circle_in_Open_Circle
-from itertools import combinations
+#from itertools import combinations
 #from utils import degrees_sameddd
 from cycle_detection import Cycle_Detector_in_BSplines
 from grafkom1Framework import ObjLoader
@@ -40,7 +40,7 @@ from grafkom1Framework import ObjLoader
 #from visualizer import view_point_1
 #from visualizer import view_point
 #import open3d
-from functools import partial
+#from functools import partial
 
 
 if __name__ == "__main__": 
@@ -523,12 +523,11 @@ if __name__ == "__main__":
             # | |
             # 
             BSpline_OpenCircle_List = BSpline_list + OpenCircle_list
-            #before_num = len(Line_list)
+            before_num = len(Line_list)
             #Line_list_copy = Line_list[:]
             delete_idx_collector = []
-            print("BEFORE len(Line_list): ", len(Line_list))
-            k = 0
-            original_idx = 0
+            #print("BEFORE len(Line_list): ", len(Line_list))
+            k = 0            
             while k < len(Line_list):
                 try:
                     if touching_four_BO_Line(BSpline_OpenCircle_List, Line_list, k, vertices) or touching_four_BO_BO(BSpline_OpenCircle_List, Line_list, k, vertices):
@@ -540,12 +539,125 @@ if __name__ == "__main__":
                     print("there's something wrong in touching_four_BO_Line() or touching_four_BO_BO(). skip this.")
                     log_string("Type 35", log_fout)
                     log_string("there's something wrong in touching_four_BO_Line() or touching_four_BO_BO(). skip this.", log_fout)
-                    continue                    
+                    k = k + 1
+                    continue
             for index in sorted(delete_idx_collector, reverse = True):
                 del Line_list[index]
-            print("AFTER len(Line_list): ", len(Line_list))
-
+            #print("AFTER len(Line_list): ", len(Line_list))
+            if len(Line_list) - before_num < 0:
+                log_string("Type 1105: " + str(len(Line_list) - before_num), log_fout)
             
+            # corners not clear? skip this object.
+            k = 0
+            theta_threshold_1 = 2.53
+            theta_threshold_2 = 3.15
+            skip_this_model = False
+            while k < len(Line_list) and not skip_this_model:
+                for i in range(len(BSpline_OpenCircle_List)):
+                    current_idx = Line_list[k][2]
+                    if current_idx[0] == BSpline_OpenCircle_List[i][0]:
+                        corner_idx0 = current_idx[0]
+                        corner_idx1 = current_idx[1]
+                        corner_idx2 = BSpline_OpenCircle_List[i][1]
+                        vec1 = vertices[corner_idx1, ...] - vertices[corner_idx0, ...]
+                        vec2 = vertices[corner_idx2, ...] - vertices[corner_idx0, ...]
+                        theta = np.arccos(np.sum(vec1*vec2)/(np.sqrt(np.sum(vec1**2))*np.sqrt(np.sum(vec2**2))).astype(np.float64))
+                        if theta_threshold_1 < theta < theta_threshold_2:
+                            skip_this_model = True
+                            break
+                    elif current_idx[0] == BSpline_OpenCircle_List[i][-1]:
+                        corner_idx0 = current_idx[0]
+                        corner_idx1 = current_idx[1]
+                        corner_idx2 = BSpline_OpenCircle_List[i][-2]
+                        vec1 = vertices[corner_idx1, ...] - vertices[corner_idx0, ...]
+                        vec2 = vertices[corner_idx2, ...] - vertices[corner_idx0, ...]
+                        theta = np.arccos(np.sum(vec1*vec2)/(np.sqrt(np.sum(vec1**2))*np.sqrt(np.sum(vec2**2))).astype(np.float64))
+                        if theta_threshold_1 < theta < theta_threshold_2:
+                            skip_this_model = True
+                            break
+                    elif current_idx[-1] == BSpline_OpenCircle_List[i][0]:
+                        corner_idx0 = current_idx[-1]
+                        corner_idx1 = current_idx[-2]
+                        corner_idx2 = BSpline_OpenCircle_List[i][1]
+                        vec1 = vertices[corner_idx1, ...] - vertices[corner_idx0, ...]
+                        vec2 = vertices[corner_idx2, ...] - vertices[corner_idx0, ...]
+                        theta = np.arccos(np.sum(vec1*vec2)/(np.sqrt(np.sum(vec1**2))*np.sqrt(np.sum(vec2**2))).astype(np.float64))
+                        if theta_threshold_1 < theta < theta_threshold_2:
+                            skip_this_model = True
+                            break
+                    elif current_idx[-1] == BSpline_OpenCircle_List[i][-1]:
+                        corner_idx0 = current_idx[-1]
+                        corner_idx1 = current_idx[-2]
+                        corner_idx2 = BSpline_OpenCircle_List[i][-2]
+                        vec1 = vertices[corner_idx1, ...] - vertices[corner_idx0, ...]
+                        vec2 = vertices[corner_idx2, ...] - vertices[corner_idx0, ...]
+                        theta = np.arccos(np.sum(vec1*vec2)/(np.sqrt(np.sum(vec1**2))*np.sqrt(np.sum(vec2**2))).astype(np.float64))
+                        if theta_threshold_1 < theta < theta_threshold_2:
+                            skip_this_model = True
+                            break
+                k = k + 1
+
+            if skip_this_model:
+                print("Problemkreis begrenzen! skip this.")
+                log_string("Type 0402_0", log_fout)
+                log_string("Problemkreis begrenzen! skip this.", log_fout)
+                continue
+
+            k = 0
+            skip_this_model = False
+            while k < len(BSpline_OpenCircle_List) and not skip_this_model:
+                BSpline_OpenCircle_idx = BSpline_OpenCircle_List[k][2]
+                for i in range(k, len(BSpline_OpenCircle_List)):
+                    current_idx = Line_list[k][2]
+                    if current_idx[0] == BSpline_OpenCircle_List[i][0]:
+                        corner_idx0 = current_idx[0]
+                        corner_idx1 = current_idx[1]
+                        corner_idx2 = BSpline_OpenCircle_List[i][1]
+                        vec1 = vertices[corner_idx1, ...] - vertices[corner_idx0, ...]
+                        vec2 = vertices[corner_idx2, ...] - vertices[corner_idx0, ...]
+                        theta = np.arccos(np.sum(vec1*vec2)/(np.sqrt(np.sum(vec1**2))*np.sqrt(np.sum(vec2**2))).astype(np.float64))
+                        if theta_threshold_1 < theta < theta_threshold_2:
+                            skip_this_model = True
+                            break
+                    elif current_idx[0] == BSpline_OpenCircle_List[i][-1]:
+                        corner_idx0 = current_idx[0]
+                        corner_idx1 = current_idx[1]
+                        corner_idx2 = BSpline_OpenCircle_List[i][-2]
+                        vec1 = vertices[corner_idx1, ...] - vertices[corner_idx0, ...]
+                        vec2 = vertices[corner_idx2, ...] - vertices[corner_idx0, ...]
+                        theta = np.arccos(np.sum(vec1*vec2)/(np.sqrt(np.sum(vec1**2))*np.sqrt(np.sum(vec2**2))).astype(np.float64))
+                        if theta_threshold_1 < theta < theta_threshold_2:
+                            skip_this_model = True
+                            break
+                    elif current_idx[-1] == BSpline_OpenCircle_List[i][0]:
+                        corner_idx0 = current_idx[-1]
+                        corner_idx1 = current_idx[-2]
+                        corner_idx2 = BSpline_OpenCircle_List[i][1]
+                        vec1 = vertices[corner_idx1, ...] - vertices[corner_idx0, ...]
+                        vec2 = vertices[corner_idx2, ...] - vertices[corner_idx0, ...]
+                        theta = np.arccos(np.sum(vec1*vec2)/(np.sqrt(np.sum(vec1**2))*np.sqrt(np.sum(vec2**2))).astype(np.float64))
+                        if theta_threshold_1 < theta < theta_threshold_2:
+                            skip_this_model = True
+                            break
+                    elif current_idx[-1] == BSpline_OpenCircle_List[i][-1]:
+                        corner_idx0 = current_idx[-1]
+                        corner_idx1 = current_idx[-2]
+                        corner_idx2 = BSpline_OpenCircle_List[i][-2]
+                        vec1 = vertices[corner_idx1, ...] - vertices[corner_idx0, ...]
+                        vec2 = vertices[corner_idx2, ...] - vertices[corner_idx0, ...]
+                        theta = np.arccos(np.sum(vec1*vec2)/(np.sqrt(np.sum(vec1**2))*np.sqrt(np.sum(vec2**2))).astype(np.float64))
+                        if theta_threshold_1 < theta < theta_threshold_2:
+                            skip_this_model = True
+                            break
+                k = k + 1
+
+            if skip_this_model:
+                print("Problemkreis begrenzen! skip this.")
+                log_string("Type 0402_1", log_fout)
+                log_string("Problemkreis begrenzen! skip this.", log_fout)
+                continue
+
+
             #if len(Line_list) - before_num < 0:
             if False:
                 # create updates
