@@ -84,7 +84,7 @@ if __name__ == "__main__":
     check_point3 = args[4] == '3'
     sn = int(args[5]) # subsampling number. let us try 64 and 128.
     #plus_rate = float(args[5])*5.0*0.01
-    for i in range(model_total_num):       
+    for i in range(104, model_total_num):       
         model_name_obj = "_".join(list_obj_lines[i].split('/')[-1].split('_')[0:2])
         model_name_ftr = "_".join(list_ftr_lines[i].split('/')[-1].split('_')[0:2])
         model_name_obj = delete_newline(model_name_obj)
@@ -122,24 +122,13 @@ if __name__ == "__main__":
                 continue
             elif vertices.shape[0] < 10000:
                 print("vertices:", vertices.shape[0], " < 10000. skip this.")
-                log_string("Type 27", log_fout)
+                log_string("Type 2", log_fout)
                 log_string("vertices " +str(vertices.shape[0])+" < 10000. skip this.", log_fout)
                 del vertices
                 del faces
                 del vertex_normals
                 continue
 
-
-            
-            #Type2
-            # Curves with vertex indices: (sharp and not sharp)edges of BSpline, Line, Cycle only.
-            '''
-            if not mostly_sharp_edges(list_ftr_line, threshold=0.30):
-                print("sharp_true_count/(sharp_true_count+sharp_false_count) < 0.30. skip this.")
-                log_string("Type 2", log_fout)
-                log_string("sharp_true_count/(sharp_true_count+sharp_false_count) < 0.30. skip this.", log_fout)
-                continue
-            '''
             
             # Type3
             # This has curves other than Circle, BSpline or Line, skip this.
@@ -177,7 +166,7 @@ if __name__ == "__main__":
             # skip if there is a curve which consists of very few vertices.
             if very_few:
                 print("there is a curve which consists of very few vertices. skip this.")
-                log_string("Type 24", log_fout)
+                log_string("Type 4", log_fout)
                 log_string("there is a curve which consists of very few vertices. skip this.", log_fout)
                 continue
             
@@ -185,31 +174,17 @@ if __name__ == "__main__":
             # skip if there are one type of curves too much.
             if len(BSpline_list) > 300 or len(Circle_list) > 300 or len(Line_list) > 300:
                 print("at least one curve type has > 300 curves. skip this.")
-                log_string("Type 4", log_fout)
+                log_string("Type 5", log_fout)
                 log_string("at least one curve type has > 300 curves. skip this.", log_fout)
                 continue
 
-            # Find a misclassified BSplines and first classify them correctly into circle,
-            # if they have same start and end points.
-            '''
-            k = 0
-            BSpline_list_num = len(BSpline_list)
-            while k < BSpline_list_num :
-                if BSpline_list[k][2][0] == BSpline_list[k][2][-1]:
-                    BSpline_list[k][0] = 'Circle'
-                    Circle_list.append(BSpline_list[k])
-                    del BSpline_list[k]
-                    BSpline_list_num = BSpline_list_num - 1
-                    k = k - 1
-                k = k + 1
-            '''
 
             # Check if there are half Circles/BSplines pair, merge them if there's one. BSplines 
             try:
                 BSpline_Circle_list = rest_curve_finder(BSpline_list + Circle_list, vertices)
             except:
                 print("there's something wrong in rest_curve_finder. possibly two BSplines having same start/end points, but not buliding a circle. skip this.")
-                log_string("Type 25", log_fout)
+                log_string("Type 6", log_fout)
                 log_string("there's something wrong in rest_curve_finder. possibly two BSplines having same start/end points, but not buliding a circle. skip this.", log_fout)
                 continue
 
@@ -223,20 +198,7 @@ if __name__ == "__main__":
                 if curve[0] == 'BSpline': BSpline_list.append(curve)
                 elif curve[0] == 'Circle': Circle_list.append(curve)
                 k = k + 1
-                #print(k)
             
-            '''
-            # check if a line touches circles_or_BSplines
-            Line_list_num = len(Line_list)
-            k = 0
-            while k < Line_list_num:
-                if touch_in_circles_or_BSplines(Line_list[k][2], Circle_list):
-                    del Line_list[k]
-                    k = k - 1
-                    Line_list_num = Line_list_num - 1
-                k = k + 1
-            '''
-
             # Circles should be also classified into three categories: Full Circle, OpenCircle(note: it is Circle_list after this.)
             FullCircles = []
             Circle_list_num = len(Circle_list)
@@ -248,93 +210,21 @@ if __name__ == "__main__":
                     k = k - 1
                     Circle_list_num = Circle_list_num - 1
                 k = k + 1
-            
-            '''
-            # Divide them into two categories: Half Circle or BSpline.
-            OpenCircle_list = []
-            k = 0
-            Circle_list_num = len(Circle_list)
-            while k < Circle_list_num:
-                if Circle_list[k][2][0] != Circle_list[k][2][-1]:
-                    point1_idx = Circle_list[k][2][0]
-                    point2_idx = Circle_list[k][2][-1]
-                    point1 = vertices[point1_idx, :]
-                    point2 = vertices[point2_idx, :]
-                    middle = (point1 + point2)/2.0
-                    distances = np.sqrt(((middle - vertices[Circle_list[k][2], :])**2).sum(axis = 1))
-                    small_std = np.std(distances, dtype = np.float64) < 0.05
 
-                    if len(Circle_list[k][2]) > 3 and small_std:
-                        Circle_list[k][0] == 'HalfCircle'
-                        HalfCircle_list.append(Circle_list[k])
-                        del Circle_list[k]
-                        Circle_list_num = Circle_list_num - 1
-                        k = k - 1
-                    else:
-                        Circle_list[k][0] = 'BSpline'
-                        BSpline_list.append(Circle_list[k])
-                        del Circle_list[k]
-                        Circle_list_num = Circle_list_num - 1
-                        k = k - 1                    
-                k = k + 1
-            '''
-            '''
-            while PathLength(Circle_list, nodes) > 1:
-                HalfCircle_list, Circle_list = Check_Connect_Circles(nodes, vertices, HalfCircle_list, Circle_list, BSpline_list)
-            '''
+            if len(FullCircles) > 0:
+                print("there's at least one full circles. we don't need this. skip this.")
+                log_string("Type 7", log_fout)
+                log_string("there's at least one full circles. we don't need this. skip this.", log_fout)
+                continue
 
             OpenCircle_list = Circle_list
-            ####
-            # if Circles in OpenCircle are connectable, just skip this
-            '''
-            if connection_available(OpenCircle_list):
-                print("connection_available in Opencircle_list.")
-                log_string("Type 23", log_fout)
-                log_string("connection_available in Opencircle_list.", log_fout)
-                continue
-            '''
 
-
-            # this is different to first finding out full circles. first and last vertices are not equal,
-            # but there's still possibility to build circles.
-            # 1. take all the open circles
-            # 2. see if combinations of 1, 2, 3, .... len(OpenCircle_list) builds a circle
-            '''
-            OpenCircle_list_num = len(OpenCircle_list)
-            sample_list = list(range(OpenCircle_list_num))
-            list_combinations = list()
-            for k in range(len(sample_list) + 1):
-                list_combinations += list(combinations(sample_list, k))
-                
-            all_combinations = list_combinations[1:]
-            for k in all_combinations:
-                vertex_idx = []
-                for i in k:
-                    vertex_idx = vertex_idx + OpenCircle_list[i][2]
-                
-                vertex_idx = np.array([vertex_idx])
-                r = np.sqrt(np.sum((np.mean(vertices[vertex_idx, ...], axis = 0) - vertices[vertex_idx, ...])**2, axis = 1))
-                if np.std(r) < 0.001:
-                    # this is a possible circle.
-                    vertex_idx = list(vertex_idx)
-                    FullCircles.append([['Circle'], None, vertex_idx])
-                    indices_to_delete = k
-                    sorted_indecies_to_delete = sorted(indices_to_delete, reverse=True)
-                    for index in indices_to_delete:
-                        del OpenCircle_list[index]
-            '''
             # Check if OpenCircle_list contains something "more" than a HalfCircle (theta > pi)
             if check_OpenCircle(OpenCircle_list, vertices):
                 print("OpenCircle_list contains something more than a HalfCircle (theta > pi)")
-                log_string("Type 22", log_fout)
+                log_string("Type 8", log_fout)
                 log_string("OpenCircle_list contains something more than a HalfCircle (theta > pi)", log_fout)
                 continue
-
-            ####
-
-            
-            
-
 
             Circle_list = FullCircles
             #
@@ -404,7 +294,7 @@ if __name__ == "__main__":
                 k = k + 1
             if touch_in_circles_:
                 print("there is at least one line touching a circle. skip this.")
-                log_string("Type 5", log_fout)
+                log_string("Type 9", log_fout)
                 log_string("there is at least one line touching a circle. skip this.", log_fout)
                 continue
 
@@ -419,7 +309,7 @@ if __name__ == "__main__":
             
             if (np.bincount(visited_verticies) > 2).sum() > 0:
                 print("there exist at least one vertex that is visited more than twice. skip this.")
-                log_string("Type 6", log_fout)
+                log_string("Type 10", log_fout)
                 log_string("there exist at least one vertex that is visited more than twice. skip this.", log_fout)
                 continue
             
@@ -431,38 +321,9 @@ if __name__ == "__main__":
             print("Finished!")
             if detected_cycles_in_BSplines:
                 print("There are at least one detected cycle, skip this.")
-                log_string("Type 7", log_fout)
+                log_string("Type 11", log_fout)
                 log_string("there are at least one detected cycle, skip this.", log_fout)
                 continue
-
-            '''
-            # run this once more to detect cycle in OpenCircle, where we try to find this specific triangular looking "opencircle" cycle.
-            terminate = False
-            Cycle_Detector = Cycle_Detector_in_BSplines(OpenCircle_list)
-            detected_cycles_in_OpenCircles = Cycle_Detector.run_cycle_detection_in_BSplines()
-            result_list = Cycle_Detector.result_list
-            while detected_cycles_in_OpenCircles:
-                
-                if len(result_list[0]) == 3:
-                    idx_to_delete = []
-                    for vertex_num_to_find in result_list[0]:
-                        idx_to_delete.append(vertex_num_finder(OpenCircle_list, vertex_num_to_find))
-                    #idx_to_delete = result_list[0]
-                    sorted_idx_to_delete = sorted(idx_to_delete, reverse=True)
-                    for index in sorted_idx_to_delete:
-                        del OpenCircle_list[index]                
-                    Cycle_Detector = Cycle_Detector_in_BSplines(OpenCircle_list)
-                    detected_cycles_in_OpenCircles = Cycle_Detector.run_cycle_detection_in_BSplines()
-                
-                if len(result_list[0]) > 3:
-                    terminate = True
-            
-            if terminate:
-                print("There were a cycle length > 3 in OpenCircle. skip this.")
-                log_string("Type 26", log_fout)
-                log_string("There were a cycle length > 3 in OpenCircle. skip this.", log_fout)
-                continue
-            '''
 
             #
             # More filtering rules for BSpline_list, Line_list, OpenCircle_list, Circle_list.
@@ -496,7 +357,7 @@ if __name__ == "__main__":
 
             if skip_this_model: 
                 print("This object is dropped out. Skip this.")
-                log_string("Type 28", log_fout)
+                log_string("Type 12", log_fout)
                 log_string("This object is dropped out. Skip this.", log_fout)
                 continue
 
@@ -511,7 +372,7 @@ if __name__ == "__main__":
                             cross_points = cross_points_finder(curve[2], all_curves[j][2])
                             if len(cross_points) > 0:
                                 print("len(cross_points): ", len(cross_points), "> 0.")
-                                log_string("Type 8", log_fout)
+                                log_string("Type 13", log_fout)
                                 log_string("len(cross_points) > 0.", log_fout)
                                 corner_points_ori = corner_points_ori + cross_points
                 k = k + 1
@@ -526,69 +387,74 @@ if __name__ == "__main__":
             before_num = len(Line_list)
             #Line_list_copy = Line_list[:]
             delete_idx_collector = []
+            skip_this_model = False
             #print("BEFORE len(Line_list): ", len(Line_list))
             k = 0            
-            while k < len(Line_list):
+            while k < len(Line_list) and not skip_this_model:
                 try:
                     if touching_four_BO_Line(BSpline_OpenCircle_List, Line_list, k, vertices) or touching_four_BO_BO(BSpline_OpenCircle_List, Line_list, k, vertices):
                         delete_idx_collector.append(k)
                         #original_collector.append(original_idx)
                     k = k + 1
                     #original_idx = original_idx + 1
-                except:            
-                    print("there's something wrong in touching_four_BO_Line() or touching_four_BO_BO(). skip this.")
-                    log_string("Type 35", log_fout)
-                    log_string("there's something wrong in touching_four_BO_Line() or touching_four_BO_BO(). skip this.", log_fout)
+                except:
+                    skip_this_model = True   
                     k = k + 1
-                    continue
+                    
+            if skip_this_model:
+                print("there's something wrong in touching_four_BO_Line() or touching_four_BO_BO(). skip this.")
+                log_string("Type 14", log_fout)
+                log_string("there's something wrong in touching_four_BO_Llsine() or touching_four_BO_BO(). skip this.", log_fout)
+                continue
+
             for index in sorted(delete_idx_collector, reverse = True):
                 del Line_list[index]
             #print("AFTER len(Line_list): ", len(Line_list))
             if len(Line_list) - before_num < 0:
-                log_string("Type 1105: " + str(len(Line_list) - before_num), log_fout)
+                log_string("Type 15: " + str(len(Line_list) - before_num), log_fout)
             
             # corners not clear? skip this object.
             k = 0
-            theta_threshold_1 = 2.53
+            theta_threshold_1 = 2.094
             theta_threshold_2 = 3.15
             skip_this_model = False
             while k < len(Line_list) and not skip_this_model:
                 for i in range(len(BSpline_OpenCircle_List)):
                     current_idx = Line_list[k][2]
-                    if current_idx[0] == BSpline_OpenCircle_List[i][0]:
+                    if current_idx[0] == BSpline_OpenCircle_List[i][2][0]:
                         corner_idx0 = current_idx[0]
                         corner_idx1 = current_idx[1]
-                        corner_idx2 = BSpline_OpenCircle_List[i][1]
+                        corner_idx2 = BSpline_OpenCircle_List[i][2][1]
                         vec1 = vertices[corner_idx1, ...] - vertices[corner_idx0, ...]
                         vec2 = vertices[corner_idx2, ...] - vertices[corner_idx0, ...]
                         theta = np.arccos(np.sum(vec1*vec2)/(np.sqrt(np.sum(vec1**2))*np.sqrt(np.sum(vec2**2))).astype(np.float64))
                         if theta_threshold_1 < theta < theta_threshold_2:
                             skip_this_model = True
                             break
-                    elif current_idx[0] == BSpline_OpenCircle_List[i][-1]:
+                    elif current_idx[0] == BSpline_OpenCircle_List[i][2][-1]:
                         corner_idx0 = current_idx[0]
                         corner_idx1 = current_idx[1]
-                        corner_idx2 = BSpline_OpenCircle_List[i][-2]
+                        corner_idx2 = BSpline_OpenCircle_List[i][2][-2]
                         vec1 = vertices[corner_idx1, ...] - vertices[corner_idx0, ...]
                         vec2 = vertices[corner_idx2, ...] - vertices[corner_idx0, ...]
                         theta = np.arccos(np.sum(vec1*vec2)/(np.sqrt(np.sum(vec1**2))*np.sqrt(np.sum(vec2**2))).astype(np.float64))
                         if theta_threshold_1 < theta < theta_threshold_2:
                             skip_this_model = True
                             break
-                    elif current_idx[-1] == BSpline_OpenCircle_List[i][0]:
+                    elif current_idx[-1] == BSpline_OpenCircle_List[i][2][0]:
                         corner_idx0 = current_idx[-1]
                         corner_idx1 = current_idx[-2]
-                        corner_idx2 = BSpline_OpenCircle_List[i][1]
+                        corner_idx2 = BSpline_OpenCircle_List[i][2][1]
                         vec1 = vertices[corner_idx1, ...] - vertices[corner_idx0, ...]
                         vec2 = vertices[corner_idx2, ...] - vertices[corner_idx0, ...]
                         theta = np.arccos(np.sum(vec1*vec2)/(np.sqrt(np.sum(vec1**2))*np.sqrt(np.sum(vec2**2))).astype(np.float64))
                         if theta_threshold_1 < theta < theta_threshold_2:
                             skip_this_model = True
                             break
-                    elif current_idx[-1] == BSpline_OpenCircle_List[i][-1]:
+                    elif current_idx[-1] == BSpline_OpenCircle_List[i][2][-1]:
                         corner_idx0 = current_idx[-1]
                         corner_idx1 = current_idx[-2]
-                        corner_idx2 = BSpline_OpenCircle_List[i][-2]
+                        corner_idx2 = BSpline_OpenCircle_List[i][2][-2]
                         vec1 = vertices[corner_idx1, ...] - vertices[corner_idx0, ...]
                         vec2 = vertices[corner_idx2, ...] - vertices[corner_idx0, ...]
                         theta = np.arccos(np.sum(vec1*vec2)/(np.sqrt(np.sum(vec1**2))*np.sqrt(np.sum(vec2**2))).astype(np.float64))
@@ -599,7 +465,7 @@ if __name__ == "__main__":
 
             if skip_this_model:
                 print("Problemkreis begrenzen! skip this.")
-                log_string("Type 0402_0", log_fout)
+                log_string("Type 16", log_fout)
                 log_string("Problemkreis begrenzen! skip this.", log_fout)
                 continue
 
@@ -608,41 +474,41 @@ if __name__ == "__main__":
             while k < len(BSpline_OpenCircle_List) and not skip_this_model:
                 BSpline_OpenCircle_idx = BSpline_OpenCircle_List[k][2]
                 for i in range(k, len(BSpline_OpenCircle_List)):
-                    current_idx = Line_list[k][2]
-                    if current_idx[0] == BSpline_OpenCircle_List[i][0]:
+                    current_idx = BSpline_OpenCircle_List[k][2]
+                    if current_idx[0] == BSpline_OpenCircle_List[i][2][0]:
                         corner_idx0 = current_idx[0]
                         corner_idx1 = current_idx[1]
-                        corner_idx2 = BSpline_OpenCircle_List[i][1]
+                        corner_idx2 = BSpline_OpenCircle_List[i][2][1]
                         vec1 = vertices[corner_idx1, ...] - vertices[corner_idx0, ...]
                         vec2 = vertices[corner_idx2, ...] - vertices[corner_idx0, ...]
                         theta = np.arccos(np.sum(vec1*vec2)/(np.sqrt(np.sum(vec1**2))*np.sqrt(np.sum(vec2**2))).astype(np.float64))
                         if theta_threshold_1 < theta < theta_threshold_2:
                             skip_this_model = True
                             break
-                    elif current_idx[0] == BSpline_OpenCircle_List[i][-1]:
+                    elif current_idx[0] == BSpline_OpenCircle_List[i][2][-1]:
                         corner_idx0 = current_idx[0]
                         corner_idx1 = current_idx[1]
-                        corner_idx2 = BSpline_OpenCircle_List[i][-2]
+                        corner_idx2 = BSpline_OpenCircle_List[i][2][-2]
                         vec1 = vertices[corner_idx1, ...] - vertices[corner_idx0, ...]
                         vec2 = vertices[corner_idx2, ...] - vertices[corner_idx0, ...]
                         theta = np.arccos(np.sum(vec1*vec2)/(np.sqrt(np.sum(vec1**2))*np.sqrt(np.sum(vec2**2))).astype(np.float64))
                         if theta_threshold_1 < theta < theta_threshold_2:
                             skip_this_model = True
                             break
-                    elif current_idx[-1] == BSpline_OpenCircle_List[i][0]:
+                    elif current_idx[-1] == BSpline_OpenCircle_List[i][2][0]:
                         corner_idx0 = current_idx[-1]
                         corner_idx1 = current_idx[-2]
-                        corner_idx2 = BSpline_OpenCircle_List[i][1]
+                        corner_idx2 = BSpline_OpenCircle_List[i][2][1]
                         vec1 = vertices[corner_idx1, ...] - vertices[corner_idx0, ...]
                         vec2 = vertices[corner_idx2, ...] - vertices[corner_idx0, ...]
                         theta = np.arccos(np.sum(vec1*vec2)/(np.sqrt(np.sum(vec1**2))*np.sqrt(np.sum(vec2**2))).astype(np.float64))
                         if theta_threshold_1 < theta < theta_threshold_2:
                             skip_this_model = True
                             break
-                    elif current_idx[-1] == BSpline_OpenCircle_List[i][-1]:
+                    elif current_idx[-1] == BSpline_OpenCircle_List[i][2][-1]:
                         corner_idx0 = current_idx[-1]
                         corner_idx1 = current_idx[-2]
-                        corner_idx2 = BSpline_OpenCircle_List[i][-2]
+                        corner_idx2 = BSpline_OpenCircle_List[i][2][-2]
                         vec1 = vertices[corner_idx1, ...] - vertices[corner_idx0, ...]
                         vec2 = vertices[corner_idx2, ...] - vertices[corner_idx0, ...]
                         theta = np.arccos(np.sum(vec1*vec2)/(np.sqrt(np.sum(vec1**2))*np.sqrt(np.sum(vec2**2))).astype(np.float64))
@@ -653,7 +519,7 @@ if __name__ == "__main__":
 
             if skip_this_model:
                 print("Problemkreis begrenzen! skip this.")
-                log_string("Type 0402_1", log_fout)
+                log_string("Type 17", log_fout)
                 log_string("Problemkreis begrenzen! skip this.", log_fout)
                 continue
 
@@ -787,7 +653,7 @@ if __name__ == "__main__":
 
             if skip_this_model:
                 print("subsampled curve too short. skip this.")
-                log_string("Type 117", log_fout)
+                log_string("Type 18", log_fout)
                 log_string("subsampled curve too short. skip this.", log_fout)                
                 continue
 
@@ -844,14 +710,14 @@ if __name__ == "__main__":
 
             if skip_this_model:
                 print("subsampled curve too short. skip this.")
-                log_string("Type 118", log_fout)
+                log_string("Type 19", log_fout)
                 log_string("subsampled curve too short. skip this.", log_fout)                
                 continue
 
             # if there are more than 256 curves in each section: don't use this model.
             if (len(open_curves) > 256) or (len(closed_curves) > 256): 
                 print("(open/closed)_curves > 256. skip this.")
-                log_string("Type 9", log_fout)
+                log_string("Type 20", log_fout)
                 log_string("(open/closed)_curves > 256. skip this.", log_fout)
                 continue
 
@@ -859,7 +725,7 @@ if __name__ == "__main__":
             # just reject the object if there are no open_curves: this will exclude objects with circles only.
             if (len(open_curves) == 0): 
                 print("open_curves = 0. skip this.")
-                log_string("Type 10", log_fout)
+                log_string("Type 21", log_fout)
                 log_string("open_curves = 0. skip this.", log_fout)
                 continue
 
@@ -871,7 +737,7 @@ if __name__ == "__main__":
 
             if skip_this_model: 
                 print("problems in (edge/corner)_points_ori(.shape[0] = 0). Skip this.")
-                log_string("Type 11", log_fout)
+                log_string("Type 22", log_fout)
                 log_string("problems in (edge/corner)_points_ori(.shape[0] = 0). Skip this.", log_fout)
                 continue
             ''' 
@@ -949,7 +815,7 @@ if __name__ == "__main__":
             # checking the number of corner points will save us a lot of time.
             if corner_points_ori.shape[0] > 23:
                 print("corner points > 23. skip this.")
-                log_string("Type 14", log_fout)
+                log_string("Type 23", log_fout)
                 log_string("corner points > 23. skip this.", log_fout)
                 continue
 
@@ -969,7 +835,6 @@ if __name__ == "__main__":
             vertices[:, 1] = vertices[:, 1]/xyz_max
             vertices[:, 2] = vertices[:, 2]/xyz_max
             
-            
             # Downsampling
             # create mesh - this takes a lot of time.
             mesh = trimesh.Trimesh(vertices = vertices, faces = faces, vertex_normals = vertex_normals)
@@ -984,6 +849,7 @@ if __name__ == "__main__":
 
             nearest_neighbor_idx_edge = 0
             nearest_neighbor_idx_corner = 0
+
             # Annotation transfer
             # edge_points_now ('PC_8096_edge_points_label_bin'), (8096, 1), dtype: uint8
             # Note: find a nearest neighbor of each edge_point in edge_points_ori, label it as an "edge"
@@ -997,14 +863,14 @@ if __name__ == "__main__":
                 threshold = 0.03
                 if distance_max_1 > threshold:
                     print("distance_max_1: ", distance_max_1, " >", threshold, ". skip this.")
-                    log_string("Type 12", log_fout)
+                    log_string("Type 24", log_fout)
                     log_string("distance_max_1: "+str(distance_max_1)+ " >", threshold, ". skip this.", log_fout)
                     continue
                 nearest_neighbor_idx_edge = nearest_neighbor_idx_edge_1
                 nearest_neighbor_idx_corner = nearest_neighbor_idx_corner_1
             except:
                 print("NN was not successful. skip this.")
-                log_string("Type 13", log_fout)
+                log_string("Type 25", log_fout)
                 log_string("NN was not successful. skip this.", log_fout)
                 continue
             
@@ -1049,7 +915,7 @@ if __name__ == "__main__":
                     break
             if too_many_corner_points_nearby:
                 print("too_many_corner_points_nearby. skip this.")
-                log_string("Type 15", log_fout)
+                log_string("Type 26", log_fout)
                 log_string("too_many_corner_points_nearby."+str(distance_between_corner_points[k,:])+"skip this.", log_fout)
                 continue
 
@@ -1075,7 +941,7 @@ if __name__ == "__main__":
                     down_sample_point_copy[closed_gt_pair_idx[m,0], :] = np.Inf
                 except:
                     print("NN for closed_gt_pair_idx was not successful. skip this.")
-                    log_string("Type 16", log_fout)
+                    log_string("Type 27", log_fout)
                     log_string("NN for closed_gt_pair_idx was not successful. skip this.", log_fout)
                     closed_curve_NN_search_failed = True
                     break
@@ -1089,7 +955,7 @@ if __name__ == "__main__":
                     down_sample_point_copy[closed_gt_256_sn_idx[m, 1:len(curve[2][1:])+1], :] = np.Inf
                 except:
                     print("NN for closed_gt_256_sn_idx len() < sn was not successful. skip this.")
-                    log_string("Type 18", log_fout)
+                    log_string("Type 28", log_fout)
                     log_string("NN for closed_gt_256_sn_idx len() < sn was not successful. skip this.", log_fout)
                     closed_curve_NN_search_failed = True
                     break
@@ -1163,7 +1029,7 @@ if __name__ == "__main__":
                     down_sample_point_copy[open_gt_pair_idx[n,1], :] = np.Inf
                 except:
                     print("NN for open_gt_pair_idx was not successful. skip this.")
-                    log_string("Type 19", log_fout)
+                    log_string("Type 29", log_fout)
                     log_string("NN for open_gt_pair_idx was not successful. skip this.", log_fout)
                     open_curve_NN_search_failed = True
                     break
@@ -1175,7 +1041,7 @@ if __name__ == "__main__":
                     down_sample_point_copy[open_gt_256_sn_idx[n, 1:(middle_idx_num+1)],:] = np.Inf
                 except:
                     print("NN for open_gt_256_sn_idx[n, 1:(middle_idx_num+1)] was not successful. skip this.")
-                    log_string("Type 21", log_fout)
+                    log_string("Type 30", log_fout)
                     log_string("NN for open_gt_256_sn_idx[n, 1:(middle_idx_num+1)] was not successful. skip this.", log_fout)
                     open_curve_NN_search_failed = True
                     break
