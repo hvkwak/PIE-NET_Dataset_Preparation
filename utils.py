@@ -70,7 +70,7 @@ def comb_BSpline_OpenCircle_List(bol, idx_A, idx_B):
 def scalar_product(tup_BSplineOpenCircle, tup_Line, idx_A, idx_B, k, Line_list, BSpline_OpenCircle_List, vertices):
 
     # theta thresholds
-    theta_threshold_1 = 2.53
+    theta_threshold_1 = 2.356
     theta_threshold_2 = 3.15
 
     # note that idxA_*, idxB_* are idx in List
