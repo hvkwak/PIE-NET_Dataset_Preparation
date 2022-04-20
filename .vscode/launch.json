@@ -1,0 +1,16 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": ["/raid/home/hyovin.kwak/all/obj/0000_list_obj.txt", "/raid/home/hyovin.kwak/all/obj/0000_list_features.txt", "0000", "/raid/home/hyovin.kwak/PIE-NET_Dataset_Preparation/log/", "4", "128"]
+        }
+    ]
+}

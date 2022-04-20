@@ -5,21 +5,234 @@ import itertools
 from tqdm import tqdm
 #import open3d
 
-'''
-def PathLength(Circle_list, nodes):
-    max_digit = 0
-    for circle in Circle_list:
-        if max_digit < np.max([circle[2][0], circle[2][-1]]): max_digit = np.max([circle[2][0], circle[2][-1]])
-    
-    CurvesConnector = Graph(max_digit+1)
-    for k in range(len(Circle_list)):
-        CurvesConnector.addEdge(Circle_list[k][2][0], Circle_list[k][2][-1])
 
-    node, node_2, LongDis = CurvesConnector.LongestPathLength()
-    nodes[0] = node
-    nodes[1] = node_2
-    return LongDis
-'''
+def comb_in_Line_List(ll, k, idx_A, idx_B):
+    candidate_tuples = []
+    for a in range(len(ll)):
+        if a == k : continue
+        for b in range(a, len(ll)):
+            if b == k : continue
+            if ll[a][2][0] == idx_A and ll[b][2][0] == idx_B:
+                candidate_tuples.append((True, a, b, 1, 1, 0))
+                #return True, a, b, 1, 1, 0
+            elif ll[a][2][0] == idx_A and ll[b][2][-1] == idx_B:
+                candidate_tuples.append((True, a, b, 1, -2, 0))
+                #return True, a, b, 1, -2, 0
+            elif ll[a][2][-1] == idx_A and ll[b][2][0] == idx_B:
+                candidate_tuples.append((True, a, b, -2, 1, 0))
+                #return True, a, b, -2, 1, 0
+            elif ll[a][2][-1] == idx_A and ll[b][2][-1] == idx_B:
+                candidate_tuples.append((True, a, b, -2, -2, 0))
+                #return True, a, b, -2, -2, 0
+            elif ll[a][2][0] == idx_B and ll[b][2][0] == idx_A:
+                candidate_tuples.append((True, a, b, 1, 1, 1))
+                #return True, a, b, 1, 1, 1
+            elif ll[a][2][0] == idx_B and ll[b][2][-1] == idx_A:
+                candidate_tuples.append((True, a, b, 1, -2, 1))
+                #return True, a, b, 1, -2, 1
+            elif ll[a][2][-1] == idx_B and ll[b][2][0] == idx_A:
+                candidate_tuples.append((True, a, b, -2, 1, 1))
+                #return True, a, b, -2, 1, 1
+            elif ll[a][2][-1] == idx_B and ll[b][2][-1] == idx_A:
+                candidate_tuples.append((True, a, b, -2, -2, 1))
+                #return True, a, b, -2, -2, 1
+    return candidate_tuples
+
+def comb_BSpline_OpenCircle_List(bol, idx_A, idx_B):
+    candidate_tuples = []
+    for a in range(len(bol)):
+        for b in range(a, len(bol)):
+            if bol[a][2][0] == idx_A and bol[b][2][0] == idx_B:
+                candidate_tuples.append((True, a, b, 1, 1, 0))
+                #return True, a, b, 1, 1, 0
+            elif bol[a][2][0] == idx_A and bol[b][2][-1] == idx_B:
+                candidate_tuples.append((True, a, b, 1, -2, 0))
+                #return True, a, b, 1, -2, 0
+            elif bol[a][2][-1] == idx_A and bol[b][2][0] == idx_B:
+                candidate_tuples.append((True, a, b, -2, 1, 0))
+                #return True, a, b, -2, 1, 0
+            elif bol[a][2][-1] == idx_A and bol[b][2][-1] == idx_B:
+                candidate_tuples.append((True, a, b, -2, -2, 0))
+                #return True, a, b, -2, -2, 0
+            elif bol[a][2][0] == idx_B and bol[b][2][0] == idx_A:
+                candidate_tuples.append((True, a, b, 1, 1, 1))
+                #return True, a, b, 1, 1, 1
+            elif bol[a][2][0] == idx_B and bol[b][2][-1] == idx_A:
+                candidate_tuples.append((True, a, b, 1, -2, 1))
+                #return True, a, b, 1, -2, 1
+            elif bol[a][2][-1] == idx_B and bol[b][2][0] == idx_A:
+                candidate_tuples.append((True, a, b, -2, 1, 1))
+                #return True, a, b, -2, 1, 1
+            elif bol[a][2][-1] == idx_B and bol[b][2][-1] == idx_A:
+                candidate_tuples.append((True, a, b, -2, -2, 1))
+                #return True, a, b, -2, -2, 1
+    return candidate_tuples
+
+def scalar_product(tup_BSplineOpenCircle, tup_Line, idx_A, idx_B, k, Line_list, BSpline_OpenCircle_List, vertices):
+
+    # theta thresholds
+    theta_threshold_1 = 2.356
+    theta_threshold_2 = 3.15
+
+    # note that idxA_*, idxB_* are idx in List
+    # check idx_A
+    if tup_BSplineOpenCircle[5] == 0:
+        # a meets idx_A, b meets idx_B
+        idxA_BO = tup_BSplineOpenCircle[1]
+        idxB_BO = tup_BSplineOpenCircle[2]
+        idxA_BO_vertex_idx = tup_BSplineOpenCircle[3]
+        idxB_BO_vertex_idx = tup_BSplineOpenCircle[4]
+    else:
+        idxA_BO = tup_BSplineOpenCircle[2]
+        idxB_BO = tup_BSplineOpenCircle[1]
+        idxA_BO_vertex_idx = tup_BSplineOpenCircle[4]
+        idxB_BO_vertex_idx = tup_BSplineOpenCircle[3]
+        
+    if tup_Line[5] == 0:
+        idxA_Line = tup_Line[1]
+        idxB_Line = tup_Line[2]
+        idxA_Line_vertex_idx = tup_Line[3]
+        idxB_Line_vertex_idx = tup_Line[4]
+    else:
+        idxA_Line = tup_Line[2]
+        idxB_Line = tup_Line[1]
+        idxA_Line_vertex_idx = tup_Line[4]
+        idxB_Line_vertex_idx = tup_Line[3]
+
+    vectorA1 = vertices[idx_A, ...] - vertices[BSpline_OpenCircle_List[idxA_BO][2][idxA_BO_vertex_idx], ...]
+    vectorA2 = vertices[idx_A, ...] - vertices[Line_list[idxA_Line][2][idxA_Line_vertex_idx], ...]
+    
+    vectorB1 = vertices[idx_B, ...] - vertices[BSpline_OpenCircle_List[idxB_BO][2][idxB_BO_vertex_idx], ...]
+    vectorB2 = vertices[idx_B, ...] - vertices[Line_list[idxB_Line][2][idxB_Line_vertex_idx], ...]
+
+    vector1_same = np.sqrt(np.sum((vectorA1 - vectorB1)**2)) < 0.0001
+    vector2_same = np.sqrt(np.sum((vectorA2 - vectorB2)**2)) < 0.0001
+
+    theta1 = np.arccos(np.sum(vectorA1*vectorA2)/(np.sqrt(np.sum(vectorA1**2))*np.sqrt(np.sum(vectorA2**2))).astype(np.float64))
+    theta2 = np.arccos(np.sum(vectorB1*vectorB2)/(np.sqrt(np.sum(vectorB1**2))*np.sqrt(np.sum(vectorB2**2))).astype(np.float64))
+    
+    #if theta_threshold_1 < theta1 < theta_threshold_2 and theta_threshold_1 < theta2 < theta_threshold_2:
+    #    print("theta1", theta1)
+    #    print("theta2", theta2)
+    #else:
+    #    print("theta1", theta1)
+    #    print("theta2", theta2)
+    return theta_threshold_1 < theta1 < theta_threshold_2 and theta_threshold_1 < theta2 < theta_threshold_2 and vector1_same and vector2_same
+    
+        
+
+def touching_four_BO_Line(BSpline_OpenCircle_List, Line_list, k, vertices):
+    # returns true if Line_list[k] touching for other curves like this:
+    #
+    # )_)
+    # | |
+    # 
+    idx_A = Line_list[k][2][0]
+    idx_B = Line_list[k][2][-1]
+    assert idx_A != idx_B
+    candidate_tuples_BO = comb_BSpline_OpenCircle_List(BSpline_OpenCircle_List, idx_A, idx_B)
+    candidate_tuples_Line = comb_in_Line_List(Line_list, k, idx_A, idx_B)
+    if len(candidate_tuples_BO) == 0 or len(candidate_tuples_Line) == 0:
+        return False
+    else:
+        for i in range(len(candidate_tuples_BO)):
+            for j in range(len(candidate_tuples_Line)):
+                if scalar_product(candidate_tuples_BO[i], candidate_tuples_Line[j], idx_A, idx_B, k, Line_list, BSpline_OpenCircle_List, vertices):
+                    return True
+        return False
+
+# function to get unique values
+def unique(list1):
+ 
+    # initialize a null list
+    unique_list = []
+     
+    # traverse for all elements
+    for x in list1:
+        # check if exists in unique_list or not
+        if x not in unique_list:
+            unique_list.append(x)
+    return unique_list
+
+def touching_four_BO_BO(BSpline_OpenCircle_List, Line_list, k, vertices):
+    idx_A = Line_list[k][2][0]
+    idx_B = Line_list[k][2][-1]
+    assert idx_A != idx_B
+    candidate_tuples_BO1 = comb_BSpline_OpenCircle_List(BSpline_OpenCircle_List, idx_A, idx_B)
+    candidate_tuples_BO2 = candidate_tuples_BO1[:]
+    n = len(candidate_tuples_BO1)
+    if n == 0:
+        return False
+    else:
+        print(n)
+        for i in range(n):
+            for j in range(n):
+                idx = []
+                if i == j: continue
+                else:
+                    idx.append(candidate_tuples_BO1[i][1])
+                    idx.append(candidate_tuples_BO1[i][2])
+                    idx.append(candidate_tuples_BO2[j][1])
+                    idx.append(candidate_tuples_BO2[j][2])
+                    idx = unique(idx)
+                    if len(idx) == 4 and scalar_product(candidate_tuples_BO1[i], candidate_tuples_BO2[j], idx_A, idx_B, k, BSpline_OpenCircle_List, BSpline_OpenCircle_List, vertices):
+                        print("YES")
+                        return True
+                    else:
+                        continue
+        return False
+
+
+
+
+
+
+    
+
+
+
+
+def vertex_num_finder(OpenCircle_list, vertex_num_to_find):
+    OpenCircle_list_num = len(OpenCircle_list)
+    for k in range(OpenCircle_list_num):
+        if OpenCircle_list[k][0] == vertex_num_to_find:
+            return k
+
+def connection_possible(listA, listB):
+    return listA[0] == listB[0] or listA[0] == listB[-1] or listA[-1] == listB[0] or listA[-1] == listB[0]
+
+def connection_available(OpenCircle_list):
+    OpenCircle_list_num = len(OpenCircle_list)
+    for k in range(OpenCircle_list_num):
+        for i in range(k, OpenCircle_list_num):
+            if connection_possible(OpenCircle_list[k][2], OpenCircle_list[i][2]):
+                return True
+    return False
+
+
+def part_of(line_vertices, Curve_List):
+    # checks if line_vertices belong to one of the curve from Curve_List
+    for i in range(len(Curve_List)):
+        if np.in1d(np.array(line_vertices), np.array(Curve_List[i][2])).all():
+            return True
+    return False
+
+def check_OpenCircle(OpenCircle_list, vertices):
+    list_num = len(OpenCircle_list)
+    for i in range(list_num):
+        array = vertices[np.array(OpenCircle_list[i][2]), ...] # sequence doesn't change here
+        center = (array[0, ...] + array[-1, ...])/2.0
+        d = np.sqrt(np.sum((array[0, ...] - center)**2)) + 0.001
+        ds = np.sqrt(np.sum((center - array)**2, axis = 1))
+        if np.mean((ds < d).astype(np.float64)) < 0.90:
+            # "reachable" rate less than 90%
+            return True
+    return False
+
+
+
+
+
 
 def Check_Connect_Circles(nodes, vertices, HalfCircle_list, Circle_list, BSpline_list):
     # connect the circles and determine whether it is half circle or BSpline.
@@ -244,12 +457,12 @@ def nearest_neighbor_finder(edge_or_corner_points, down_sample_point, use_cluste
                 current_edge_points = current_edge_points + list(np.where(argmin_per_row == k)[0])
         else: 
             current_edge_points = np.where(argmin_per_row == idx)[0]
-        current_edge_points_num = len(current_edge_points)            
+        current_edge_points_num = len(current_edge_points)
         # generate permutations of available_neighbors.
         available_neighbors = available_neighbor_search(idx, down_sample_pts_used, down_sample_point, unique, counts, clustered = use_clustering)
         assert len(available_neighbors) == current_edge_points_num
-        if current_edge_points_num > 7: 
-            print("WARNING: too much Permutations. skip this.")
+        if current_edge_points_num > 9: 
+            print("WARNING: too much Permutations, points_num: ", current_edge_points_num, "skip this.")
             raise ValueError("WARNING: too much Permutations. skip this.")
         perm = np.array(list(itertools.permutations(available_neighbors, current_edge_points_num)))
         """
@@ -330,6 +543,29 @@ def calc_distances(p0, points):
     """
     return np.sqrt(((p0 - points)**2).sum(axis = len(points.shape) - 1))
 
+def graipher_FPS_idx_collector(pts, K):
+    """ returns "greedy" farthest points based on Euclidean Distances
+    Code by Graipher from https://codereview.stackexchange.com/questions/179561/farthest-point-algorithm-in-python
+
+    Args:
+        pts ((N, 4), float): Sampled points, where position 0 each row contains idx
+        K (int): the number of farthest sampled points
+
+    Returns:
+        farthest_pts ((K, 3), float): farthest sampled points
+    """
+    farthest_pts = np.zeros((K, 3))
+    farthest_pts_idx = np.zeros((K, 1))
+    idx = 0
+    farthest_pts[0] = pts[idx][1:4]
+    farthest_pts_idx[0] = pts[idx][0] # starts with 0!
+    distances = calc_distances(farthest_pts[0], pts[:, 1:4])
+    for i in tqdm(range(1, K)):
+        argmax_idx = np.argmax(distances)
+        farthest_pts[i] = pts[argmax_idx][1:4]
+        farthest_pts_idx[i] = pts[argmax_idx][0]
+        distances = np.minimum(distances, calc_distances(farthest_pts[i], pts[:, 1:4]))
+    return np.c_[farthest_pts_idx, farthest_pts] 
 
 def graipher_FPS(pts, K):
     """ returns "greedy" farthest points based on Euclidean Distances
@@ -431,6 +667,8 @@ def rest_curve_finder(Circle_or_BSpline_list, vertices):
                 Circle_or_BSpline_list[k] = new_curve
                 del Circle_or_BSpline_list[idx]
                 Circle_or_BSpline_num = Circle_or_BSpline_num - 1
+            else:
+                raise ValueError
         k = k + 1
     return Circle_or_BSpline_list
 

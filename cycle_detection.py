@@ -1,22 +1,24 @@
 # Code mostly from https://www.geeksforgeeks.org/print-all-the-cycles-in-an-undirected-graph/
 import numpy as np
 
+
 class Cycle_Detector_in_BSplines:
     
     def __init__(self, BSpline_list):
         self.N = 100000
         self.BSpline_list = BSpline_list
-        self.starting_vertices = [spline[2][0] for spline in self.BSpline_list]
+        self.starting_vertices = [spline[2][0]+1 for spline in self.BSpline_list]
+        self.result_list = []
 
     def run_cycle_detection_in_BSplines(self):
         for starting_vertex in self.starting_vertices:
-            result_list = self.cycle_detection_in_BSplines(starting_vertex+1)
+            result_list = self.cycle_detection_in_BSplines(starting_vertex)
             
             if len(result_list) > 0:
-                print("cycle_detection_in_BSplines: ", result_list)
+                #print("cycle_detection_in_BSplines: ", result_list)
+                self.result_list = result_list
                 return True
-            else:
-                continue
+
         return False
 
     def cycle_detection_in_BSplines(self, starting_vertex):
@@ -30,6 +32,7 @@ class Cycle_Detector_in_BSplines:
             if max_num < np.max([self.BSpline_list[i][2][0]+1, self.BSpline_list[i][2][-1]+1]):
                 max_num = np.max([self.BSpline_list[i][2][0]+1, self.BSpline_list[i][2][-1]+1])
             self.addEdge(self.BSpline_list[i][2][0]+1, self.BSpline_list[i][2][-1]+1)
+            
             
         # arrays required to color the
         # graph, store the parent of node
@@ -115,8 +118,6 @@ class Cycle_Detector_in_BSplines:
             print()
 
         return cycle_list
-
-
 
 
 
@@ -229,47 +230,47 @@ def cycle_detection_in_BSplines(BSpline_list):
 if __name__ == "__main__":
  
     # add edges
-    Cycle_Detector = Cycle_Detector_in_BSplines([])
+    #Cycle_Detector = Cycle_Detector_in_BSplines([])
     
-    Cycle_Detector.addEdge(4, 5)
-    Cycle_Detector.addEdge(5, 8)
-    Cycle_Detector.addEdge(8, 9)
-    Cycle_Detector.addEdge(9, 4)
+    addEdge(4, 5)
+    addEdge(5, 8)
+    addEdge(8, 9)
+    addEdge(9, 4)
     
-    Cycle_Detector.addEdge(1, 2)
-    Cycle_Detector.addEdge(2, 3)
-    Cycle_Detector.addEdge(3, 4)
-    Cycle_Detector.addEdge(4, 6)
-    Cycle_Detector.addEdge(4, 7)
-    Cycle_Detector.addEdge(5, 6)
-    Cycle_Detector.addEdge(3, 5)
-    Cycle_Detector.addEdge(7, 8)
-    Cycle_Detector.addEdge(6, 10)
-    Cycle_Detector.addEdge(5, 9)
-    Cycle_Detector.addEdge(10, 11)
-    Cycle_Detector.addEdge(11, 12)
-    Cycle_Detector.addEdge(11, 13)
-    Cycle_Detector.addEdge(12, 13)
+    #addEdge(1, 2)
+    #addEdge(2, 3)
+    #addEdge(3, 4)
+    #addEdge(4, 6)
+    #addEdge(4, 7)
+    #addEdge(5, 6)
+    #addEdge(3, 5)
+    #addEdge(7, 8)
+    #addEdge(6, 10)
+    #addEdge(5, 9)
+    #addEdge(10, 11)
+    #addEdge(11, 12)
+    #addEdge(11, 13)
+    #addEdge(12, 13)
     
  
     # arrays required to color the
     # graph, store the parent of node
-    Cycle_Detector.color = [0] * Cycle_Detector.N
-    Cycle_Detector.par = [0] * Cycle_Detector.N
+    color = [0] * N
+    par = [0] * N
  
     # mark with unique numbers
-    Cycle_Detector.mark = [0] * Cycle_Detector.N
-    Cycle_Detector.cyclenumber = 0
+    mark = [0] * N
+    cyclenumber = 0
     # store the numbers of cycle
     #cyclenumber = 0
-    Cycle_Detector.edges = 9
+    edges = 9
  
     # call DFS to mark the cycles
-    Cycle_Detector.dfs_cycle(4, 0, Cycle_Detector.color, Cycle_Detector.mark, Cycle_Detector.par)
+    dfs_cycle(4, 0, color, mark, par)
     
     # function to print the cycles
     cycle_list = []
-    cycle_list = Cycle_Detector.returnCycles(Cycle_Detector.edges, Cycle_Detector.mark, cycle_list)
+    cycle_list = returnCycles(edges, mark, cycle_list)
     print(cycle_list)
  
 # This code is contributed by
