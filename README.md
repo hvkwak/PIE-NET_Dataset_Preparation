@@ -17,5 +17,5 @@ where you will enter an additional argument to select a "chunk number" of the Da
 
 `make_list.sh` generates the a text file of filenames. <br />
 `main_multiple_screens.sh` runs `main.sh` in multiple screens in linux <br />
-main.sh runs `main.py` <br />
-main2.py there are some datasets that are not size of 64 after running `main.py`. This pack the "leftover" datasets altogether to be size of 64. The last that failed to form a file size of 64 will be discarded.<br />
+`main.sh` runs `main.py` <br />
+`main2.py` there are some datasets that are not size of 64 after running `main.py`. This pack the "leftover" datasets altogether to be size of 64. The last that failed to form a file size of 64 will be discarded.<br />
