@@ -1,8 +1,8 @@
 # Overview
-This set of codes generate the datasets suitable for PIE-NET: Parametric Inference of Point Cloud Edges (Wang et al. 2020) from ABC Dataset(Koch et al. 2019). This may create a dataset size of > 2.6K out of 1M CAD Models based on instructions in [Dataset Preparation](https://github.com/wangxiaogang866/PIE-NET), if you are about to use all chunks of ABC Dataset. More "filtering" rules were added accordingly to fulfill the requirements as many as possible.
+This set of codes generates the datasets suitable for PIE-NET: Parametric Inference of Point Cloud Edges (Wang et al. 2020) from ABC Dataset(Koch et al. 2019), which may be size of ca. 2K out of 750K CAD models based on instructions in [Dataset Preparation](https://github.com/wangxiaogang866/PIE-NET). Note that there have been many unsuitable models regarding the difficulty level of the models for corner and edge point recognition that are supposed to be excluded from the dataset. It is recommended to check the generated dataset once again after running the `main.py`, which inevitably has some unsuitable models.
 
 ## Please note
-Results from Section 3.1 of the paper were reproducible. No Warranty, No Liability.
+Results from Section 3.1 of the paper were reproducible.
 
 ## How to use / Brief Descriptions
 You may find some of codes in `utils` useful. First download `*.obj` and `*.yml` files from [ABC Dataset](https://deep-geometry.github.io/abc-dataset/), then run 
