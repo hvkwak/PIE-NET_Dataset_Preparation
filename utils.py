@@ -5,6 +5,7 @@ import itertools
 from tqdm import tqdm
 #import open3d
 
+
 def comb_in_Line_List(ll, k, idx_A, idx_B):
     candidate_tuples = []
     for a in range(len(ll)):
@@ -231,21 +232,7 @@ def check_OpenCircle(OpenCircle_list, vertices):
 
 
 
-'''
-def PathLength(Circle_list, nodes):
-    max_digit = 0
-    for circle in Circle_list:
-        if max_digit < np.max([circle[2][0], circle[2][-1]]): max_digit = np.max([circle[2][0], circle[2][-1]])
-    
-    CurvesConnector = Graph(max_digit+1)
-    for k in range(len(Circle_list)):
-        CurvesConnector.addEdge(Circle_list[k][2][0], Circle_list[k][2][-1])
 
-    node, node_2, LongDis = CurvesConnector.LongestPathLength()
-    nodes[0] = node
-    nodes[1] = node_2
-    return LongDis
-'''
 
 def Check_Connect_Circles(nodes, vertices, HalfCircle_list, Circle_list, BSpline_list):
     # connect the circles and determine whether it is half circle or BSpline.

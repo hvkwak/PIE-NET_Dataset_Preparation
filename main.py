@@ -37,6 +37,7 @@ from grafkom1Framework import ObjLoader
 
 #from utils import PathLength
 #from LongestPath import Graph
+
 #from visualizer import view_point_1
 #from visualizer import view_point
 #import open3d
@@ -114,6 +115,7 @@ if __name__ == "__main__":
             # make sure we have < 30K vertices to keep it simple.
             if vertices.shape[0] > 30000: 
                 print("vertices:", vertices.shape[0], " > 30000. skip this.")
+
                 log_string("Type 1", log_fout)
                 log_string("vertices " +str(vertices.shape[0])+" > 30000. skip this.", log_fout)
                 del vertices
@@ -193,6 +195,7 @@ if __name__ == "__main__":
             Circle_list = []
             k = 0
             curve_num = len(BSpline_Circle_list)
+
             while k < curve_num:
                 curve = BSpline_Circle_list[k]
                 if curve[0] == 'BSpline': BSpline_list.append(curve)
@@ -619,44 +622,7 @@ if __name__ == "__main__":
                 # create updates
                 def close_visualization(vis):
                     vis.close()
-                '''
-                s = 1 # 
-                def update_visualization(vis, vertices, BSpline_list, Line_list, OpenCircle_list, Circle_list):
-                    global s
-                    print("s: ", s)
-                    # k just stands for k-th element in listB and listG
-                    #assert len(listB) == len(listG)
-                    #colorG = [0.5, 0.5, 0.5]   # gray
-                    color1 = [0.99, 0.0, 0.0] # red Bspline
-                    color2 = [0.0, 0.99, 0.99] # blue Line
-                    color3 = [0.0, 0.99, 0.0] # green Circle
 
-                    # arrayR and take first
-                    #arrayR = down_sample_point
-                    if s == 1:
-                        curves = Line_list
-                        color = color1 # red
-                    elif s == 2:
-                        curves = Circle_list
-                        color = color2 # lightblue
-                    elif s == 3:
-                        curves = OpenCircle_list
-                        color = color3 # green
-                    
-                    curves_idx = []
-                    for i in range(len(curves)):
-                        curves_idx = curves_idx + curves[i][2]
-                    color_array = np.zeros_like(vertices)
-                    color_array[curves_idx, :] = color
-                    if s < 3:
-                        s += 1
-                    point_cloud.points = open3d.utility.Vector3dVector(vertices)
-                    point_cloud.colors = open3d.utility.Vector3dVector(color_array)
-                    vis.update_geometry(point_cloud)
-                    vis.poll_events()
-                    vis.update_renderer()
-                    #vis.run()
-                '''
                 color_array = np.zeros_like(vertices)
                 k = 0
                 while k < len(BSpline_OpenCircle_List):
