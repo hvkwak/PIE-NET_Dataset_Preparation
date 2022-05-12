@@ -10,7 +10,7 @@ which generates text files of lists to prepare for further steps. Then run other
 ```bash
 main.sh
 ```
-where you will enter an additional argument to select a "chunk number" of the Dataset. You may also find `main_multiple_screens.sh` useful if you are willing to do this in mutliple screens. Please check the details, directories and arguments in advance. <br />
+where you will enter an additional argument to select a "chunk number" of the Dataset. You may also find `main_multiple_screens.sh` useful if you are willing to do this in mutliple screens and processors. Please check the details, directories and arguments in advance. <br />
 
 `make_list.sh` generates the a text file of filenames. <br />
 `main_multiple_screens.sh` runs `main.sh` in multiple screens in linux <br />
