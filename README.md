@@ -1,5 +1,5 @@
 ## Overview
-This set of codes generates the datasets suitable for PIE-NET: Parametric Inference of Point Cloud Edges (Wang et al. 2020) from ABC Dataset(Koch et al. 2019), which may be size of ca. 2K out of 750K CAD models based on instructions in [Dataset Preparation](https://github.com/wangxiaogang866/PIE-NET). Note that there have been many unsuitable models regarding the difficulty level that are supposed to be excluded from the dataset. It is recommended to check the generated dataset once again after running the `main.py`, which will unfortunately still have some unsuitable models. 
+This set of codes generates the datasets suitable for PIE-NET: Parametric Inference of Point Cloud Edges (Wang et al. 2020) from ABC Dataset(Koch et al. 2019), which may be size of ca. 2K out of 750K CAD models based on instructions in [Dataset Preparation](https://github.com/wangxiaogang866/PIE-NET). Note that there have been many unsuitable models regarding the difficulty level in the dataset. It is recommended to check the generated dataset once again after running the `main.py`, which will unfortunately still have some unsuitable models. 
 
 Results from Section 3.1 and 3.2. of the paper were reproducible, where Parameter Regression in 3.2. was omitted but T-Net in PointNet was included.
 
