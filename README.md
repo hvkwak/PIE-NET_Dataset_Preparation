@@ -21,5 +21,5 @@ where you will enter an additional argument to select a "chunk number" of the Da
 `main_multiple_screens.sh` runs `main.sh` in multiple screens in linux <br />
 `main.sh` runs `main.py` <br />
 
-## Please note
-Note that this code will generate objects per chunk. You may have to pack all the pieces together so that the dataset is ready for training neural networks. Please understand that some codes are not efficient enough, or copy-and-paste.
+## Note
+This code will generate objects per chunk. You may have to pack all the pieces together so that the dataset is ready for training neural networks. Please understand that some codes are not efficient enough.
