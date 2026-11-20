@@ -3,7 +3,9 @@ This set of codes generates the datasets suitable for PIE-NET: Parametric Infere
 
 Results from Section 3.1 and 3.2. of the paper were reproducible, where Parameter Regression in 3.2. was omitted but T-Net in PointNet was included.
 
+<!--
 <img src="https://github.com/hvkwak/PIE-NET_Dataset_Preparation/blob/master/IMG_9164.jpg" width="300" height="200">
+-->
 
 
 ## How to generate
